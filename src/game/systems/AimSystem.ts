@@ -16,44 +16,42 @@ export class AimSystem {
       if (len > 0) {
         const dash = 8;
         const gap = 6;
-        const maxLen = 260;
-        const radius = 4;
-        const step = 4;
-        const maxBounces = 2;
+        const lifeSeconds = 1;
+        const stepDt = 1 / 60;
 
-        let dirX = dx / len;
-        let dirY = dy / len;
+        const isCharged = aim.chargeRatio >= 1;
+        const radius = isCharged ? 8 : 4;
+        const speed = isCharged ? 380 : 420;
+        const bounciness = 1;
+
+        let velX = (dx / len) * speed;
+        let velY = (dy / len) * speed;
         let posX = player.pos.x;
         let posY = player.pos.y;
-        let remaining = maxLen;
-        let bounceCount = 0;
 
         const points: Array<{ x: number; y: number }> = [{ x: posX, y: posY }];
+        const steps = Math.ceil(lifeSeconds / stepDt);
 
-        while (remaining > 0 && bounceCount <= maxBounces) {
-          const stepSize = Math.min(step, remaining);
-          const nextX = posX + dirX * stepSize;
-          const nextY = posY + dirY * stepSize;
-          const hit = checkCollision({ x: nextX, y: nextY, z: 0 }, radius, state.map);
+        for (let i = 0; i < steps; i += 1) {
+          posX += velX * stepDt;
+          posY += velY * stepDt;
 
+          const hit = checkCollision({ x: posX, y: posY, z: 0 }, radius, state.map);
           if (hit) {
-            const dot = dirX * hit.normal.x + dirY * hit.normal.y;
-            dirX = dirX - 2 * dot * hit.normal.x;
-            dirY = dirY - 2 * dot * hit.normal.y;
-            bounceCount += 1;
-            posX += hit.normal.x * (radius + 1);
-            posY += hit.normal.y * (radius + 1);
-            points.push({ x: posX, y: posY });
-            continue;
+            const dot = velX * hit.normal.x + velY * hit.normal.y;
+            if (dot < 0) {
+              velX = velX - 2 * dot * hit.normal.x;
+              velY = velY - 2 * dot * hit.normal.y;
+              velX *= bounciness;
+              velY *= bounciness;
+              posX += hit.normal.x * (radius + 0.5);
+              posY += hit.normal.y * (radius + 0.5);
+            }
           }
 
-          posX = nextX;
-          posY = nextY;
-          remaining -= stepSize;
           points.push({ x: posX, y: posY });
         }
 
-        const isCharged = aim.chargeRatio >= 1;
         aim.line.lineStyle(3, isCharged ? 0xf97316 : 0xffffff, isCharged ? 0.95 : 0.9);
         const cycle = dash + gap;
         let cyclePos = 0;
