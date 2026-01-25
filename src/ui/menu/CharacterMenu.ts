@@ -1,16 +1,43 @@
 import * as PIXI from "pixi.js";
 
-export class CharacterMenu extends PIXI.Container {
-  private readonly statsText: PIXI.Text;
-  private readonly gearText: PIXI.Text;
+export interface CharacterStats {
+  hp: string;
+  attack: number;
+  defense: number;
+  focus: number;
+  dash: string;
+  guard: string;
+  weapon: string;
+  body: string;
+  arms: string;
+  head: string;
+}
 
-  constructor(width: number, height: number) {
+export class CharacterMenu extends PIXI.Container {
+  private readonly data: CharacterStats;
+  private widthPx = 0;
+  private heightPx = 0;
+
+  constructor(data: CharacterStats) {
     super();
+    this.data = data;
+  }
+
+  public resize(width: number, height: number): void {
+    if (this.widthPx === width && this.heightPx === height) {
+      return;
+    }
+    this.widthPx = width;
+    this.heightPx = height;
+    this.removeChildren();
+
+    const panelWidth = width * 0.5 - 12;
+    const panelHeight = height - 24;
 
     const statsPanel = new PIXI.Graphics();
     statsPanel.beginFill(0x0b1220, 0.85);
     statsPanel.lineStyle(1, 0x1e293b, 1);
-    statsPanel.drawRoundedRect(0, 0, width * 0.5 - 12, height - 24, 10);
+    statsPanel.drawRoundedRect(0, 0, panelWidth, panelHeight, 10);
     statsPanel.endFill();
     statsPanel.position.set(0, 0);
     this.addChild(statsPanel);
@@ -18,7 +45,7 @@ export class CharacterMenu extends PIXI.Container {
     const gearPanel = new PIXI.Graphics();
     gearPanel.beginFill(0x0b1220, 0.85);
     gearPanel.lineStyle(1, 0x1e293b, 1);
-    gearPanel.drawRoundedRect(0, 0, width * 0.5 - 12, height - 24, 10);
+    gearPanel.drawRoundedRect(0, 0, panelWidth, panelHeight, 10);
     gearPanel.endFill();
     gearPanel.position.set(width * 0.5 + 12, 0);
     this.addChild(gearPanel);
@@ -34,14 +61,14 @@ export class CharacterMenu extends PIXI.Container {
     statsHeader.position.set(16, 12);
     this.addChild(statsHeader);
 
-    this.statsText = new PIXI.Text({
+    const statsText = new PIXI.Text({
       text:
-        "HP  120 / 120\n" +
-        "Attack  24\n" +
-        "Defense  18\n" +
-        "Focus  12\n" +
-        "Dash  1.35x\n" +
-        "Guard  1.15x\n",
+        `HP  ${this.data.hp}\n` +
+        `Attack  ${this.data.attack}\n` +
+        `Defense  ${this.data.defense}\n` +
+        `Focus  ${this.data.focus}\n` +
+        `Dash  ${this.data.dash}\n` +
+        `Guard  ${this.data.guard}\n`,
       style: {
         fill: 0xcbd5f5,
         fontFamily: "Arial",
@@ -49,19 +76,19 @@ export class CharacterMenu extends PIXI.Container {
         lineHeight: 20,
       },
     });
-    this.statsText.position.set(16, 44);
-    this.addChild(this.statsText);
+    statsText.position.set(16, 44);
+    this.addChild(statsText);
 
     const gearHeader = new PIXI.Text({ text: "Equipment", style: headerStyle });
     gearHeader.position.set(width * 0.5 + 28, 12);
     this.addChild(gearHeader);
 
-    this.gearText = new PIXI.Text({
+    const gearText = new PIXI.Text({
       text:
-        "Weapon: Hexa Blade\n" +
-        "Body: Prism Guard\n" +
-        "Arms: Flux Bracers\n" +
-        "Head: Neo Visor\n",
+        `Weapon: ${this.data.weapon}\n` +
+        `Body: ${this.data.body}\n` +
+        `Arms: ${this.data.arms}\n` +
+        `Head: ${this.data.head}\n`,
       style: {
         fill: 0xcbd5f5,
         fontFamily: "Arial",
@@ -69,7 +96,7 @@ export class CharacterMenu extends PIXI.Container {
         lineHeight: 20,
       },
     });
-    this.gearText.position.set(width * 0.5 + 28, 44);
-    this.addChild(this.gearText);
+    gearText.position.set(width * 0.5 + 28, 44);
+    this.addChild(gearText);
   }
 }

@@ -1,12 +1,14 @@
 import * as PIXI from "pixi.js";
 import { MenuTabButton } from "./MenuTabButton";
 import { CharacterMenu } from "./CharacterMenu";
+import { InventoryMenu, type InventoryItem } from "./InventoryMenu";
 
 export class MenuSystem extends PIXI.Container {
   private readonly overlay: PIXI.Graphics;
   private readonly frame: PIXI.Graphics;
   private readonly titleText: PIXI.Text;
-  private readonly tabBar: PIXI.Container;
+  private readonly rail: PIXI.Container;
+  private readonly railBg: PIXI.Graphics;
   private readonly contentRoot: PIXI.Container;
   private readonly tabs: MenuTabButton[] = [];
   private readonly pages = new Map<string, PIXI.Container>();
@@ -15,6 +17,11 @@ export class MenuSystem extends PIXI.Container {
   private openProgress = 0;
   private targetProgress = 0;
   private readonly openSpeed = 6;
+
+  private transition = 1;
+  private transitionFrom: string | null = null;
+  private transitionTo: string | null = null;
+  private activeTab: string | null = null;
 
   private widthPx = 0;
   private heightPx = 0;
@@ -39,8 +46,10 @@ export class MenuSystem extends PIXI.Container {
     });
     this.addChild(this.titleText);
 
-    this.tabBar = new PIXI.Container();
-    this.addChild(this.tabBar);
+    this.rail = new PIXI.Container();
+    this.railBg = new PIXI.Graphics();
+    this.rail.addChild(this.railBg);
+    this.addChild(this.rail);
 
     this.contentRoot = new PIXI.Container();
     this.addChild(this.contentRoot);
@@ -93,6 +102,28 @@ export class MenuSystem extends PIXI.Container {
     this.alpha = eased;
     const scale = 0.98 + 0.02 * eased;
     this.scale.set(scale);
+
+    if (this.transitionFrom && this.transitionTo && this.transition < 1) {
+      this.transition = Math.min(1, this.transition + dt * 6);
+      const fromPage = this.pages.get(this.transitionFrom);
+      const toPage = this.pages.get(this.transitionTo);
+      if (fromPage && toPage) {
+        const t = this.transition;
+        const easedT = t * t * (3 - 2 * t);
+        fromPage.alpha = 1 - easedT;
+        toPage.alpha = easedT;
+        fromPage.position.x = -24 * easedT;
+        toPage.position.x = 24 * (1 - easedT);
+        if (t === 1) {
+          fromPage.visible = false;
+          fromPage.alpha = 1;
+          fromPage.position.x = 0;
+          toPage.alpha = 1;
+          toPage.position.x = 0;
+          this.transitionFrom = null;
+        }
+      }
+    }
   }
 
   public updateLayout(screenWidth: number, screenHeight: number): void {
@@ -120,7 +151,7 @@ export class MenuSystem extends PIXI.Container {
 
     this.titleText.position.set(frameX + 24, frameY + 18);
 
-    this.layoutTabs(frameX, frameY, frameWidth);
+    this.layoutRail(frameX, frameY, frameWidth, frameHeight);
     this.layoutContent(frameX, frameY, frameWidth, frameHeight);
   }
 
@@ -130,9 +161,36 @@ export class MenuSystem extends PIXI.Container {
     this.addTab("Stats", () => this.setActiveTab("Stats"));
     this.addTab("Quest", () => this.setActiveTab("Quest"));
 
-    const characterPage = new CharacterMenu(680, 360);
+    const characterPage = new CharacterMenu({
+      hp: "120 / 120",
+      attack: 24,
+      defense: 18,
+      focus: 12,
+      dash: "1.35x",
+      guard: "1.15x",
+      weapon: "Hexa Blade",
+      body: "Prism Guard",
+      arms: "Flux Bracers",
+      head: "Neo Visor",
+    });
     this.pages.set("Character", characterPage);
     this.contentRoot.addChild(characterPage);
+
+    const items: InventoryItem[] = [
+      { id: "potion", name: "Heat Potion", rarity: "Common" },
+      { id: "tonic", name: "Focus Tonic", rarity: "Common" },
+      { id: "coil", name: "Flux Coil", rarity: "Rare" },
+      { id: "badge", name: "Circuit Badge", rarity: "Rare" },
+      { id: "blade", name: "Astra Blade", rarity: "Epic" },
+      { id: "shell", name: "Prism Shell", rarity: "Common" },
+      { id: "gear", name: "Repair Kit", rarity: "Common" },
+      { id: "data", name: "Data Fragment", rarity: "Rare" },
+      { id: "stone", name: "Cryst Stone", rarity: "Common" },
+      { id: "core", name: "Arc Core", rarity: "Epic" },
+    ];
+    const inventoryPage = new InventoryMenu(items);
+    this.pages.set("Inventory", inventoryPage);
+    this.contentRoot.addChild(inventoryPage);
 
     const placeholder = (label: string): PIXI.Container => {
       const container = new PIXI.Container();
@@ -149,7 +207,6 @@ export class MenuSystem extends PIXI.Container {
       return container;
     };
 
-    this.pages.set("Inventory", placeholder("Inventory"));
     this.pages.set("Stats", placeholder("Stats"));
     this.pages.set("Quest", placeholder("Quest"));
     for (const [key, page] of this.pages) {
@@ -165,20 +222,36 @@ export class MenuSystem extends PIXI.Container {
     const tab = new MenuTabButton({
       label,
       width: 140,
-      height: 34,
+      height: 38,
       onSelect,
     });
-    this.tabBar.addChild(tab);
+    this.rail.addChild(tab);
     this.tabs.push(tab);
   }
 
-  private layoutTabs(frameX: number, frameY: number, frameWidth: number): void {
-    const spacing = 10;
-    let x = frameX + 24;
-    const y = frameY + 54;
+  private layoutRail(
+    frameX: number,
+    frameY: number,
+    frameWidth: number,
+    frameHeight: number
+  ): void {
+    const railWidth = 170;
+    const railX = frameX + 16;
+    const railY = frameY + 56;
+    const railHeight = frameHeight - 72;
+
+    this.railBg.clear();
+    this.railBg.beginFill(0x0a1020, 0.9);
+    this.railBg.lineStyle(1, 0x1e293b, 1);
+    this.railBg.drawRoundedRect(railX, railY, railWidth, railHeight, 12);
+    this.railBg.endFill();
+
+    const spacing = 12;
+    let y = railY + 16;
+    const x = railX + 14;
     for (const tab of this.tabs) {
       tab.position.set(x, y);
-      x += tab.widthPx + spacing;
+      y += tab.heightPx + spacing;
     }
   }
 
@@ -188,22 +261,45 @@ export class MenuSystem extends PIXI.Container {
     frameWidth: number,
     frameHeight: number
   ): void {
-    const contentX = frameX + 24;
+    const railWidth = 170;
+    const contentX = frameX + 24 + railWidth + 20;
     const contentY = frameY + 100;
-    const contentWidth = frameWidth - 48;
+    const contentWidth = frameWidth - (24 + railWidth + 44);
     const contentHeight = frameHeight - 130;
     this.contentRoot.position.set(contentX, contentY);
 
     for (const page of this.pages.values()) {
       page.position.set(0, 0);
+      if ("resize" in page && typeof (page as { resize: unknown }).resize === "function") {
+        (page as { resize: (w: number, h: number) => void }).resize(
+          contentWidth,
+          contentHeight
+        );
+      }
     }
   }
 
   private setActiveTab(name: string): void {
     this.titleText.text = name;
-    for (const [key, page] of this.pages) {
-      page.visible = key === name;
+    if (this.activeTab === name && this.transitionTo === name) {
+      return;
     }
+    const current = this.activeTab ?? name;
+    for (const [key, page] of this.pages) {
+      page.visible = key === name || key === current;
+      page.alpha = key === name ? 0 : 1;
+      page.position.x = 0;
+    }
+    if (current !== name) {
+      this.transitionFrom = current;
+      this.transitionTo = name;
+      this.transition = 0;
+    } else {
+      this.transitionFrom = null;
+      this.transitionTo = name;
+      this.transition = 1;
+    }
+    this.activeTab = name;
     for (const tab of this.tabs) {
       tab.setActive(tab.label === name);
     }
