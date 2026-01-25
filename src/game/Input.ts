@@ -1,4 +1,4 @@
-export type KeyAction = "up" | "down" | "left" | "right" | "action";
+export type KeyAction = "up" | "down" | "left" | "right" | "action" | "menu";
 
 const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
   up: ["KeyW", "ArrowUp"],
@@ -6,6 +6,7 @@ const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
   left: ["KeyA", "ArrowLeft"],
   right: ["KeyD", "ArrowRight"],
   action: ["Space", "Enter"],
+  menu: ["Escape", "KeyM", "KeyI"],
 };
 
 export class Input {

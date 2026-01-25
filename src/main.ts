@@ -5,6 +5,7 @@ import { tileIndex } from "./core/world/TileMap";
 import { Input } from "./game/Input";
 import { PlayerController } from "./game/PlayerController";
 import { UIElement } from "./ui/UIElement";
+import { MenuSystem } from "./ui/menu/MenuSystem";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -163,7 +164,7 @@ const bootstrap = async (): Promise<void> => {
   hud.addChild(hudBg);
 
   const hudText = new PIXI.Text({
-    text: "WASD / Arrows to move\nSpace to interact",
+    text: "WASD / Arrows to move\nSpace to interact\nM/Esc for menu",
     style: {
       fill: 0xcbd5f5,
       fontFamily: "Arial",
@@ -203,15 +204,33 @@ const bootstrap = async (): Promise<void> => {
   dialog.visible = false;
   uiLayer.addChild(dialog);
 
+  const menu = new MenuSystem();
+  menu.registerTabs();
+  uiLayer.addChild(menu);
+
   let dialogOpen = false;
   let lastActionPressed = false;
+  let lastMenuPressed = false;
   let dialogCharIndex = 0;
   let dialogCharTimer = 0;
   const dialogCharsPerSecond = 28;
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
-    if (!dialogOpen) {
+    const menuPressed = input.isActionPressed("menu");
+    const menuJustPressed = menuPressed && !lastMenuPressed;
+    lastMenuPressed = menuPressed;
+
+    if (menuJustPressed) {
+      menu.toggle();
+      if (menu.isOpen) {
+        dialogOpen = false;
+        dialog.visible = false;
+        dialogText.text = "";
+      }
+    }
+
+    if (!dialogOpen && !menu.isOpen) {
       playerController.update(dt, map);
       const dx = player.pos.x - npc.pos.x;
       const dy = player.pos.y - npc.pos.y;
@@ -237,7 +256,7 @@ const bootstrap = async (): Promise<void> => {
         dialogOpen = false;
         dialog.visible = false;
         dialogText.text = "";
-      } else {
+      } else if (!menu.isOpen) {
         const dx = player.pos.x - npc.pos.x;
         const dy = player.pos.y - npc.pos.y;
         if (Math.hypot(dx, dy) <= 40) {
@@ -265,6 +284,8 @@ const bootstrap = async (): Promise<void> => {
 
     hud.updateLayout(app.renderer.width, app.renderer.height);
     dialog.updateLayout(app.renderer.width, app.renderer.height);
+    menu.update(dt);
+    menu.updateLayout(app.renderer.width, app.renderer.height);
   });
 };
 
