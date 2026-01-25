@@ -186,8 +186,9 @@ const bootstrap = async (): Promise<void> => {
   dialogBg.endFill();
   dialog.addChild(dialogBg);
 
+  const dialogContent = "Hello!";
   const dialogText = new PIXI.Text({
-    text: "Hello!",
+    text: "",
     style: {
       fill: 0xf9fafb,
       fontFamily: "Arial",
@@ -202,10 +203,18 @@ const bootstrap = async (): Promise<void> => {
 
   let dialogOpen = false;
   let lastActionPressed = false;
+  let dialogCharIndex = 0;
+  let dialogCharTimer = 0;
+  const dialogCharsPerSecond = 28;
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
-    playerController.update(dt, map);
+    if (!dialogOpen) {
+      playerController.update(dt, map);
+    } else {
+      player.vel.x = 0;
+      player.vel.y = 0;
+    }
 
     const actionPressed = input.isActionPressed("action");
     const actionJustPressed = actionPressed && !lastActionPressed;
@@ -215,13 +224,30 @@ const bootstrap = async (): Promise<void> => {
       if (dialogOpen) {
         dialogOpen = false;
         dialog.visible = false;
+        dialogText.text = "";
       } else {
         const dx = player.pos.x - npc.pos.x;
         const dy = player.pos.y - npc.pos.y;
         if (Math.hypot(dx, dy) <= 40) {
           dialogOpen = true;
           dialog.visible = true;
+          dialogCharIndex = 0;
+          dialogCharTimer = 0;
+          dialogText.text = "";
         }
+      }
+    }
+
+    if (dialogOpen && dialogCharIndex < dialogContent.length) {
+      dialogCharTimer += dt;
+      const nextChars = Math.floor(dialogCharTimer * dialogCharsPerSecond);
+      if (nextChars > 0) {
+        dialogCharIndex = Math.min(
+          dialogContent.length,
+          dialogCharIndex + nextChars
+        );
+        dialogCharTimer = 0;
+        dialogText.text = dialogContent.slice(0, dialogCharIndex);
       }
     }
 
