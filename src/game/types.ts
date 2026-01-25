@@ -7,16 +7,29 @@ import type { MenuSystem } from "../ui/menu/MenuSystem";
 import type { UIElement } from "../ui/UIElement";
 import type { Projectile } from "../projectiles/Projectile";
 
+export interface ProjectilePoolEntry {
+  entity: ZEntity;
+  projectile: Projectile;
+  inUse: boolean;
+}
+
 export interface ProjectileEntry {
   projectile: Projectile;
   life: number;
   damage: number;
+  pool: ProjectilePoolEntry;
+}
+
+export interface DamageTextPoolEntry {
+  text: PIXI.Text;
+  inUse: boolean;
 }
 
 export interface DamageTextEntry {
   text: PIXI.Text;
   life: number;
   velY: number;
+  pool: DamageTextPoolEntry;
 }
 
 export interface EnemyState {
@@ -66,6 +79,8 @@ export interface GameState {
   dialog: DialogState;
   aim: AimState;
   projectiles: ProjectileEntry[];
+  projectilePool: ProjectilePoolEntry[];
   enemy: EnemyState;
   damageTexts: DamageTextEntry[];
+  damageTextPool: DamageTextPoolEntry[];
 }

@@ -7,6 +7,30 @@ export const setupPointerSystem = (
   state: GameState,
   projectileTexture: PIXI.Texture
 ): void => {
+  const acquireProjectile = (radius: number): {
+    entry: GameState["projectilePool"][number];
+    entity: ZEntity;
+    projectile: Projectile;
+  } => {
+    for (const entry of state.projectilePool) {
+      if (!entry.inUse && entry.projectile.radius === radius) {
+        entry.inUse = true;
+        return { entry, entity: entry.entity, projectile: entry.projectile };
+      }
+    }
+
+    const entity = new ZEntity({
+      sprite: new PIXI.Sprite(projectileTexture),
+      gravity: 0,
+      mass: 1,
+    });
+    entity.sprite.anchor.set(0.5);
+    const projectile = new Projectile({ entity, radius, bounciness: 1 });
+    const entry = { entity, projectile, inUse: true };
+    state.projectilePool.push(entry);
+    return { entry, entity, projectile };
+  };
+
   const spawnProjectile = (
     dirX: number,
     dirY: number,
@@ -14,12 +38,7 @@ export const setupPointerSystem = (
     speed: number,
     damage: number
   ): void => {
-    const entity = new ZEntity({
-      sprite: new PIXI.Sprite(projectileTexture),
-      gravity: 0,
-      mass: 1,
-    });
-    entity.sprite.anchor.set(0.5);
+    const { entry, entity, projectile } = acquireProjectile(radius);
     entity.sprite.scale.set(radius / 4);
     entity.pos.x = state.player.pos.x;
     entity.pos.y = state.player.pos.y;
@@ -27,12 +46,16 @@ export const setupPointerSystem = (
     entity.vel.x = dirX * speed;
     entity.vel.y = dirY * speed;
     entity.vel.z = 0;
+    entity.visible = true;
 
-    state.app.stage.addChild(entity);
+    if (!state.app.stage.children.includes(entity)) {
+      state.app.stage.addChild(entity);
+    }
     state.projectiles.push({
-      projectile: new Projectile({ entity, radius, bounciness: 1 }),
+      projectile,
       life: 1,
       damage,
+      pool: entry,
     });
   };
 

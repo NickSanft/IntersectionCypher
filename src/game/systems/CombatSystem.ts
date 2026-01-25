@@ -2,6 +2,29 @@ import * as PIXI from "pixi.js";
 import type { GameState } from "../types";
 
 export class CombatSystem {
+  private acquireDamageText(state: GameState): GameState["damageTextPool"][number] {
+    for (const entry of state.damageTextPool) {
+      if (!entry.inUse) {
+        entry.inUse = true;
+        return entry;
+      }
+    }
+
+    const text = new PIXI.Text({
+      text: "",
+      style: {
+        fill: 0xf97316,
+        fontFamily: "Arial",
+        fontSize: 14,
+        fontWeight: "700",
+      },
+    });
+    text.anchor.set(0.5);
+    const entry = { text, inUse: true };
+    state.damageTextPool.push(entry);
+    return entry;
+  }
+
   public update(state: GameState, dt: number): void {
     const enemy = state.enemy;
 
@@ -44,20 +67,23 @@ export class CombatSystem {
           }
           this.drawEnemyHp(enemy);
 
-          const damageText = new PIXI.Text({
-            text: `-${entry.damage}`,
-            style: {
-              fill: 0xf97316,
-              fontFamily: "Arial",
-              fontSize: 14,
-              fontWeight: "700",
-            },
+          const damagePoolEntry = this.acquireDamageText(state);
+          damagePoolEntry.text.text = `-${entry.damage}`;
+          damagePoolEntry.text.position.set(enemy.entity.pos.x, enemy.entity.pos.y - 36);
+          damagePoolEntry.text.alpha = 1;
+          damagePoolEntry.text.visible = true;
+          if (!state.app.stage.children.includes(damagePoolEntry.text)) {
+            state.app.stage.addChild(damagePoolEntry.text);
+          }
+          state.damageTexts.push({
+            text: damagePoolEntry.text,
+            life: 0.6,
+            velY: -20,
+            pool: damagePoolEntry,
           });
-          damageText.anchor.set(0.5);
-          damageText.position.set(enemy.entity.pos.x, enemy.entity.pos.y - 36);
-          state.app.stage.addChild(damageText);
-          state.damageTexts.push({ text: damageText, life: 0.6, velY: -20 });
 
+          entry.pool.inUse = false;
+          entry.projectile.entity.visible = false;
           state.app.stage.removeChild(entry.projectile.entity);
           state.projectiles.splice(i, 1);
           continue;
@@ -65,6 +91,8 @@ export class CombatSystem {
       }
 
       if (entry.life <= 0) {
+        entry.pool.inUse = false;
+        entry.projectile.entity.visible = false;
         state.app.stage.removeChild(entry.projectile.entity);
         state.projectiles.splice(i, 1);
       }
@@ -76,6 +104,8 @@ export class CombatSystem {
       entry.text.alpha = Math.max(0, entry.life / 0.6);
       entry.text.position.y += entry.velY * dt;
       if (entry.life <= 0) {
+        entry.pool.inUse = false;
+        entry.text.visible = false;
         state.app.stage.removeChild(entry.text);
         state.damageTexts.splice(i, 1);
       }

@@ -288,6 +288,7 @@ const bootstrap = async (): Promise<void> => {
       chargeRing,
     },
     projectiles: [],
+    projectilePool: [],
     enemy: {
       entity: enemy,
       radius: 12,
@@ -299,6 +300,7 @@ const bootstrap = async (): Promise<void> => {
       hpBar: enemyHpBar,
     },
     damageTexts: [],
+    damageTextPool: [],
   };
 
   setupPointerSystem(state, projectileTexture);
