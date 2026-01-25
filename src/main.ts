@@ -83,6 +83,9 @@ const bootstrap = async (): Promise<void> => {
     throw new Error("Missing #app host element");
   }
   host.appendChild(app.canvas);
+  app.stage.sortableChildren = true;
+  app.stage.eventMode = "static";
+  app.stage.hitArea = app.screen;
 
   const entityTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -94,6 +97,7 @@ const bootstrap = async (): Promise<void> => {
 
   const map = buildTestMap(48);
   const mapView = drawMap(map);
+  mapView.zIndex = 0;
   app.stage.addChild(mapView);
 
   const playerTexture = (() => {
@@ -109,6 +113,7 @@ const bootstrap = async (): Promise<void> => {
     gravity: 0,
     mass: 1,
   });
+  player.zIndex = 2;
   player.sprite.anchor.set(0.5);
   player.pos.x = map.tileSize * 4;
   player.pos.y = map.tileSize * 4;
@@ -147,6 +152,7 @@ const bootstrap = async (): Promise<void> => {
     gravity: 0,
     mass: 1,
   });
+  enemy.zIndex = 2;
   enemy.sprite.anchor.set(0.5);
   enemy.pos.x = map.tileSize * 14;
   enemy.pos.y = map.tileSize * 4;
@@ -161,6 +167,7 @@ const bootstrap = async (): Promise<void> => {
   let enemyRespawnTimer = 0;
 
   const enemyHpBar = new PIXI.Graphics();
+  enemyHpBar.zIndex = 3;
   app.stage.addChild(enemyHpBar);
 
   const damageTexts: { text: PIXI.Text; life: number; velY: number }[] = [];
@@ -186,6 +193,12 @@ const bootstrap = async (): Promise<void> => {
   drawEnemyHp();
 
   const projectiles: { projectile: Projectile; life: number }[] = [];
+  const aimLine = new PIXI.Graphics();
+  aimLine.zIndex = 4;
+  app.stage.addChild(aimLine);
+  let aimX = 0;
+  let aimY = 0;
+  let aimActive = false;
 
   app.canvas.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) {
@@ -227,6 +240,16 @@ const bootstrap = async (): Promise<void> => {
     });
   });
 
+  app.stage.on("pointermove", (event) => {
+    aimX = event.global.x;
+    aimY = event.global.y;
+    aimActive = true;
+  });
+
+  app.stage.on("pointerout", () => {
+    aimActive = false;
+  });
+
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
     gfx.beginFill(0xf472b6);
@@ -249,6 +272,7 @@ const bootstrap = async (): Promise<void> => {
 
   const uiLayer = new PIXI.Container();
   uiLayer.sortableChildren = true;
+  uiLayer.zIndex = 10;
   app.stage.addChild(uiLayer);
 
   const hud = new UIElement({
@@ -381,6 +405,35 @@ const bootstrap = async (): Promise<void> => {
         );
         dialogCharTimer = 0;
         dialogText.text = dialogContent.slice(0, dialogCharIndex);
+      }
+    }
+
+    aimLine.clear();
+    if (aimActive && !dialogOpen && !menu.isOpen) {
+      const dx = aimX - player.pos.x;
+      const dy = aimY - player.pos.y;
+      const len = Math.hypot(dx, dy);
+      if (len > 0) {
+        const dirX = dx / len;
+        const dirY = dy / len;
+        const dash = 8;
+        const gap = 6;
+        const maxLen = Math.min(len, 220);
+        aimLine.lineStyle(3, 0xffffff, 0.9);
+        let dist = 10;
+        while (dist < maxLen) {
+          const segLen = Math.min(dash, maxLen - dist);
+          const startX = player.pos.x + dirX * dist;
+          const startY = player.pos.y + dirY * dist;
+          const endX = player.pos.x + dirX * (dist + segLen);
+          const endY = player.pos.y + dirY * (dist + segLen);
+          aimLine.moveTo(startX, startY);
+          aimLine.lineTo(endX, endY);
+          dist += dash + gap;
+        }
+        aimLine.beginFill(0xffffff, 0.95);
+        aimLine.drawCircle(aimX, aimY, 3);
+        aimLine.endFill();
       }
     }
 
