@@ -45,6 +45,13 @@ export interface EnemyState {
   respawnSeconds: number;
   hitFlashSeconds: number;
   labelOffsetY: number;
+  speed: number;
+  aggroRange: number;
+  stopRange: number;
+  patrolRadius: number;
+  patrolAngle: number;
+  homeX: number;
+  homeY: number;
   hpBar: PIXI.Graphics;
   label: PIXI.Text;
 }

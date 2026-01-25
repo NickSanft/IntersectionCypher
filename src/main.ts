@@ -15,6 +15,7 @@ import { CombatSystem } from "./game/systems/CombatSystem";
 import { UISystem } from "./game/systems/UISystem";
 import { CameraSystem } from "./game/systems/CameraSystem";
 import { HUDSystem } from "./game/systems/HUDSystem";
+import { EnemyAISystem } from "./game/systems/EnemyAISystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData } from "./game/data/EnemyData";
@@ -362,6 +363,13 @@ const bootstrap = async (): Promise<void> => {
       respawnSeconds: defaultEnemyData.respawnSeconds,
       hitFlashSeconds: defaultEnemyData.hitFlashSeconds,
       labelOffsetY: defaultEnemyData.labelOffsetY,
+      speed: defaultEnemyData.speed,
+      aggroRange: defaultEnemyData.aggroRange,
+      stopRange: defaultEnemyData.stopRange,
+      patrolRadius: defaultEnemyData.patrolRadius,
+      patrolAngle: 0,
+      homeX: enemy.pos.x,
+      homeY: enemy.pos.y,
       hpBar: enemyHpBar,
       label: enemyLabel,
     },
@@ -380,12 +388,14 @@ const bootstrap = async (): Promise<void> => {
   const uiSystem = new UISystem();
   const cameraSystem = new CameraSystem();
   const hudSystem = new HUDSystem();
+  const enemyAISystem = new EnemyAISystem();
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
     menuToggleSystem.update(state);
     dialogSystem.update(state, dt);
     playerSystem.update(state, dt);
+    enemyAISystem.update(state, dt);
     aimSystem.update(state);
     combatSystem.update(state, dt);
     cameraSystem.update(state, dt);
