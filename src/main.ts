@@ -6,6 +6,7 @@ import { Input } from "./game/Input";
 import { PlayerController } from "./game/PlayerController";
 import { UIElement } from "./ui/UIElement";
 import { MenuSystem } from "./ui/menu/MenuSystem";
+import { Projectile } from "./projectiles/Projectile";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -124,6 +125,78 @@ const bootstrap = async (): Promise<void> => {
   });
   const playerRadius = 10;
   const npcRadius = 10;
+
+  const projectileTexture = (() => {
+    const gfx = new PIXI.Graphics();
+    gfx.beginFill(0xfbbf24);
+    gfx.drawCircle(0, 0, 4);
+    gfx.endFill();
+    return app.renderer.generateTexture(gfx);
+  })();
+
+  const enemyTexture = (() => {
+    const gfx = new PIXI.Graphics();
+    gfx.beginFill(0xef4444);
+    gfx.drawRoundedRect(0, 0, 26, 26, 6);
+    gfx.endFill();
+    return app.renderer.generateTexture(gfx);
+  })();
+
+  const enemy = new ZEntity({
+    sprite: new PIXI.Sprite(enemyTexture),
+    gravity: 0,
+    mass: 1,
+  });
+  enemy.sprite.anchor.set(0.5);
+  enemy.pos.x = map.tileSize * 14;
+  enemy.pos.y = map.tileSize * 4;
+  enemy.pos.z = 0;
+  enemy.renderUpdate();
+  app.stage.addChild(enemy);
+  const enemyRadius = 12;
+  let enemyHitTimer = 0;
+
+  const projectiles: { projectile: Projectile; life: number }[] = [];
+
+  app.canvas.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    if (dialogOpen || menu.isOpen) {
+      return;
+    }
+
+    const rect = app.canvas.getBoundingClientRect();
+    const targetX = event.clientX - rect.left;
+    const targetY = event.clientY - rect.top;
+
+    const dirX = targetX - player.pos.x;
+    const dirY = targetY - player.pos.y;
+    const len = Math.hypot(dirX, dirY);
+    if (len === 0) {
+      return;
+    }
+
+    const entity = new ZEntity({
+      sprite: new PIXI.Sprite(projectileTexture),
+      gravity: 0,
+      mass: 1,
+    });
+    entity.sprite.anchor.set(0.5);
+    entity.pos.x = player.pos.x;
+    entity.pos.y = player.pos.y;
+    entity.pos.z = 0;
+    const speed = 420;
+    entity.vel.x = (dirX / len) * speed;
+    entity.vel.y = (dirY / len) * speed;
+    entity.vel.z = 0;
+
+    app.stage.addChild(entity);
+    projectiles.push({
+      projectile: new Projectile({ entity, radius: 4, bounciness: 1 }),
+      life: 3,
+    });
+  });
 
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -279,6 +352,36 @@ const bootstrap = async (): Promise<void> => {
         );
         dialogCharTimer = 0;
         dialogText.text = dialogContent.slice(0, dialogCharIndex);
+      }
+    }
+
+    if (enemyHitTimer > 0) {
+      enemyHitTimer -= dt;
+      if (enemyHitTimer <= 0) {
+        enemy.sprite.tint = 0xffffff;
+      }
+    }
+
+    for (let i = projectiles.length - 1; i >= 0; i -= 1) {
+      const entry = projectiles[i];
+      entry.projectile.update(dt, map);
+      entry.projectile.renderUpdate();
+      entry.life -= dt;
+
+      const dx = entry.projectile.entity.pos.x - enemy.pos.x;
+      const dy = entry.projectile.entity.pos.y - enemy.pos.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= enemyRadius + entry.projectile.radius) {
+        enemy.sprite.tint = 0xffc2c2;
+        enemyHitTimer = 0.15;
+        app.stage.removeChild(entry.projectile.entity);
+        projectiles.splice(i, 1);
+        continue;
+      }
+
+      if (entry.life <= 0) {
+        app.stage.removeChild(entry.projectile.entity);
+        projectiles.splice(i, 1);
       }
     }
 
