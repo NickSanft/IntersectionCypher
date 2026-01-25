@@ -121,6 +121,8 @@ const bootstrap = async (): Promise<void> => {
     moveSpeed: 220,
     radius: 10,
   });
+  const playerRadius = 10;
+  const npcRadius = 10;
 
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -211,6 +213,16 @@ const bootstrap = async (): Promise<void> => {
     const dt = ticker.deltaMS / 1000;
     if (!dialogOpen) {
       playerController.update(dt, map);
+      const dx = player.pos.x - npc.pos.x;
+      const dy = player.pos.y - npc.pos.y;
+      const dist = Math.hypot(dx, dy);
+      const minDist = playerRadius + npcRadius;
+      if (dist > 0 && dist < minDist) {
+        const push = (minDist - dist) / dist;
+        player.pos.x += dx * push;
+        player.pos.y += dy * push;
+        player.renderUpdate();
+      }
     } else {
       player.vel.x = 0;
       player.vel.y = 0;
