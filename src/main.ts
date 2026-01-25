@@ -14,6 +14,7 @@ import { AimSystem } from "./game/systems/AimSystem";
 import { CombatSystem } from "./game/systems/CombatSystem";
 import { UISystem } from "./game/systems/UISystem";
 import { CameraSystem } from "./game/systems/CameraSystem";
+import { HUDSystem } from "./game/systems/HUDSystem";
 import type { GameState } from "./game/types";
 
 const buildTestMap = (tileSize: number): TileMap => {
@@ -169,6 +170,21 @@ const bootstrap = async (): Promise<void> => {
   enemyHpBar.zIndex = 3;
   world.addChild(enemyHpBar);
 
+  const enemyLabel = new PIXI.Text({
+    text: "Target",
+    style: {
+      fill: 0xf8fafc,
+      fontFamily: "Arial",
+      fontSize: 12,
+      fontWeight: "700",
+      stroke: 0x0b1220,
+      strokeThickness: 3,
+    },
+  });
+  enemyLabel.anchor.set(0.5);
+  enemyLabel.zIndex = 3;
+  world.addChild(enemyLabel);
+
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
     gfx.beginFill(0xf472b6);
@@ -219,6 +235,33 @@ const bootstrap = async (): Promise<void> => {
   hudText.position.set(12, 12);
   hud.addChild(hudText);
   uiLayer.addChild(hud);
+
+  const hudTitle = new PIXI.Text({
+    text: "SYSTEMS",
+    style: {
+      fill: 0xe2e8f0,
+      fontFamily: "Arial",
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 2,
+    },
+  });
+  hudTitle.position.set(12, 8);
+  hud.addChild(hudTitle);
+
+  const chargeBar = new PIXI.Graphics();
+  hud.addChild(chargeBar);
+
+  const chargeLabel = new PIXI.Text({
+    text: "Charging",
+    style: {
+      fill: 0x93c5fd,
+      fontFamily: "Arial",
+      fontSize: 11,
+    },
+  });
+  chargeLabel.position.set(12, 100);
+  hud.addChild(chargeLabel);
 
   const dialog = new UIElement({
     width: 260,
@@ -274,6 +317,9 @@ const bootstrap = async (): Promise<void> => {
     npcRadius,
     menu,
     hud,
+    hudTitle,
+    chargeBar,
+    chargeLabel,
     dialog: {
       open: false,
       content: dialogContent,
@@ -311,6 +357,7 @@ const bootstrap = async (): Promise<void> => {
       dead: false,
       respawnTimer: 0,
       hpBar: enemyHpBar,
+      label: enemyLabel,
     },
     damageTexts: [],
     damageTextPool: [],
@@ -325,6 +372,7 @@ const bootstrap = async (): Promise<void> => {
   const combatSystem = new CombatSystem();
   const uiSystem = new UISystem();
   const cameraSystem = new CameraSystem();
+  const hudSystem = new HUDSystem();
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
@@ -335,6 +383,7 @@ const bootstrap = async (): Promise<void> => {
     combatSystem.update(state, dt);
     cameraSystem.update(state, dt);
     uiSystem.update(state, dt);
+    hudSystem.update(state);
   });
 };
 

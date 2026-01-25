@@ -41,6 +41,7 @@ export interface EnemyState {
   dead: boolean;
   respawnTimer: number;
   hpBar: PIXI.Graphics;
+  label: PIXI.Text;
 }
 
 export interface DialogState {
@@ -84,6 +85,9 @@ export interface GameState {
   npcRadius: number;
   menu: MenuSystem;
   hud: UIElement;
+  hudTitle: PIXI.Text;
+  chargeBar: PIXI.Graphics;
+  chargeLabel: PIXI.Text;
   dialog: DialogState;
   aim: AimState;
   camera: CameraState;
