@@ -6,8 +6,14 @@ import { Input } from "./game/Input";
 import { PlayerController } from "./game/PlayerController";
 import { UIElement } from "./ui/UIElement";
 import { MenuSystem } from "./ui/menu/MenuSystem";
-import { Projectile } from "./projectiles/Projectile";
-import { checkCollision } from "./core/physics/Collision";
+import { setupPointerSystem } from "./game/systems/PointerSystem";
+import { MenuToggleSystem } from "./game/systems/MenuToggleSystem";
+import { DialogSystem } from "./game/systems/DialogSystem";
+import { PlayerSystem } from "./game/systems/PlayerSystem";
+import { AimSystem } from "./game/systems/AimSystem";
+import { CombatSystem } from "./game/systems/CombatSystem";
+import { UISystem } from "./game/systems/UISystem";
+import type { GameState } from "./game/types";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -88,14 +94,6 @@ const bootstrap = async (): Promise<void> => {
   app.stage.eventMode = "static";
   app.stage.hitArea = app.screen;
 
-  const entityTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.beginFill(0x59d9ff);
-    gfx.drawRoundedRect(0, 0, 20, 20, 4);
-    gfx.endFill();
-    return app.renderer.generateTexture(gfx);
-  })();
-
   const map = buildTestMap(48);
   const mapView = drawMap(map);
   mapView.zIndex = 0;
@@ -160,139 +158,10 @@ const bootstrap = async (): Promise<void> => {
   enemy.pos.z = 0;
   enemy.renderUpdate();
   app.stage.addChild(enemy);
-  const enemyRadius = 12;
-  let enemyHitTimer = 0;
-  const enemyMaxHp = 5;
-  let enemyHp = enemyMaxHp;
-  let enemyDead = false;
-  let enemyRespawnTimer = 0;
 
   const enemyHpBar = new PIXI.Graphics();
   enemyHpBar.zIndex = 3;
   app.stage.addChild(enemyHpBar);
-
-  const damageTexts: { text: PIXI.Text; life: number; velY: number }[] = [];
-
-  const drawEnemyHp = (): void => {
-    enemyHpBar.clear();
-    if (enemyDead) {
-      return;
-    }
-    const barWidth = 40;
-    const barHeight = 6;
-    const x = enemy.pos.x - barWidth / 2;
-    const y = enemy.pos.y - 28;
-    enemyHpBar.beginFill(0x111827, 0.9);
-    enemyHpBar.drawRoundedRect(x, y, barWidth, barHeight, 3);
-    enemyHpBar.endFill();
-
-    const ratio = Math.max(0, enemyHp) / enemyMaxHp;
-    enemyHpBar.beginFill(0x22c55e, 0.95);
-    enemyHpBar.drawRoundedRect(x + 1, y + 1, (barWidth - 2) * ratio, barHeight - 2, 2);
-    enemyHpBar.endFill();
-  };
-  drawEnemyHp();
-
-  const projectiles: { projectile: Projectile; life: number; damage: number }[] = [];
-  const aimLine = new PIXI.Graphics();
-  aimLine.zIndex = 4;
-  app.stage.addChild(aimLine);
-  let aimX = 0;
-  let aimY = 0;
-  let aimActive = false;
-
-  let chargeStartMs = 0;
-  let chargeActive = false;
-
-  const spawnProjectile = (
-    dirX: number,
-    dirY: number,
-    radius: number,
-    speed: number,
-    damage: number
-  ): void => {
-    const entity = new ZEntity({
-      sprite: new PIXI.Sprite(projectileTexture),
-      gravity: 0,
-      mass: 1,
-    });
-    entity.sprite.anchor.set(0.5);
-    entity.sprite.scale.set(radius / 4);
-    entity.pos.x = player.pos.x;
-    entity.pos.y = player.pos.y;
-    entity.pos.z = 0;
-    entity.vel.x = dirX * speed;
-    entity.vel.y = dirY * speed;
-    entity.vel.z = 0;
-
-    app.stage.addChild(entity);
-    projectiles.push({
-      projectile: new Projectile({ entity, radius, bounciness: 1 }),
-      life: 1,
-      damage,
-    });
-  };
-
-  app.stage.on("pointerdown", (event) => {
-    if (event.button !== 0) {
-      return;
-    }
-    if (dialogOpen || menu.isOpen) {
-      return;
-    }
-    aimX = event.global.x;
-    aimY = event.global.y;
-    aimActive = true;
-    chargeStartMs = performance.now();
-    chargeActive = true;
-  });
-
-  window.addEventListener("pointerup", (event) => {
-    if (event.button !== 0) {
-      return;
-    }
-    if (!chargeActive) {
-      return;
-    }
-    if (dialogOpen || menu.isOpen) {
-      chargeActive = false;
-      return;
-    }
-
-    const rect = app.canvas.getBoundingClientRect();
-    const scaleX = app.renderer.width / rect.width;
-    const scaleY = app.renderer.height / rect.height;
-    const targetX = (event.clientX - rect.left) * scaleX;
-    const targetY = (event.clientY - rect.top) * scaleY;
-
-    const dirX = targetX - player.pos.x;
-    const dirY = targetY - player.pos.y;
-    const len = Math.hypot(dirX, dirY);
-    if (len === 0) {
-      chargeActive = false;
-      return;
-    }
-
-    const isCharged = performance.now() - chargeStartMs >= chargeThresholdMs;
-    const normX = dirX / len;
-    const normY = dirY / len;
-    if (isCharged) {
-      spawnProjectile(normX, normY, 8, 380, 3);
-    } else {
-      spawnProjectile(normX, normY, 4, 420, 1);
-    }
-    chargeActive = false;
-  });
-
-  app.stage.on("pointermove", (event) => {
-    aimX = event.global.x;
-    aimY = event.global.y;
-    aimActive = true;
-  });
-
-  app.stage.on("pointerout", () => {
-    aimActive = false;
-  });
 
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -378,274 +247,77 @@ const bootstrap = async (): Promise<void> => {
   menu.registerTabs();
   uiLayer.addChild(menu);
 
-  let dialogOpen = false;
-  let lastActionPressed = false;
-  let lastMenuPressed = false;
-  let dialogCharIndex = 0;
-  let dialogCharTimer = 0;
-  const dialogCharsPerSecond = 28;
-  const chargeThresholdMs = 2000;
+  const aimLine = new PIXI.Graphics();
+  aimLine.zIndex = 4;
+  app.stage.addChild(aimLine);
+
   const chargeRing = new PIXI.Graphics();
   chargeRing.zIndex = 6;
   chargeRing.blendMode = "add";
   app.stage.addChild(chargeRing);
-  let chargeRatio = 0;
+
+  const state: GameState = {
+    app,
+    map,
+    input,
+    player,
+    playerController,
+    playerRadius,
+    npc,
+    npcRadius,
+    menu,
+    hud,
+    dialog: {
+      open: false,
+      content: dialogContent,
+      text: dialogText,
+      charIndex: 0,
+      charTimer: 0,
+      charsPerSecond: 28,
+      ui: dialog,
+    },
+    aim: {
+      line: aimLine,
+      active: false,
+      x: 0,
+      y: 0,
+      chargeActive: false,
+      chargeStartMs: 0,
+      chargeRatio: 0,
+      chargeThresholdMs: 2000,
+      chargeRing,
+    },
+    projectiles: [],
+    enemy: {
+      entity: enemy,
+      radius: 12,
+      maxHp: 5,
+      hp: 5,
+      hitTimer: 0,
+      dead: false,
+      respawnTimer: 0,
+      hpBar: enemyHpBar,
+    },
+    damageTexts: [],
+  };
+
+  setupPointerSystem(state, projectileTexture);
+
+  const menuToggleSystem = new MenuToggleSystem();
+  const dialogSystem = new DialogSystem();
+  const playerSystem = new PlayerSystem();
+  const aimSystem = new AimSystem();
+  const combatSystem = new CombatSystem();
+  const uiSystem = new UISystem();
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
-    const menuPressed = input.isActionPressed("menu");
-    const menuJustPressed = menuPressed && !lastMenuPressed;
-    lastMenuPressed = menuPressed;
-
-    if (menuJustPressed) {
-      menu.toggle();
-      if (menu.isOpen) {
-        dialogOpen = false;
-        dialog.visible = false;
-        dialogText.text = "";
-      }
-    }
-
-    if (!dialogOpen && !menu.isOpen) {
-      playerController.update(dt, map);
-      const dx = player.pos.x - npc.pos.x;
-      const dy = player.pos.y - npc.pos.y;
-      const dist = Math.hypot(dx, dy);
-      const minDist = playerRadius + npcRadius;
-      if (dist > 0 && dist < minDist) {
-        const push = (minDist - dist) / dist;
-        player.pos.x += dx * push;
-        player.pos.y += dy * push;
-        player.renderUpdate();
-      }
-    } else {
-      player.vel.x = 0;
-      player.vel.y = 0;
-    }
-
-    const actionPressed = input.isActionPressed("action");
-    const actionJustPressed = actionPressed && !lastActionPressed;
-    lastActionPressed = actionPressed;
-
-    if (actionJustPressed) {
-      if (dialogOpen) {
-        dialogOpen = false;
-        dialog.visible = false;
-        dialogText.text = "";
-      } else if (!menu.isOpen) {
-        const dx = player.pos.x - npc.pos.x;
-        const dy = player.pos.y - npc.pos.y;
-        if (Math.hypot(dx, dy) <= 40) {
-          dialogOpen = true;
-          dialog.visible = true;
-          dialogCharIndex = 0;
-          dialogCharTimer = 0;
-          dialogText.text = "";
-        }
-      }
-    }
-
-    if (dialogOpen && dialogCharIndex < dialogContent.length) {
-      dialogCharTimer += dt;
-      const nextChars = Math.floor(dialogCharTimer * dialogCharsPerSecond);
-      if (nextChars > 0) {
-        dialogCharIndex = Math.min(
-          dialogContent.length,
-          dialogCharIndex + nextChars
-        );
-        dialogCharTimer = 0;
-        dialogText.text = dialogContent.slice(0, dialogCharIndex);
-      }
-    }
-
-    aimLine.clear();
-    if (aimActive && !dialogOpen && !menu.isOpen) {
-      const dx = aimX - player.pos.x;
-      const dy = aimY - player.pos.y;
-      const len = Math.hypot(dx, dy);
-      if (len > 0) {
-        const dash = 8;
-        const gap = 6;
-        const maxLen = 260;
-        const radius = 4;
-        const step = 4;
-        const maxBounces = 2;
-
-        let dirX = dx / len;
-        let dirY = dy / len;
-        let posX = player.pos.x;
-        let posY = player.pos.y;
-        let remaining = maxLen;
-        let bounceCount = 0;
-
-        const points: Array<{ x: number; y: number }> = [{ x: posX, y: posY }];
-
-        while (remaining > 0 && bounceCount <= maxBounces) {
-          const stepSize = Math.min(step, remaining);
-          const nextX = posX + dirX * stepSize;
-          const nextY = posY + dirY * stepSize;
-          const hit = checkCollision({ x: nextX, y: nextY, z: 0 }, radius, map);
-
-          if (hit) {
-            const dot = dirX * hit.normal.x + dirY * hit.normal.y;
-            dirX = dirX - 2 * dot * hit.normal.x;
-            dirY = dirY - 2 * dot * hit.normal.y;
-            bounceCount += 1;
-            posX += hit.normal.x * (radius + 1);
-            posY += hit.normal.y * (radius + 1);
-            points.push({ x: posX, y: posY });
-            continue;
-          }
-
-          posX = nextX;
-          posY = nextY;
-          remaining -= stepSize;
-          points.push({ x: posX, y: posY });
-        }
-
-        const isCharged = chargeRatio >= 1;
-        aimLine.lineStyle(3, isCharged ? 0xf97316 : 0xffffff, isCharged ? 0.95 : 0.9);
-        const cycle = dash + gap;
-        let cyclePos = 0;
-
-        for (let i = 0; i < points.length - 1; i += 1) {
-          const p0 = points[i];
-          const p1 = points[i + 1];
-          const segDx = p1.x - p0.x;
-          const segDy = p1.y - p0.y;
-          const segLen = Math.hypot(segDx, segDy);
-          if (segLen === 0) {
-            continue;
-          }
-          let segPos = 0;
-          while (segPos < segLen) {
-            const remainingInCycle = cycle - cyclePos;
-            const stepLen = Math.min(remainingInCycle, segLen - segPos);
-            if (cyclePos < dash) {
-              const drawLen = Math.min(stepLen, dash - cyclePos);
-              const t0 = segPos / segLen;
-              const t1 = (segPos + drawLen) / segLen;
-              const sx = p0.x + segDx * t0;
-              const sy = p0.y + segDy * t0;
-              const ex = p0.x + segDx * t1;
-              const ey = p0.y + segDy * t1;
-              aimLine.moveTo(sx, sy);
-              aimLine.lineTo(ex, ey);
-            }
-            segPos += stepLen;
-            cyclePos += stepLen;
-            if (cyclePos >= cycle) {
-              cyclePos = 0;
-            }
-          }
-        }
-
-        aimLine.beginFill(isCharged ? 0xf97316 : 0xffffff, 0.95);
-        aimLine.drawCircle(aimX, aimY, 3);
-        aimLine.endFill();
-      }
-    }
-
-    chargeRatio = 0;
-    if (chargeActive && !dialogOpen && !menu.isOpen) {
-      chargeRatio = Math.min(1, (performance.now() - chargeStartMs) / chargeThresholdMs);
-    }
-    chargeRing.clear();
-    if (chargeRatio > 0) {
-      const radius = 16 + 8 * chargeRatio;
-      chargeRing.beginFill(0x22c55e, 0.12);
-      chargeRing.drawCircle(player.pos.x, player.pos.y, radius + 4);
-      chargeRing.endFill();
-      chargeRing.lineStyle(3, 0x22c55e, 0.95);
-      chargeRing.drawCircle(player.pos.x, player.pos.y, radius);
-      chargeRing.lineStyle(2, 0xfde047, 0.85);
-      chargeRing.drawCircle(player.pos.x, player.pos.y, radius - 5);
-    }
-
-    if (!enemyDead && enemyHitTimer > 0) {
-      enemyHitTimer -= dt;
-      if (enemyHitTimer <= 0) {
-        enemy.sprite.tint = 0xffffff;
-      }
-    }
-
-    if (enemyDead) {
-      enemyRespawnTimer -= dt;
-      if (enemyRespawnTimer <= 0) {
-        enemyDead = false;
-        enemyHp = enemyMaxHp;
-        enemy.visible = true;
-        enemy.sprite.tint = 0xffffff;
-        drawEnemyHp();
-      }
-    }
-
-    for (let i = projectiles.length - 1; i >= 0; i -= 1) {
-      const entry = projectiles[i];
-      entry.projectile.update(dt, map);
-      entry.projectile.renderUpdate();
-      entry.life -= dt;
-
-      if (!enemyDead) {
-        const dx = entry.projectile.entity.pos.x - enemy.pos.x;
-        const dy = entry.projectile.entity.pos.y - enemy.pos.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist <= enemyRadius + entry.projectile.radius) {
-          enemy.sprite.tint = 0xffc2c2;
-          enemyHitTimer = 0.15;
-          enemyHp = Math.max(0, enemyHp - entry.damage);
-          if (enemyHp === 0) {
-            enemyDead = true;
-            enemy.visible = false;
-            enemyRespawnTimer = 2.5;
-          }
-          drawEnemyHp();
-
-          const damageText = new PIXI.Text({
-            text: `-${entry.damage}`,
-            style: {
-              fill: 0xf97316,
-              fontFamily: "Arial",
-              fontSize: 14,
-              fontWeight: "700",
-            },
-          });
-          damageText.anchor.set(0.5);
-          damageText.position.set(enemy.pos.x, enemy.pos.y - 36);
-          app.stage.addChild(damageText);
-          damageTexts.push({ text: damageText, life: 0.6, velY: -20 });
-
-          app.stage.removeChild(entry.projectile.entity);
-          projectiles.splice(i, 1);
-          continue;
-        }
-      }
-
-      if (entry.life <= 0) {
-        app.stage.removeChild(entry.projectile.entity);
-        projectiles.splice(i, 1);
-      }
-    }
-
-    for (let i = damageTexts.length - 1; i >= 0; i -= 1) {
-      const entry = damageTexts[i];
-      entry.life -= dt;
-      entry.text.alpha = Math.max(0, entry.life / 0.6);
-      entry.text.position.y += entry.velY * dt;
-      if (entry.life <= 0) {
-        app.stage.removeChild(entry.text);
-        damageTexts.splice(i, 1);
-      }
-    }
-
-    hud.updateLayout(app.renderer.width, app.renderer.height);
-    dialog.updateLayout(app.renderer.width, app.renderer.height);
-    menu.update(dt);
-    menu.updateLayout(app.renderer.width, app.renderer.height);
-
-    if (!enemyDead) {
-      drawEnemyHp();
-    }
+    menuToggleSystem.update(state);
+    dialogSystem.update(state, dt);
+    playerSystem.update(state, dt);
+    aimSystem.update(state);
+    combatSystem.update(state, dt);
+    uiSystem.update(state, dt);
   });
 };
 
