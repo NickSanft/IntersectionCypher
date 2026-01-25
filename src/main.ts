@@ -16,6 +16,8 @@ import { UISystem } from "./game/systems/UISystem";
 import { CameraSystem } from "./game/systems/CameraSystem";
 import { HUDSystem } from "./game/systems/HUDSystem";
 import type { GameState } from "./game/types";
+import { defaultPlayerData } from "./game/data/PlayerData";
+import { defaultEnemyData } from "./game/data/EnemyData";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -171,7 +173,7 @@ const bootstrap = async (): Promise<void> => {
   world.addChild(enemyHpBar);
 
   const enemyLabel = new PIXI.Text({
-    text: "Target",
+    text: defaultEnemyData.name,
     style: {
       fill: 0xf8fafc,
       fontFamily: "Arial",
@@ -293,7 +295,7 @@ const bootstrap = async (): Promise<void> => {
   uiLayer.addChild(dialog);
 
   const menu = new MenuSystem();
-  menu.registerTabs();
+  menu.registerTabs(defaultPlayerData);
   uiLayer.addChild(menu);
 
   const aimLine = new PIXI.Graphics();
@@ -350,17 +352,22 @@ const bootstrap = async (): Promise<void> => {
     projectilePool: [],
     enemy: {
       entity: enemy,
-      radius: 12,
-      maxHp: 5,
-      hp: 5,
+      name: defaultEnemyData.name,
+      radius: defaultEnemyData.radius,
+      maxHp: defaultEnemyData.maxHp,
+      hp: defaultEnemyData.maxHp,
       hitTimer: 0,
       dead: false,
       respawnTimer: 0,
+      respawnSeconds: defaultEnemyData.respawnSeconds,
+      hitFlashSeconds: defaultEnemyData.hitFlashSeconds,
+      labelOffsetY: defaultEnemyData.labelOffsetY,
       hpBar: enemyHpBar,
       label: enemyLabel,
     },
     damageTexts: [],
     damageTextPool: [],
+    playerData: defaultPlayerData,
   };
 
   setupPointerSystem(state, projectileTexture);

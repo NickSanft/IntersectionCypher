@@ -58,12 +58,12 @@ export class CombatSystem {
         const dist = Math.hypot(dx, dy);
         if (dist <= enemy.radius + entry.projectile.radius) {
           enemy.entity.sprite.tint = 0xffc2c2;
-          enemy.hitTimer = 0.15;
+          enemy.hitTimer = enemy.hitFlashSeconds;
           enemy.hp = Math.max(0, enemy.hp - entry.damage);
           if (enemy.hp === 0) {
             enemy.dead = true;
             enemy.entity.visible = false;
-            enemy.respawnTimer = 2.5;
+            enemy.respawnTimer = enemy.respawnSeconds;
           }
           this.drawEnemyHp(enemy);
 

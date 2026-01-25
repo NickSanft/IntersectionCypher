@@ -40,7 +40,7 @@ export class HUDSystem {
       return;
     }
     enemy.label.visible = true;
-    enemy.label.position.set(enemy.entity.pos.x, enemy.entity.pos.y - 44);
-    enemy.label.text = `Target ${enemy.hp}/${enemy.maxHp}`;
+    enemy.label.position.set(enemy.entity.pos.x, enemy.entity.pos.y - enemy.labelOffsetY);
+    enemy.label.text = `${enemy.name} ${enemy.hp}/${enemy.maxHp}`;
   }
 }

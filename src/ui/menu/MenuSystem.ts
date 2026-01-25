@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import { MenuTabButton } from "./MenuTabButton";
 import { CharacterMenu } from "./CharacterMenu";
 import { InventoryMenu, type InventoryItem } from "./InventoryMenu";
+import type { PlayerData } from "../../game/data/PlayerData";
 
 export class MenuSystem extends PIXI.Container {
   private readonly overlay: PIXI.Graphics;
@@ -80,29 +81,6 @@ export class MenuSystem extends PIXI.Container {
   }
 
   public update(dt: number): void {
-    if (this.openProgress === this.targetProgress) {
-      if (this.targetProgress === 0) {
-        this.isVisible = false;
-        this.visible = false;
-      }
-      return;
-    }
-
-    const direction = Math.sign(this.targetProgress - this.openProgress);
-    this.openProgress = Math.max(
-      0,
-      Math.min(1, this.openProgress + direction * dt * this.openSpeed)
-    );
-    if (this.openProgress === 0 && this.targetProgress === 0) {
-      this.isVisible = false;
-      this.visible = false;
-    }
-
-    const eased = this.openProgress * this.openProgress * (3 - 2 * this.openProgress);
-    this.alpha = eased;
-    const scale = 0.98 + 0.02 * eased;
-    this.scale.set(scale);
-
     if (this.transitionFrom && this.transitionTo && this.transition < 1) {
       this.transition = Math.min(1, this.transition + dt * 6);
       const fromPage = this.pages.get(this.transitionFrom);
@@ -124,6 +102,26 @@ export class MenuSystem extends PIXI.Container {
         }
       }
     }
+
+    if (this.openProgress !== this.targetProgress) {
+      const direction = Math.sign(this.targetProgress - this.openProgress);
+      this.openProgress = Math.max(
+        0,
+        Math.min(1, this.openProgress + direction * dt * this.openSpeed)
+      );
+      if (this.openProgress === 0 && this.targetProgress === 0) {
+        this.isVisible = false;
+        this.visible = false;
+      }
+    } else if (this.targetProgress === 0) {
+      this.isVisible = false;
+      this.visible = false;
+    }
+
+    const eased = this.openProgress * this.openProgress * (3 - 2 * this.openProgress);
+    this.alpha = eased;
+    const scale = 0.98 + 0.02 * eased;
+    this.scale.set(scale);
   }
 
   public updateLayout(screenWidth: number, screenHeight: number): void {
@@ -155,23 +153,41 @@ export class MenuSystem extends PIXI.Container {
     this.layoutContent(frameX, frameY, frameWidth, frameHeight);
   }
 
-  public registerTabs(): void {
+  public registerTabs(playerData?: PlayerData): void {
     this.addTab("Character", () => this.setActiveTab("Character"));
     this.addTab("Inventory", () => this.setActiveTab("Inventory"));
     this.addTab("Stats", () => this.setActiveTab("Stats"));
     this.addTab("Quest", () => this.setActiveTab("Quest"));
 
+    const data = playerData ?? {
+      name: "Lea",
+      stats: {
+        hp: 120,
+        maxHp: 120,
+        attack: 24,
+        defense: 18,
+        focus: 12,
+        dashMultiplier: 1.35,
+        guardMultiplier: 1.15,
+      },
+      equipment: {
+        weapon: "Hexa Blade",
+        body: "Prism Guard",
+        arms: "Flux Bracers",
+        head: "Neo Visor",
+      },
+    };
     const characterPage = new CharacterMenu({
-      hp: "120 / 120",
-      attack: 24,
-      defense: 18,
-      focus: 12,
-      dash: "1.35x",
-      guard: "1.15x",
-      weapon: "Hexa Blade",
-      body: "Prism Guard",
-      arms: "Flux Bracers",
-      head: "Neo Visor",
+      hp: `${data.stats.hp} / ${data.stats.maxHp}`,
+      attack: data.stats.attack,
+      defense: data.stats.defense,
+      focus: data.stats.focus,
+      dash: `${data.stats.dashMultiplier.toFixed(2)}x`,
+      guard: `${data.stats.guardMultiplier.toFixed(2)}x`,
+      weapon: data.equipment.weapon,
+      body: data.equipment.body,
+      arms: data.equipment.arms,
+      head: data.equipment.head,
     });
     this.pages.set("Character", characterPage);
     this.contentRoot.addChild(characterPage);

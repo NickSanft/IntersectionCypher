@@ -6,6 +6,7 @@ import type { ZEntity } from "../entities/ZEntity";
 import type { MenuSystem } from "../ui/menu/MenuSystem";
 import type { UIElement } from "../ui/UIElement";
 import type { Projectile } from "../projectiles/Projectile";
+import type { PlayerData } from "./data/PlayerData";
 
 export interface ProjectilePoolEntry {
   entity: ZEntity;
@@ -34,12 +35,16 @@ export interface DamageTextEntry {
 
 export interface EnemyState {
   entity: ZEntity;
+  name: string;
   radius: number;
   maxHp: number;
   hp: number;
   hitTimer: number;
   dead: boolean;
   respawnTimer: number;
+  respawnSeconds: number;
+  hitFlashSeconds: number;
+  labelOffsetY: number;
   hpBar: PIXI.Graphics;
   label: PIXI.Text;
 }
@@ -94,6 +99,7 @@ export interface GameState {
   projectiles: ProjectileEntry[];
   projectilePool: ProjectilePoolEntry[];
   enemy: EnemyState;
+  playerData: PlayerData;
   damageTexts: DamageTextEntry[];
   damageTextPool: DamageTextPoolEntry[];
 }
