@@ -5,6 +5,7 @@ export type AnchorPreset =
   | "TopRight"
   | "BottomLeft"
   | "BottomRight"
+  | "BottomCenter"
   | "Center";
 
 export interface UIElementOptions {
@@ -45,6 +46,11 @@ export class UIElement extends PIXI.Container {
       case "BottomRight":
         return new PIXI.Point(
           parentWidth - this.widthPx,
+          parentHeight - this.heightPx
+        );
+      case "BottomCenter":
+        return new PIXI.Point(
+          (parentWidth - this.widthPx) * 0.5,
           parentHeight - this.heightPx
         );
       case "Center":

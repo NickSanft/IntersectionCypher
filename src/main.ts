@@ -2,12 +2,9 @@ import * as PIXI from "pixi.js";
 import { ZEntity } from "./entities/ZEntity";
 import type { TileMap, TileDef } from "./core/world/TileMap";
 import { tileIndex } from "./core/world/TileMap";
-import { Projectile } from "./projectiles/Projectile";
 import { Input } from "./game/Input";
 import { PlayerController } from "./game/PlayerController";
 import { UIElement } from "./ui/UIElement";
-import { UIButton } from "./ui/UIButton";
-import { FocusManager } from "./ui/focus/FocusManager";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -97,14 +94,6 @@ const bootstrap = async (): Promise<void> => {
   const mapView = drawMap(map);
   app.stage.addChild(mapView);
 
-  const projectileTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.beginFill(0xffc857);
-    gfx.drawCircle(0, 0, 6);
-    gfx.endFill();
-    return app.renderer.generateTexture(gfx);
-  })();
-
   const playerTexture = (() => {
     const gfx = new PIXI.Graphics();
     gfx.beginFill(0x4ade80);
@@ -133,28 +122,25 @@ const bootstrap = async (): Promise<void> => {
     radius: 10,
   });
 
-  const projectiles: Projectile[] = [];
-  const count = 600;
-  for (let i = 0; i < count; i += 1) {
-    const entity = new ZEntity({
-      sprite: new PIXI.Sprite(projectileTexture),
-      gravity: 0,
-      mass: 1,
-    });
-    entity.sprite.anchor.set(0.5);
-    entity.pos.x = map.tileSize * 2 + Math.random() * map.tileSize * 16;
-    entity.pos.y = map.tileSize * 2 + Math.random() * map.tileSize * 8;
-    entity.pos.z = 0;
+  const npcTexture = (() => {
+    const gfx = new PIXI.Graphics();
+    gfx.beginFill(0xf472b6);
+    gfx.drawCircle(0, 0, 10);
+    gfx.endFill();
+    return app.renderer.generateTexture(gfx);
+  })();
 
-    const speed = 140 + Math.random() * 120;
-    const angle = Math.random() * Math.PI * 2;
-    entity.vel.x = Math.cos(angle) * speed;
-    entity.vel.y = Math.sin(angle) * speed;
-    entity.vel.z = 0;
-
-    app.stage.addChild(entity);
-    projectiles.push(new Projectile({ entity, radius: 6, bounciness: 1 }));
-  }
+  const npc = new ZEntity({
+    sprite: new PIXI.Sprite(npcTexture),
+    gravity: 0,
+    mass: 1,
+  });
+  npc.sprite.anchor.set(0.5);
+  npc.pos.x = map.tileSize * 12;
+  npc.pos.y = map.tileSize * 6;
+  npc.pos.z = 0;
+  npc.renderUpdate();
+  app.stage.addChild(npc);
 
   const uiLayer = new PIXI.Container();
   uiLayer.sortableChildren = true;
@@ -175,7 +161,7 @@ const bootstrap = async (): Promise<void> => {
   hud.addChild(hudBg);
 
   const hudText = new PIXI.Text({
-    text: "WASD / Arrows to move\nTab to switch focus\nEnter to activate",
+    text: "WASD / Arrows to move\nSpace to interact",
     style: {
       fill: 0xcbd5f5,
       fontFamily: "Arial",
@@ -186,74 +172,61 @@ const bootstrap = async (): Promise<void> => {
   hud.addChild(hudText);
   uiLayer.addChild(hud);
 
-  const focusManager = new FocusManager();
-  focusManager.attach();
+  const dialog = new UIElement({
+    width: 260,
+    height: 90,
+    anchor: "BottomCenter",
+    offsetX: 0,
+    offsetY: -24,
+  });
+  const dialogBg = new PIXI.Graphics();
+  dialogBg.beginFill(0x111827, 0.92);
+  dialogBg.lineStyle(2, 0x3b82f6, 1);
+  dialogBg.drawRoundedRect(0, 0, dialog.widthPx, dialog.heightPx, 10);
+  dialogBg.endFill();
+  dialog.addChild(dialogBg);
 
-  const buttonA = new UIButton({
-    width: 120,
-    height: 32,
-    label: "Spawn Burst",
-    onClick: () => {
-      for (let i = 0; i < 40; i += 1) {
-        const entity = new ZEntity({
-          sprite: new PIXI.Sprite(projectileTexture),
-          gravity: 0,
-          mass: 1,
-        });
-        entity.sprite.anchor.set(0.5);
-        entity.pos.x = player.pos.x;
-        entity.pos.y = player.pos.y;
-        entity.pos.z = 0;
-
-        const speed = 160 + Math.random() * 140;
-        const angle = Math.random() * Math.PI * 2;
-        entity.vel.x = Math.cos(angle) * speed;
-        entity.vel.y = Math.sin(angle) * speed;
-        entity.vel.z = 0;
-
-        app.stage.addChild(entity);
-        projectiles.push(new Projectile({ entity, radius: 6, bounciness: 1 }));
-      }
+  const dialogText = new PIXI.Text({
+    text: "Hello!",
+    style: {
+      fill: 0xf9fafb,
+      fontFamily: "Arial",
+      fontSize: 16,
     },
   });
-  buttonA.anchor = "BottomLeft";
-  buttonA.offsetX = 16;
-  buttonA.offsetY = -16;
-  buttonA.updateLayout(app.renderer.width, app.renderer.height);
-  uiLayer.addChild(buttonA);
-  focusManager.register(buttonA);
+  dialogText.anchor.set(0.5);
+  dialogText.position.set(dialog.widthPx * 0.5, dialog.heightPx * 0.5);
+  dialog.addChild(dialogText);
+  dialog.visible = false;
+  uiLayer.addChild(dialog);
 
-  const buttonB = new UIButton({
-    width: 120,
-    height: 32,
-    label: "Clear Burst",
-    onClick: () => {
-      const remaining = projectiles.slice(0, count);
-      const toRemove = projectiles.slice(count);
-      for (const projectile of toRemove) {
-        app.stage.removeChild(projectile.entity);
-      }
-      projectiles.length = 0;
-      projectiles.push(...remaining);
-    },
-  });
-  buttonB.anchor = "BottomLeft";
-  buttonB.offsetX = 152;
-  buttonB.offsetY = -16;
-  buttonB.updateLayout(app.renderer.width, app.renderer.height);
-  uiLayer.addChild(buttonB);
-  focusManager.register(buttonB);
+  let dialogOpen = false;
+  let lastActionPressed = false;
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
     playerController.update(dt, map);
-    for (const projectile of projectiles) {
-      projectile.update(dt, map);
-      projectile.renderUpdate();
+
+    const actionPressed = input.isActionPressed("action");
+    const actionJustPressed = actionPressed && !lastActionPressed;
+    lastActionPressed = actionPressed;
+
+    if (actionJustPressed) {
+      if (dialogOpen) {
+        dialogOpen = false;
+        dialog.visible = false;
+      } else {
+        const dx = player.pos.x - npc.pos.x;
+        const dy = player.pos.y - npc.pos.y;
+        if (Math.hypot(dx, dy) <= 40) {
+          dialogOpen = true;
+          dialog.visible = true;
+        }
+      }
     }
+
     hud.updateLayout(app.renderer.width, app.renderer.height);
-    buttonA.updateLayout(app.renderer.width, app.renderer.height);
-    buttonB.updateLayout(app.renderer.width, app.renderer.height);
+    dialog.updateLayout(app.renderer.width, app.renderer.height);
   });
 };
 
