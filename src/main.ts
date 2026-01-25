@@ -193,7 +193,7 @@ const bootstrap = async (): Promise<void> => {
   };
   drawEnemyHp();
 
-  const projectiles: { projectile: Projectile; life: number }[] = [];
+  const projectiles: { projectile: Projectile; life: number; damage: number }[] = [];
   const aimLine = new PIXI.Graphics();
   aimLine.zIndex = 4;
   app.stage.addChild(aimLine);
@@ -201,11 +201,61 @@ const bootstrap = async (): Promise<void> => {
   let aimY = 0;
   let aimActive = false;
 
-  app.canvas.addEventListener("pointerdown", (event) => {
+  let chargeStartMs = 0;
+  let chargeActive = false;
+
+  const spawnProjectile = (
+    dirX: number,
+    dirY: number,
+    radius: number,
+    speed: number,
+    damage: number
+  ): void => {
+    const entity = new ZEntity({
+      sprite: new PIXI.Sprite(projectileTexture),
+      gravity: 0,
+      mass: 1,
+    });
+    entity.sprite.anchor.set(0.5);
+    entity.sprite.scale.set(radius / 4);
+    entity.pos.x = player.pos.x;
+    entity.pos.y = player.pos.y;
+    entity.pos.z = 0;
+    entity.vel.x = dirX * speed;
+    entity.vel.y = dirY * speed;
+    entity.vel.z = 0;
+
+    app.stage.addChild(entity);
+    projectiles.push({
+      projectile: new Projectile({ entity, radius, bounciness: 1 }),
+      life: 1,
+      damage,
+    });
+  };
+
+  app.stage.on("pointerdown", (event) => {
     if (event.button !== 0) {
       return;
     }
     if (dialogOpen || menu.isOpen) {
+      return;
+    }
+    aimX = event.global.x;
+    aimY = event.global.y;
+    aimActive = true;
+    chargeStartMs = performance.now();
+    chargeActive = true;
+  });
+
+  window.addEventListener("pointerup", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    if (!chargeActive) {
+      return;
+    }
+    if (dialogOpen || menu.isOpen) {
+      chargeActive = false;
       return;
     }
 
@@ -219,28 +269,19 @@ const bootstrap = async (): Promise<void> => {
     const dirY = targetY - player.pos.y;
     const len = Math.hypot(dirX, dirY);
     if (len === 0) {
+      chargeActive = false;
       return;
     }
 
-    const entity = new ZEntity({
-      sprite: new PIXI.Sprite(projectileTexture),
-      gravity: 0,
-      mass: 1,
-    });
-    entity.sprite.anchor.set(0.5);
-    entity.pos.x = player.pos.x;
-    entity.pos.y = player.pos.y;
-    entity.pos.z = 0;
-    const speed = 420;
-    entity.vel.x = (dirX / len) * speed;
-    entity.vel.y = (dirY / len) * speed;
-    entity.vel.z = 0;
-
-    app.stage.addChild(entity);
-    projectiles.push({
-      projectile: new Projectile({ entity, radius: 4, bounciness: 1 }),
-      life: 1,
-    });
+    const isCharged = performance.now() - chargeStartMs >= chargeThresholdMs;
+    const normX = dirX / len;
+    const normY = dirY / len;
+    if (isCharged) {
+      spawnProjectile(normX, normY, 8, 380, 3);
+    } else {
+      spawnProjectile(normX, normY, 4, 420, 1);
+    }
+    chargeActive = false;
   });
 
   app.stage.on("pointermove", (event) => {
@@ -343,6 +384,12 @@ const bootstrap = async (): Promise<void> => {
   let dialogCharIndex = 0;
   let dialogCharTimer = 0;
   const dialogCharsPerSecond = 28;
+  const chargeThresholdMs = 2000;
+  const chargeRing = new PIXI.Graphics();
+  chargeRing.zIndex = 6;
+  chargeRing.blendMode = "add";
+  app.stage.addChild(chargeRing);
+  let chargeRatio = 0;
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
@@ -456,7 +503,8 @@ const bootstrap = async (): Promise<void> => {
           points.push({ x: posX, y: posY });
         }
 
-        aimLine.lineStyle(3, 0xffffff, 0.9);
+        const isCharged = chargeRatio >= 1;
+        aimLine.lineStyle(3, isCharged ? 0xf97316 : 0xffffff, isCharged ? 0.95 : 0.9);
         const cycle = dash + gap;
         let cyclePos = 0;
 
@@ -492,10 +540,26 @@ const bootstrap = async (): Promise<void> => {
           }
         }
 
-        aimLine.beginFill(0xffffff, 0.95);
+        aimLine.beginFill(isCharged ? 0xf97316 : 0xffffff, 0.95);
         aimLine.drawCircle(aimX, aimY, 3);
         aimLine.endFill();
       }
+    }
+
+    chargeRatio = 0;
+    if (chargeActive && !dialogOpen && !menu.isOpen) {
+      chargeRatio = Math.min(1, (performance.now() - chargeStartMs) / chargeThresholdMs);
+    }
+    chargeRing.clear();
+    if (chargeRatio > 0) {
+      const radius = 16 + 8 * chargeRatio;
+      chargeRing.beginFill(0x22c55e, 0.12);
+      chargeRing.drawCircle(player.pos.x, player.pos.y, radius + 4);
+      chargeRing.endFill();
+      chargeRing.lineStyle(3, 0x22c55e, 0.95);
+      chargeRing.drawCircle(player.pos.x, player.pos.y, radius);
+      chargeRing.lineStyle(2, 0xfde047, 0.85);
+      chargeRing.drawCircle(player.pos.x, player.pos.y, radius - 5);
     }
 
     if (!enemyDead && enemyHitTimer > 0) {
@@ -529,7 +593,7 @@ const bootstrap = async (): Promise<void> => {
         if (dist <= enemyRadius + entry.projectile.radius) {
           enemy.sprite.tint = 0xffc2c2;
           enemyHitTimer = 0.15;
-          enemyHp = Math.max(0, enemyHp - 1);
+          enemyHp = Math.max(0, enemyHp - entry.damage);
           if (enemyHp === 0) {
             enemyDead = true;
             enemy.visible = false;
@@ -538,7 +602,7 @@ const bootstrap = async (): Promise<void> => {
           drawEnemyHp();
 
           const damageText = new PIXI.Text({
-            text: "-1",
+            text: `-${entry.damage}`,
             style: {
               fill: 0xf97316,
               fontFamily: "Arial",
