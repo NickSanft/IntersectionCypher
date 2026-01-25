@@ -7,6 +7,7 @@ import { PlayerController } from "./game/PlayerController";
 import { UIElement } from "./ui/UIElement";
 import { MenuSystem } from "./ui/menu/MenuSystem";
 import { Projectile } from "./projectiles/Projectile";
+import { checkCollision } from "./core/physics/Collision";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -209,8 +210,10 @@ const bootstrap = async (): Promise<void> => {
     }
 
     const rect = app.canvas.getBoundingClientRect();
-    const targetX = event.clientX - rect.left;
-    const targetY = event.clientY - rect.top;
+    const scaleX = app.renderer.width / rect.width;
+    const scaleY = app.renderer.height / rect.height;
+    const targetX = (event.clientX - rect.left) * scaleX;
+    const targetY = (event.clientY - rect.top) * scaleY;
 
     const dirX = targetX - player.pos.x;
     const dirY = targetY - player.pos.y;
@@ -236,7 +239,7 @@ const bootstrap = async (): Promise<void> => {
     app.stage.addChild(entity);
     projectiles.push({
       projectile: new Projectile({ entity, radius: 4, bounciness: 1 }),
-      life: 3,
+      life: 1,
     });
   });
 
@@ -414,23 +417,81 @@ const bootstrap = async (): Promise<void> => {
       const dy = aimY - player.pos.y;
       const len = Math.hypot(dx, dy);
       if (len > 0) {
-        const dirX = dx / len;
-        const dirY = dy / len;
         const dash = 8;
         const gap = 6;
-        const maxLen = Math.min(len, 220);
-        aimLine.lineStyle(3, 0xffffff, 0.9);
-        let dist = 10;
-        while (dist < maxLen) {
-          const segLen = Math.min(dash, maxLen - dist);
-          const startX = player.pos.x + dirX * dist;
-          const startY = player.pos.y + dirY * dist;
-          const endX = player.pos.x + dirX * (dist + segLen);
-          const endY = player.pos.y + dirY * (dist + segLen);
-          aimLine.moveTo(startX, startY);
-          aimLine.lineTo(endX, endY);
-          dist += dash + gap;
+        const maxLen = 260;
+        const radius = 4;
+        const step = 4;
+        const maxBounces = 2;
+
+        let dirX = dx / len;
+        let dirY = dy / len;
+        let posX = player.pos.x;
+        let posY = player.pos.y;
+        let remaining = maxLen;
+        let bounceCount = 0;
+
+        const points: Array<{ x: number; y: number }> = [{ x: posX, y: posY }];
+
+        while (remaining > 0 && bounceCount <= maxBounces) {
+          const stepSize = Math.min(step, remaining);
+          const nextX = posX + dirX * stepSize;
+          const nextY = posY + dirY * stepSize;
+          const hit = checkCollision({ x: nextX, y: nextY, z: 0 }, radius, map);
+
+          if (hit) {
+            const dot = dirX * hit.normal.x + dirY * hit.normal.y;
+            dirX = dirX - 2 * dot * hit.normal.x;
+            dirY = dirY - 2 * dot * hit.normal.y;
+            bounceCount += 1;
+            posX += hit.normal.x * (radius + 1);
+            posY += hit.normal.y * (radius + 1);
+            points.push({ x: posX, y: posY });
+            continue;
+          }
+
+          posX = nextX;
+          posY = nextY;
+          remaining -= stepSize;
+          points.push({ x: posX, y: posY });
         }
+
+        aimLine.lineStyle(3, 0xffffff, 0.9);
+        const cycle = dash + gap;
+        let cyclePos = 0;
+
+        for (let i = 0; i < points.length - 1; i += 1) {
+          const p0 = points[i];
+          const p1 = points[i + 1];
+          const segDx = p1.x - p0.x;
+          const segDy = p1.y - p0.y;
+          const segLen = Math.hypot(segDx, segDy);
+          if (segLen === 0) {
+            continue;
+          }
+          let segPos = 0;
+          while (segPos < segLen) {
+            const remainingInCycle = cycle - cyclePos;
+            const stepLen = Math.min(remainingInCycle, segLen - segPos);
+            if (cyclePos < dash) {
+              const drawLen = Math.min(stepLen, dash - cyclePos);
+              const t0 = segPos / segLen;
+              const t1 = (segPos + drawLen) / segLen;
+              const sx = p0.x + segDx * t0;
+              const sy = p0.y + segDy * t0;
+              const ex = p0.x + segDx * t1;
+              const ey = p0.y + segDy * t1;
+              aimLine.moveTo(sx, sy);
+              aimLine.lineTo(ex, ey);
+            }
+            segPos += stepLen;
+            cyclePos += stepLen;
+            if (cyclePos >= cycle) {
+              cyclePos = 0;
+            }
+          }
+        }
+
         aimLine.beginFill(0xffffff, 0.95);
         aimLine.drawCircle(aimX, aimY, 3);
         aimLine.endFill();
