@@ -13,6 +13,7 @@ import { PlayerSystem } from "./game/systems/PlayerSystem";
 import { AimSystem } from "./game/systems/AimSystem";
 import { CombatSystem } from "./game/systems/CombatSystem";
 import { UISystem } from "./game/systems/UISystem";
+import { CameraSystem } from "./game/systems/CameraSystem";
 import type { GameState } from "./game/types";
 
 const buildTestMap = (tileSize: number): TileMap => {
@@ -94,10 +95,15 @@ const bootstrap = async (): Promise<void> => {
   app.stage.eventMode = "static";
   app.stage.hitArea = app.screen;
 
+  const world = new PIXI.Container();
+  world.sortableChildren = true;
+  world.zIndex = 0;
+  app.stage.addChild(world);
+
   const map = buildTestMap(48);
   const mapView = drawMap(map);
   mapView.zIndex = 0;
-  app.stage.addChild(mapView);
+  world.addChild(mapView);
 
   const playerTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -117,7 +123,7 @@ const bootstrap = async (): Promise<void> => {
   player.pos.x = map.tileSize * 4;
   player.pos.y = map.tileSize * 4;
   player.pos.z = 0;
-  app.stage.addChild(player);
+  world.addChild(player);
 
   const input = new Input();
   input.attach();
@@ -157,11 +163,11 @@ const bootstrap = async (): Promise<void> => {
   enemy.pos.y = map.tileSize * 4;
   enemy.pos.z = 0;
   enemy.renderUpdate();
-  app.stage.addChild(enemy);
+  world.addChild(enemy);
 
   const enemyHpBar = new PIXI.Graphics();
   enemyHpBar.zIndex = 3;
-  app.stage.addChild(enemyHpBar);
+  world.addChild(enemyHpBar);
 
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -181,7 +187,7 @@ const bootstrap = async (): Promise<void> => {
   npc.pos.y = map.tileSize * 6;
   npc.pos.z = 0;
   npc.renderUpdate();
-  app.stage.addChild(npc);
+  world.addChild(npc);
 
   const uiLayer = new PIXI.Container();
   uiLayer.sortableChildren = true;
@@ -249,15 +255,16 @@ const bootstrap = async (): Promise<void> => {
 
   const aimLine = new PIXI.Graphics();
   aimLine.zIndex = 4;
-  app.stage.addChild(aimLine);
+  world.addChild(aimLine);
 
   const chargeRing = new PIXI.Graphics();
   chargeRing.zIndex = 6;
   chargeRing.blendMode = "add";
-  app.stage.addChild(chargeRing);
+  world.addChild(chargeRing);
 
   const state: GameState = {
     app,
+    world,
     map,
     input,
     player,
@@ -287,6 +294,12 @@ const bootstrap = async (): Promise<void> => {
       chargeThresholdMs: 2000,
       chargeRing,
     },
+    camera: {
+      world,
+      shakeTime: 0,
+      shakeAmp: 0,
+      shakeFreq: 26,
+    },
     projectiles: [],
     projectilePool: [],
     enemy: {
@@ -311,6 +324,7 @@ const bootstrap = async (): Promise<void> => {
   const aimSystem = new AimSystem();
   const combatSystem = new CombatSystem();
   const uiSystem = new UISystem();
+  const cameraSystem = new CameraSystem();
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
@@ -319,6 +333,7 @@ const bootstrap = async (): Promise<void> => {
     playerSystem.update(state, dt);
     aimSystem.update(state);
     combatSystem.update(state, dt);
+    cameraSystem.update(state, dt);
     uiSystem.update(state, dt);
   });
 };

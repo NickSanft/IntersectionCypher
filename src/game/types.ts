@@ -65,8 +65,16 @@ export interface AimState {
   chargeRing: PIXI.Graphics;
 }
 
+export interface CameraState {
+  world: PIXI.Container;
+  shakeTime: number;
+  shakeAmp: number;
+  shakeFreq: number;
+}
+
 export interface GameState {
   app: PIXI.Application;
+  world: PIXI.Container;
   map: TileMap;
   input: Input;
   player: ZEntity;
@@ -78,6 +86,7 @@ export interface GameState {
   hud: UIElement;
   dialog: DialogState;
   aim: AimState;
+  camera: CameraState;
   projectiles: ProjectileEntry[];
   projectilePool: ProjectilePoolEntry[];
   enemy: EnemyState;

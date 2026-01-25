@@ -73,7 +73,7 @@ export class CombatSystem {
           damagePoolEntry.text.alpha = 1;
           damagePoolEntry.text.visible = true;
           if (!state.app.stage.children.includes(damagePoolEntry.text)) {
-            state.app.stage.addChild(damagePoolEntry.text);
+          state.world.addChild(damagePoolEntry.text);
           }
           state.damageTexts.push({
             text: damagePoolEntry.text,
@@ -84,7 +84,9 @@ export class CombatSystem {
 
           entry.pool.inUse = false;
           entry.projectile.entity.visible = false;
-          state.app.stage.removeChild(entry.projectile.entity);
+          state.world.removeChild(entry.projectile.entity);
+          state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.12);
+          state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 6);
           state.projectiles.splice(i, 1);
           continue;
         }
@@ -93,7 +95,7 @@ export class CombatSystem {
       if (entry.life <= 0) {
         entry.pool.inUse = false;
         entry.projectile.entity.visible = false;
-        state.app.stage.removeChild(entry.projectile.entity);
+        state.world.removeChild(entry.projectile.entity);
         state.projectiles.splice(i, 1);
       }
     }
@@ -106,7 +108,7 @@ export class CombatSystem {
       if (entry.life <= 0) {
         entry.pool.inUse = false;
         entry.text.visible = false;
-        state.app.stage.removeChild(entry.text);
+        state.world.removeChild(entry.text);
         state.damageTexts.splice(i, 1);
       }
     }

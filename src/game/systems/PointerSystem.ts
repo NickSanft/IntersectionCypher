@@ -48,8 +48,8 @@ export const setupPointerSystem = (
     entity.vel.z = 0;
     entity.visible = true;
 
-    if (!state.app.stage.children.includes(entity)) {
-      state.app.stage.addChild(entity);
+    if (!state.world.children.includes(entity)) {
+      state.world.addChild(entity);
     }
     state.projectiles.push({
       projectile,
@@ -66,8 +66,9 @@ export const setupPointerSystem = (
     if (state.dialog.open || state.menu.isOpen) {
       return;
     }
-    state.aim.x = event.global.x;
-    state.aim.y = event.global.y;
+    const local = state.world.toLocal(event.global);
+    state.aim.x = local.x;
+    state.aim.y = local.y;
     state.aim.active = true;
     state.aim.chargeStartMs = performance.now();
     state.aim.chargeActive = true;
@@ -88,11 +89,12 @@ export const setupPointerSystem = (
     const rect = state.app.canvas.getBoundingClientRect();
     const scaleX = state.app.renderer.width / rect.width;
     const scaleY = state.app.renderer.height / rect.height;
-    const targetX = (event.clientX - rect.left) * scaleX;
-    const targetY = (event.clientY - rect.top) * scaleY;
+    const stageX = (event.clientX - rect.left) * scaleX;
+    const stageY = (event.clientY - rect.top) * scaleY;
+    const target = state.world.toLocal(new PIXI.Point(stageX, stageY));
 
-    const dirX = targetX - state.player.pos.x;
-    const dirY = targetY - state.player.pos.y;
+    const dirX = target.x - state.player.pos.x;
+    const dirY = target.y - state.player.pos.y;
     const len = Math.hypot(dirX, dirY);
     if (len === 0) {
       state.aim.chargeActive = false;
@@ -112,8 +114,9 @@ export const setupPointerSystem = (
   });
 
   state.app.stage.on("pointermove", (event: PIXI.FederatedPointerEvent) => {
-    state.aim.x = event.global.x;
-    state.aim.y = event.global.y;
+    const local = state.world.toLocal(event.global);
+    state.aim.x = local.x;
+    state.aim.y = local.y;
     state.aim.active = true;
   });
 
