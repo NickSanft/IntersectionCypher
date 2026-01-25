@@ -158,9 +158,12 @@ const bootstrap = async (): Promise<void> => {
   const enemyMaxHp = 5;
   let enemyHp = enemyMaxHp;
   let enemyDead = false;
+  let enemyRespawnTimer = 0;
 
   const enemyHpBar = new PIXI.Graphics();
   app.stage.addChild(enemyHpBar);
+
+  const damageTexts: { text: PIXI.Text; life: number; velY: number }[] = [];
 
   const drawEnemyHp = (): void => {
     enemyHpBar.clear();
@@ -388,6 +391,17 @@ const bootstrap = async (): Promise<void> => {
       }
     }
 
+    if (enemyDead) {
+      enemyRespawnTimer -= dt;
+      if (enemyRespawnTimer <= 0) {
+        enemyDead = false;
+        enemyHp = enemyMaxHp;
+        enemy.visible = true;
+        enemy.sprite.tint = 0xffffff;
+        drawEnemyHp();
+      }
+    }
+
     for (let i = projectiles.length - 1; i >= 0; i -= 1) {
       const entry = projectiles[i];
       entry.projectile.update(dt, map);
@@ -405,8 +419,24 @@ const bootstrap = async (): Promise<void> => {
           if (enemyHp === 0) {
             enemyDead = true;
             enemy.visible = false;
+            enemyRespawnTimer = 2.5;
           }
           drawEnemyHp();
+
+          const damageText = new PIXI.Text({
+            text: "-1",
+            style: {
+              fill: 0xf97316,
+              fontFamily: "Arial",
+              fontSize: 14,
+              fontWeight: "700",
+            },
+          });
+          damageText.anchor.set(0.5);
+          damageText.position.set(enemy.pos.x, enemy.pos.y - 36);
+          app.stage.addChild(damageText);
+          damageTexts.push({ text: damageText, life: 0.6, velY: -20 });
+
           app.stage.removeChild(entry.projectile.entity);
           projectiles.splice(i, 1);
           continue;
@@ -416,6 +446,17 @@ const bootstrap = async (): Promise<void> => {
       if (entry.life <= 0) {
         app.stage.removeChild(entry.projectile.entity);
         projectiles.splice(i, 1);
+      }
+    }
+
+    for (let i = damageTexts.length - 1; i >= 0; i -= 1) {
+      const entry = damageTexts[i];
+      entry.life -= dt;
+      entry.text.alpha = Math.max(0, entry.life / 0.6);
+      entry.text.position.y += entry.velY * dt;
+      if (entry.life <= 0) {
+        app.stage.removeChild(entry.text);
+        damageTexts.splice(i, 1);
       }
     }
 
