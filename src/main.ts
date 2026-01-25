@@ -155,6 +155,32 @@ const bootstrap = async (): Promise<void> => {
   app.stage.addChild(enemy);
   const enemyRadius = 12;
   let enemyHitTimer = 0;
+  const enemyMaxHp = 5;
+  let enemyHp = enemyMaxHp;
+  let enemyDead = false;
+
+  const enemyHpBar = new PIXI.Graphics();
+  app.stage.addChild(enemyHpBar);
+
+  const drawEnemyHp = (): void => {
+    enemyHpBar.clear();
+    if (enemyDead) {
+      return;
+    }
+    const barWidth = 40;
+    const barHeight = 6;
+    const x = enemy.pos.x - barWidth / 2;
+    const y = enemy.pos.y - 28;
+    enemyHpBar.beginFill(0x111827, 0.9);
+    enemyHpBar.drawRoundedRect(x, y, barWidth, barHeight, 3);
+    enemyHpBar.endFill();
+
+    const ratio = Math.max(0, enemyHp) / enemyMaxHp;
+    enemyHpBar.beginFill(0x22c55e, 0.95);
+    enemyHpBar.drawRoundedRect(x + 1, y + 1, (barWidth - 2) * ratio, barHeight - 2, 2);
+    enemyHpBar.endFill();
+  };
+  drawEnemyHp();
 
   const projectiles: { projectile: Projectile; life: number }[] = [];
 
@@ -355,7 +381,7 @@ const bootstrap = async (): Promise<void> => {
       }
     }
 
-    if (enemyHitTimer > 0) {
+    if (!enemyDead && enemyHitTimer > 0) {
       enemyHitTimer -= dt;
       if (enemyHitTimer <= 0) {
         enemy.sprite.tint = 0xffffff;
@@ -368,15 +394,23 @@ const bootstrap = async (): Promise<void> => {
       entry.projectile.renderUpdate();
       entry.life -= dt;
 
-      const dx = entry.projectile.entity.pos.x - enemy.pos.x;
-      const dy = entry.projectile.entity.pos.y - enemy.pos.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist <= enemyRadius + entry.projectile.radius) {
-        enemy.sprite.tint = 0xffc2c2;
-        enemyHitTimer = 0.15;
-        app.stage.removeChild(entry.projectile.entity);
-        projectiles.splice(i, 1);
-        continue;
+      if (!enemyDead) {
+        const dx = entry.projectile.entity.pos.x - enemy.pos.x;
+        const dy = entry.projectile.entity.pos.y - enemy.pos.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= enemyRadius + entry.projectile.radius) {
+          enemy.sprite.tint = 0xffc2c2;
+          enemyHitTimer = 0.15;
+          enemyHp = Math.max(0, enemyHp - 1);
+          if (enemyHp === 0) {
+            enemyDead = true;
+            enemy.visible = false;
+          }
+          drawEnemyHp();
+          app.stage.removeChild(entry.projectile.entity);
+          projectiles.splice(i, 1);
+          continue;
+        }
       }
 
       if (entry.life <= 0) {
@@ -389,6 +423,10 @@ const bootstrap = async (): Promise<void> => {
     dialog.updateLayout(app.renderer.width, app.renderer.height);
     menu.update(dt);
     menu.updateLayout(app.renderer.width, app.renderer.height);
+
+    if (!enemyDead) {
+      drawEnemyHp();
+    }
   });
 };
 
