@@ -14,6 +14,10 @@ export interface EnemyData {
   attackCooldownSeconds: number;
   strafeSpeed: number;
   strafeSwitchSeconds: number;
+  projectileSpeed: number;
+  projectileDamage: number;
+  projectileRadius: number;
+  projectileLifetime: number;
 }
 
 export const defaultEnemyData: EnemyData = {
@@ -32,4 +36,8 @@ export const defaultEnemyData: EnemyData = {
   attackCooldownSeconds: 1.2,
   strafeSpeed: 70,
   strafeSwitchSeconds: 1.6,
+  projectileSpeed: 320,
+  projectileDamage: 1,
+  projectileRadius: 5,
+  projectileLifetime: 1.2,
 };

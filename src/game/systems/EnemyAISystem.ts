@@ -1,7 +1,71 @@
+import * as PIXI from "pixi.js";
 import { moveWithCollision } from "../../core/physics/Move";
+import { Projectile } from "../../projectiles/Projectile";
+import { ZEntity } from "../../entities/ZEntity";
 import type { GameState } from "../types";
 
 export class EnemyAISystem {
+  private acquireEnemyProjectile(
+    state: GameState
+  ): {
+    entry: GameState["enemyProjectilePool"][number];
+    entity: ZEntity;
+    projectile: Projectile;
+  } {
+    for (const entry of state.enemyProjectilePool) {
+      if (!entry.inUse) {
+        entry.inUse = true;
+        return { entry, entity: entry.entity, projectile: entry.projectile };
+      }
+    }
+
+    const entity = new ZEntity({
+      sprite: new PIXI.Sprite(state.enemyProjectileTexture),
+      gravity: 0,
+      mass: 1,
+    });
+    entity.sprite.anchor.set(0.5);
+    const projectile = new Projectile({
+      entity,
+      radius: state.enemy.projectileRadius,
+      bounciness: 1,
+    });
+    const entry = { entity, projectile, inUse: true };
+    state.enemyProjectilePool.push(entry);
+    return { entry, entity, projectile };
+  }
+
+  private spawnEnemyProjectile(state: GameState): void {
+    const enemy = state.enemy;
+    const dx = state.player.pos.x - enemy.entity.pos.x;
+    const dy = state.player.pos.y - enemy.entity.pos.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist === 0) {
+      return;
+    }
+
+    const { entry, entity, projectile } = this.acquireEnemyProjectile(state);
+    entity.sprite.scale.set(enemy.projectileRadius / 4);
+    entity.pos.x = enemy.entity.pos.x;
+    entity.pos.y = enemy.entity.pos.y;
+    entity.pos.z = 0;
+    entity.vel.x = (dx / dist) * enemy.projectileSpeed;
+    entity.vel.y = (dy / dist) * enemy.projectileSpeed;
+    entity.vel.z = 0;
+    entity.visible = true;
+
+    if (!state.world.children.includes(entity)) {
+      state.world.addChild(entity);
+    }
+
+    state.enemyProjectiles.push({
+      projectile,
+      life: enemy.projectileLifetime,
+      damage: enemy.projectileDamage,
+      pool: entry,
+    });
+  }
+
   public update(state: GameState, dt: number): void {
     const enemy = state.enemy;
     if (enemy.dead || state.menu.isOpen || state.dialog.open) {
@@ -20,6 +84,7 @@ export class EnemyAISystem {
         enemy.entity.sprite.tint = 0xfbbf24;
         state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.1);
         state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 4);
+        this.spawnEnemyProjectile(state);
       }
     }
     if (enemy.attackFlashTimer > 0) {

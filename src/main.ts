@@ -148,6 +148,14 @@ const bootstrap = async (): Promise<void> => {
     return app.renderer.generateTexture(gfx);
   })();
 
+  const enemyProjectileTexture = (() => {
+    const gfx = new PIXI.Graphics();
+    gfx.beginFill(0x38bdf8);
+    gfx.drawCircle(0, 0, 5);
+    gfx.endFill();
+    return app.renderer.generateTexture(gfx);
+  })();
+
   const enemyTexture = (() => {
     const gfx = new PIXI.Graphics();
     gfx.beginFill(0xef4444);
@@ -316,6 +324,7 @@ const bootstrap = async (): Promise<void> => {
     player,
     playerController,
     playerRadius,
+    playerHitTimer: 0,
     npc,
     npcRadius,
     menu,
@@ -351,6 +360,9 @@ const bootstrap = async (): Promise<void> => {
     },
     projectiles: [],
     projectilePool: [],
+    enemyProjectiles: [],
+    enemyProjectilePool: [],
+    enemyProjectileTexture,
     enemy: {
       entity: enemy,
       name: defaultEnemyData.name,
@@ -377,6 +389,10 @@ const bootstrap = async (): Promise<void> => {
       strafeSwitchSeconds: defaultEnemyData.strafeSwitchSeconds,
       strafeSwitchTimer: defaultEnemyData.strafeSwitchSeconds,
       strafeDir: 1,
+      projectileSpeed: defaultEnemyData.projectileSpeed,
+      projectileDamage: defaultEnemyData.projectileDamage,
+      projectileRadius: defaultEnemyData.projectileRadius,
+      projectileLifetime: defaultEnemyData.projectileLifetime,
       patrolAngle: 0,
       homeX: enemy.pos.x,
       homeY: enemy.pos.y,

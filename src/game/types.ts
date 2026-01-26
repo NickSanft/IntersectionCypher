@@ -21,6 +21,19 @@ export interface ProjectileEntry {
   pool: ProjectilePoolEntry;
 }
 
+export interface EnemyProjectilePoolEntry {
+  entity: ZEntity;
+  projectile: Projectile;
+  inUse: boolean;
+}
+
+export interface EnemyProjectileEntry {
+  projectile: Projectile;
+  life: number;
+  damage: number;
+  pool: EnemyProjectilePoolEntry;
+}
+
 export interface DamageTextPoolEntry {
   text: PIXI.Text;
   inUse: boolean;
@@ -59,6 +72,10 @@ export interface EnemyState {
   strafeSwitchSeconds: number;
   strafeSwitchTimer: number;
   strafeDir: number;
+  projectileSpeed: number;
+  projectileDamage: number;
+  projectileRadius: number;
+  projectileLifetime: number;
   patrolAngle: number;
   homeX: number;
   homeY: number;
@@ -103,6 +120,7 @@ export interface GameState {
   player: ZEntity;
   playerController: PlayerController;
   playerRadius: number;
+  playerHitTimer: number;
   npc: ZEntity;
   npcRadius: number;
   menu: MenuSystem;
@@ -115,6 +133,9 @@ export interface GameState {
   camera: CameraState;
   projectiles: ProjectileEntry[];
   projectilePool: ProjectilePoolEntry[];
+  enemyProjectiles: EnemyProjectileEntry[];
+  enemyProjectilePool: EnemyProjectilePoolEntry[];
+  enemyProjectileTexture: PIXI.Texture;
   enemy: EnemyState;
   playerData: PlayerData;
   damageTexts: DamageTextEntry[];

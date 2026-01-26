@@ -27,6 +27,12 @@ export class CombatSystem {
 
   public update(state: GameState, dt: number): void {
     const enemy = state.enemy;
+    if (state.playerHitTimer > 0) {
+      state.playerHitTimer -= dt;
+      if (state.playerHitTimer <= 0) {
+        state.player.sprite.tint = 0xffffff;
+      }
+    }
 
     if (!enemy.dead && enemy.hitTimer > 0) {
       enemy.hitTimer -= dt;
@@ -97,6 +103,37 @@ export class CombatSystem {
         entry.projectile.entity.visible = false;
         state.world.removeChild(entry.projectile.entity);
         state.projectiles.splice(i, 1);
+      }
+    }
+
+    for (let i = state.enemyProjectiles.length - 1; i >= 0; i -= 1) {
+      const entry = state.enemyProjectiles[i];
+      entry.projectile.update(dt, state.map);
+      entry.projectile.renderUpdate();
+      entry.life -= dt;
+
+      const dx = entry.projectile.entity.pos.x - state.player.pos.x;
+      const dy = entry.projectile.entity.pos.y - state.player.pos.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= state.playerRadius + entry.projectile.radius) {
+        state.player.sprite.tint = 0xfca5a5;
+        state.playerHitTimer = 0.2;
+        state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - entry.damage);
+        state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.12);
+        state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 5);
+
+        entry.pool.inUse = false;
+        entry.projectile.entity.visible = false;
+        state.world.removeChild(entry.projectile.entity);
+        state.enemyProjectiles.splice(i, 1);
+        continue;
+      }
+
+      if (entry.life <= 0) {
+        entry.pool.inUse = false;
+        entry.projectile.entity.visible = false;
+        state.world.removeChild(entry.projectile.entity);
+        state.enemyProjectiles.splice(i, 1);
       }
     }
 
