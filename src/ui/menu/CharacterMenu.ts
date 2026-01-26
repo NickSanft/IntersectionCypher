@@ -1,12 +1,18 @@
 import * as PIXI from "pixi.js";
 
 export interface CharacterStats {
+  level: number;
+  exp: number;
+  expToNext: number;
   hp: string;
   attack: number;
   defense: number;
   focus: number;
   dash: string;
   guard: string;
+  projectileDamage: number;
+  projectileSpeed: number;
+  moveSpeed: number;
   weapon: string;
   body: string;
   arms: string;
@@ -14,13 +20,20 @@ export interface CharacterStats {
 }
 
 export class CharacterMenu extends PIXI.Container {
-  private readonly data: CharacterStats;
+  private data: CharacterStats;
   private widthPx = 0;
   private heightPx = 0;
 
   constructor(data: CharacterStats) {
     super();
     this.data = data;
+  }
+
+  public setData(data: CharacterStats): void {
+    this.data = data;
+    if (this.widthPx > 0 && this.heightPx > 0) {
+      this.resize(this.widthPx, this.heightPx);
+    }
   }
 
   public resize(width: number, height: number): void {
@@ -63,10 +76,15 @@ export class CharacterMenu extends PIXI.Container {
 
     const statsText = new PIXI.Text({
       text:
+        `Level  ${this.data.level}\n` +
+        `EXP  ${this.data.exp} / ${this.data.expToNext}\n` +
         `HP  ${this.data.hp}\n` +
         `Attack  ${this.data.attack}\n` +
         `Defense  ${this.data.defense}\n` +
         `Focus  ${this.data.focus}\n` +
+        `Damage  ${this.data.projectileDamage}\n` +
+        `Proj Speed  ${this.data.projectileSpeed}\n` +
+        `Move Speed  ${this.data.moveSpeed}\n` +
         `Dash  ${this.data.dash}\n` +
         `Guard  ${this.data.guard}\n`,
       style: {

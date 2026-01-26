@@ -56,6 +56,7 @@ export interface EnemyState {
   hp: number;
   hitTimer: number;
   dead: boolean;
+  expGranted: boolean;
   respawnTimer: number;
   respawnSeconds: number;
   hitFlashSeconds: number;
@@ -162,14 +163,19 @@ export interface GameState {
   npcs: NpcState[];
   menu: MenuSystem;
   hud: UIElement;
+  hudTopRight: UIElement;
   hudTitle: PIXI.Text;
   hudHpBar: PIXI.Graphics;
   hudHpText: PIXI.Text;
+  hudLevelText: PIXI.Text;
+  hudExpText: PIXI.Text;
   chargeBar: PIXI.Graphics;
   chargeLabel: PIXI.Text;
   dialog: DialogState;
   aim: AimState;
   camera: CameraState;
+  levelUpSystem: import("./systems/LevelUpSystem").LevelUpSystem;
+  levelUp: LevelUpState;
   projectiles: ProjectileEntry[];
   projectilePool: ProjectilePoolEntry[];
   enemyProjectiles: EnemyProjectileEntry[];
@@ -187,4 +193,18 @@ export interface GameState {
   transitionDuration: number;
   transitionTargetMapId: string | null;
   transitionTargetSpawn: { x: number; y: number } | null;
+  levelUp: LevelUpState;
+}
+
+export interface LevelUpOption {
+  id: string;
+  label: string;
+  apply: (state: GameState) => void;
+}
+
+export interface LevelUpState {
+  active: boolean;
+  options: LevelUpOption[];
+  selectedIndex: number;
+  ui: import("../game/level/LevelUpUI").LevelUpUI;
 }

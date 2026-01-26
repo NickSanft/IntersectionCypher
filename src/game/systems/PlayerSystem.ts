@@ -12,7 +12,7 @@ export class PlayerSystem {
       return;
     }
 
-    if (state.dialog.open || state.menu.isOpen) {
+    if (state.dialog.open || state.menu.isOpen || state.levelUp.active) {
       state.player.vel.x = 0;
       state.player.vel.y = 0;
       return;

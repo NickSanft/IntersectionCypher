@@ -61,6 +61,9 @@ export class DialogSystem {
 
     if (!state.dialog.open) {
       if (actionJustPressed && !state.menu.isOpen) {
+        if (state.levelUp.active) {
+          return;
+        }
         const nearest = this.findNearestNpc(state);
         if (nearest) {
           state.dialog.open = true;

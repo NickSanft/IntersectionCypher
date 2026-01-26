@@ -7,6 +7,12 @@ export class AimSystem {
     const player = state.player;
     const menuOpen = state.menu.isOpen;
     const dialogOpen = state.dialog.open;
+    if (state.levelUp.active) {
+      aim.line.clear();
+      aim.chargeRing.clear();
+      aim.chargeRatio = 0;
+      return;
+    }
 
     aim.line.clear();
     if (aim.active && !dialogOpen && !menuOpen) {
@@ -21,7 +27,8 @@ export class AimSystem {
 
         const isCharged = aim.chargeRatio >= 1;
         const radius = isCharged ? 8 : 4;
-        const speed = isCharged ? 380 : 420;
+        const baseSpeed = state.playerData.stats.projectileSpeed;
+        const speed = isCharged ? baseSpeed * 0.9 : baseSpeed;
         const bounciness = 1;
 
         let velX = (dx / len) * speed;

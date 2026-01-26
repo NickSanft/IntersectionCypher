@@ -25,6 +25,8 @@ import npcDialog from "./game/dialogs/npc.json";
 import npc2Dialog from "./game/dialogs/npc2.json";
 import { DialogEngine } from "./game/dialog/DialogEngine";
 import { DialogUI } from "./game/dialog/DialogUI";
+import { LevelUpUI } from "./game/level/LevelUpUI";
+import { LevelUpSystem } from "./game/systems/LevelUpSystem";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -169,6 +171,7 @@ const bootstrap = async (): Promise<void> => {
     moveSpeed: 220,
     radius: 10,
   });
+  playerController.setMoveSpeed(defaultPlayerData.stats.moveSpeed);
   const playerRadius = 10;
   const npcRadius = 10;
 
@@ -384,6 +387,45 @@ const bootstrap = async (): Promise<void> => {
   chargeLabel.position.set(12, 100);
   hud.addChild(chargeLabel);
 
+  const topRight = new UIElement({
+    width: 200,
+    height: 54,
+    anchor: "TopRight",
+    offsetX: -16,
+    offsetY: 16,
+  });
+  const topRightBg = new PIXI.Graphics();
+  topRightBg.beginFill(0x0f1720, 0.7);
+  topRightBg.lineStyle(1, 0x2b3440, 1);
+  topRightBg.drawRoundedRect(0, 0, topRight.widthPx, topRight.heightPx, 8);
+  topRightBg.endFill();
+  topRight.addChild(topRightBg);
+
+  const hudLevelText = new PIXI.Text({
+    text: "LV 1",
+    style: {
+      fill: 0xf8fafc,
+      fontFamily: "Arial",
+      fontSize: 12,
+      fontWeight: "700",
+    },
+  });
+  hudLevelText.position.set(12, 10);
+  topRight.addChild(hudLevelText);
+
+  const hudExpText = new PIXI.Text({
+    text: "EXP 0/10",
+    style: {
+      fill: 0x93c5fd,
+      fontFamily: "Arial",
+      fontSize: 11,
+    },
+  });
+  hudExpText.position.set(12, 30);
+  topRight.addChild(hudExpText);
+
+  uiLayer.addChild(topRight);
+
   const menu = new MenuSystem();
   menu.registerTabs(defaultPlayerData);
   uiLayer.addChild(menu);
@@ -403,6 +445,10 @@ const bootstrap = async (): Promise<void> => {
   dialogUI.setVisible(false);
   uiLayer.addChild(dialogUI.root);
 
+  const levelUpUI = new LevelUpUI(360, 220);
+  levelUpUI.setVisible(false);
+  uiLayer.addChild(levelUpUI.root);
+
   const aimLine = new PIXI.Graphics();
   aimLine.zIndex = 4;
   world.addChild(aimLine);
@@ -416,6 +462,8 @@ const bootstrap = async (): Promise<void> => {
   transitionOverlay.zIndex = 999;
   transitionOverlay.visible = false;
   uiLayer.addChild(transitionOverlay);
+
+  const levelUpSystem = new LevelUpSystem();
 
   const state: GameState = {
     app,
@@ -469,9 +517,12 @@ const bootstrap = async (): Promise<void> => {
     ],
     menu,
     hud,
+    hudTopRight: topRight,
     hudTitle,
     hudHpBar,
     hudHpText,
+    hudLevelText,
+    hudExpText,
     chargeBar,
     chargeLabel,
     dialog: {
@@ -514,6 +565,7 @@ const bootstrap = async (): Promise<void> => {
       hp: defaultEnemyData.maxHp,
       hitTimer: 0,
       dead: false,
+      expGranted: false,
       respawnTimer: 0,
       respawnSeconds: defaultEnemyData.respawnSeconds,
       hitFlashSeconds: defaultEnemyData.hitFlashSeconds,
@@ -556,6 +608,13 @@ const bootstrap = async (): Promise<void> => {
     transitionDuration: 0.25,
     transitionTargetMapId: null,
     transitionTargetSpawn: null,
+    levelUp: {
+      active: false,
+      options: [],
+      selectedIndex: 0,
+      ui: levelUpUI,
+    },
+    levelUpSystem,
   };
 
   setupPointerSystem(state, projectileTexture);
@@ -580,6 +639,7 @@ const bootstrap = async (): Promise<void> => {
     enemyAISystem.update(state, dt);
     aimSystem.update(state);
     combatSystem.update(state, dt);
+    levelUpSystem.update(state);
     cameraSystem.update(state, dt);
     uiSystem.update(state, dt);
     hudSystem.update(state);

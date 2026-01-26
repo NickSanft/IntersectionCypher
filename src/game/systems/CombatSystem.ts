@@ -28,6 +28,9 @@ export class CombatSystem {
   public update(state: GameState, dt: number): void {
     const enemy = state.enemy;
     const enemyActive = state.currentMapId === state.enemyMapId;
+    if (state.levelUp.active) {
+      return;
+    }
     if (state.playerHitTimer > 0) {
       state.playerHitTimer -= dt;
       if (state.playerHitTimer <= 0) {
@@ -46,6 +49,7 @@ export class CombatSystem {
       enemy.respawnTimer -= dt;
       if (enemy.respawnTimer <= 0) {
         enemy.dead = false;
+        enemy.expGranted = false;
         enemy.hp = enemy.maxHp;
         enemy.entity.visible = true;
         enemy.entity.sprite.tint = 0xffffff;
@@ -67,10 +71,12 @@ export class CombatSystem {
           enemy.entity.sprite.tint = 0xffc2c2;
           enemy.hitTimer = enemy.hitFlashSeconds;
           enemy.hp = Math.max(0, enemy.hp - entry.damage);
-          if (enemy.hp === 0) {
+          if (enemy.hp === 0 && !enemy.expGranted) {
             enemy.dead = true;
             enemy.entity.visible = false;
             enemy.respawnTimer = enemy.respawnSeconds;
+            enemy.expGranted = true;
+            state.levelUpSystem.addExperience(state, 5);
           }
           this.drawEnemyHp(enemy);
 

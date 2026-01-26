@@ -3,6 +3,9 @@ import { findNearestOpen } from "../../core/world/MapUtils";
 
 export class MapSystem {
   public update(state: GameState, dt: number): void {
+    if (state.levelUp.active) {
+      return;
+    }
     this.updateTransition(state, dt);
     if (state.transitionPhase !== "idle") {
       return;

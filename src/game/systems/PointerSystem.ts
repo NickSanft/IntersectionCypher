@@ -63,7 +63,7 @@ export const setupPointerSystem = (
     if (event.button !== 0) {
       return;
     }
-    if (state.dialog.open || state.menu.isOpen) {
+    if (state.dialog.open || state.menu.isOpen || state.levelUp.active) {
       return;
     }
     const local = state.world.toLocal(event.global);
@@ -81,7 +81,7 @@ export const setupPointerSystem = (
     if (!state.aim.chargeActive) {
       return;
     }
-    if (state.dialog.open || state.menu.isOpen) {
+    if (state.dialog.open || state.menu.isOpen || state.levelUp.active) {
       state.aim.chargeActive = false;
       return;
     }
@@ -105,10 +105,12 @@ export const setupPointerSystem = (
       performance.now() - state.aim.chargeStartMs >= state.aim.chargeThresholdMs;
     const normX = dirX / len;
     const normY = dirY / len;
+    const baseSpeed = state.playerData.stats.projectileSpeed;
+    const baseDamage = state.playerData.stats.projectileDamage;
     if (isCharged) {
-      spawnProjectile(normX, normY, 8, 380, 3);
+      spawnProjectile(normX, normY, 8, baseSpeed * 0.9, baseDamage * 3);
     } else {
-      spawnProjectile(normX, normY, 4, 420, 1);
+      spawnProjectile(normX, normY, 4, baseSpeed, baseDamage);
     }
     state.aim.chargeActive = false;
   });

@@ -1,4 +1,7 @@
 export interface PlayerStats {
+  level: number;
+  exp: number;
+  expToNext: number;
   hp: number;
   maxHp: number;
   attack: number;
@@ -6,6 +9,9 @@ export interface PlayerStats {
   focus: number;
   dashMultiplier: number;
   guardMultiplier: number;
+  projectileDamage: number;
+  projectileSpeed: number;
+  moveSpeed: number;
 }
 
 export interface PlayerEquipment {
@@ -24,6 +30,9 @@ export interface PlayerData {
 export const defaultPlayerData: PlayerData = {
   name: "Lea",
   stats: {
+    level: 1,
+    exp: 0,
+    expToNext: 10,
     hp: 120,
     maxHp: 120,
     attack: 24,
@@ -31,6 +40,9 @@ export const defaultPlayerData: PlayerData = {
     focus: 12,
     dashMultiplier: 1.35,
     guardMultiplier: 1.15,
+    projectileDamage: 1,
+    projectileSpeed: 420,
+    moveSpeed: 220,
   },
   equipment: {
     weapon: "Hexa Blade",

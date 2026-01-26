@@ -5,6 +5,7 @@ export class HUDSystem {
     this.updatePlayerHp(state);
     this.updateChargeBar(state);
     this.updateEnemyLabel(state);
+    this.updateTopRight(state);
   }
 
   private updatePlayerHp(state: GameState): void {
@@ -60,6 +61,11 @@ export class HUDSystem {
     state.chargeBar.endFill();
 
     state.chargeLabel.text = ratio >= 1 ? "Charged" : "Charging";
+  }
+
+  private updateTopRight(state: GameState): void {
+    state.hudLevelText.text = `LV ${state.playerData.stats.level}`;
+    state.hudExpText.text = `EXP ${state.playerData.stats.exp}/${state.playerData.stats.expToNext}`;
   }
 
   private updateEnemyLabel(state: GameState): void {

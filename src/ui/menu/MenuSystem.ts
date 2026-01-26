@@ -13,6 +13,8 @@ export class MenuSystem extends PIXI.Container {
   private readonly contentRoot: PIXI.Container;
   private readonly tabs: MenuTabButton[] = [];
   private readonly pages = new Map<string, PIXI.Container>();
+  private characterPage: CharacterMenu | null = null;
+  private playerData: PlayerData | null = null;
 
   private isVisible = false;
   private openProgress = 0;
@@ -154,6 +156,7 @@ export class MenuSystem extends PIXI.Container {
   }
 
   public registerTabs(playerData?: PlayerData): void {
+    this.playerData = playerData ?? null;
     this.addTab("Character", () => this.setActiveTab("Character"));
     this.addTab("Inventory", () => this.setActiveTab("Inventory"));
     this.addTab("Stats", () => this.setActiveTab("Stats"));
@@ -178,10 +181,16 @@ export class MenuSystem extends PIXI.Container {
       },
     };
     const characterPage = new CharacterMenu({
+      level: data.stats.level,
+      exp: data.stats.exp,
+      expToNext: data.stats.expToNext,
       hp: `${data.stats.hp} / ${data.stats.maxHp}`,
       attack: data.stats.attack,
       defense: data.stats.defense,
       focus: data.stats.focus,
+      projectileDamage: data.stats.projectileDamage,
+      projectileSpeed: data.stats.projectileSpeed,
+      moveSpeed: data.stats.moveSpeed,
       dash: `${data.stats.dashMultiplier.toFixed(2)}x`,
       guard: `${data.stats.guardMultiplier.toFixed(2)}x`,
       weapon: data.equipment.weapon,
@@ -191,6 +200,7 @@ export class MenuSystem extends PIXI.Container {
     });
     this.pages.set("Character", characterPage);
     this.contentRoot.addChild(characterPage);
+    this.characterPage = characterPage;
 
     const items: InventoryItem[] = [
       { id: "potion", name: "Heat Potion", rarity: "Common" },
@@ -232,6 +242,32 @@ export class MenuSystem extends PIXI.Container {
       page.visible = key === "Character";
     }
     this.setActiveTab("Character");
+  }
+
+  public updatePlayerData(playerData: PlayerData): void {
+    this.playerData = playerData;
+    if (!this.characterPage) {
+      return;
+    }
+    const data = playerData;
+    this.characterPage.setData({
+      level: data.stats.level,
+      exp: data.stats.exp,
+      expToNext: data.stats.expToNext,
+      hp: `${data.stats.hp} / ${data.stats.maxHp}`,
+      attack: data.stats.attack,
+      defense: data.stats.defense,
+      focus: data.stats.focus,
+      projectileDamage: data.stats.projectileDamage,
+      projectileSpeed: data.stats.projectileSpeed,
+      moveSpeed: data.stats.moveSpeed,
+      dash: `${data.stats.dashMultiplier.toFixed(2)}x`,
+      guard: `${data.stats.guardMultiplier.toFixed(2)}x`,
+      weapon: data.equipment.weapon,
+      body: data.equipment.body,
+      arms: data.equipment.arms,
+      head: data.equipment.head,
+    });
   }
 
   private addTab(label: string, onSelect: () => void): void {

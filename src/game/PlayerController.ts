@@ -13,7 +13,7 @@ export interface PlayerControllerOptions {
 export class PlayerController {
   public readonly entity: ZEntity;
   private readonly input: Input;
-  private readonly moveSpeed: number;
+  private moveSpeed: number;
   private readonly radius: number;
 
   constructor(options: PlayerControllerOptions) {
@@ -21,6 +21,10 @@ export class PlayerController {
     this.input = options.input;
     this.moveSpeed = options.moveSpeed;
     this.radius = options.radius;
+  }
+
+  public setMoveSpeed(speed: number): void {
+    this.moveSpeed = speed;
   }
 
   public update(dt: number, map: TileMap): void {
