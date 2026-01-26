@@ -22,10 +22,7 @@ export class LevelUpUI {
     });
 
     this.background = new PIXI.Graphics();
-    this.background.beginFill(0x0b1220, 0.95);
-    this.background.lineStyle(2, 0x60a5fa, 1);
-    this.background.drawRoundedRect(0, 0, width, height, 12);
-    this.background.endFill();
+    this.redrawBackground();
     this.root.addChild(this.background);
 
     this.title = new PIXI.Text({
@@ -41,7 +38,7 @@ export class LevelUpUI {
     this.root.addChild(this.title);
 
     this.optionsContainer = new PIXI.Container();
-    this.optionsContainer.position.set(16, 48);
+    this.optionsContainer.position.set(16, 56);
     this.root.addChild(this.optionsContainer);
   }
 
@@ -57,8 +54,8 @@ export class LevelUpUI {
     this.optionsContainer.removeChildren();
     this.optionEntries.length = 0;
     const width = this.root.widthPx - 32;
-    const height = 28;
-    const gap = 10;
+    const height = 24;
+    const gap = 8;
 
     labels.forEach((labelText, index) => {
       const bg = new PIXI.Graphics();
@@ -91,6 +88,14 @@ export class LevelUpUI {
       this.optionEntries.push({ background: bg, label, container: entry });
     });
 
+    const totalHeight =
+      this.optionsContainer.position.y +
+      labels.length * (height + gap) -
+      gap +
+      16;
+    const newHeight = Math.max(this.root.heightPx, totalHeight);
+    this.root.setSize(this.root.widthPx, newHeight);
+    this.redrawBackground();
     this.setSelected(selectedIndex);
   }
 
@@ -111,5 +116,13 @@ export class LevelUpUI {
 
   public updateLayout(width: number, height: number): void {
     this.root.updateLayout(width, height);
+  }
+
+  private redrawBackground(): void {
+    this.background.clear();
+    this.background.beginFill(0x0b1220, 0.95);
+    this.background.lineStyle(2, 0x60a5fa, 1);
+    this.background.drawRoundedRect(0, 0, this.root.widthPx, this.root.heightPx, 12);
+    this.background.endFill();
   }
 }

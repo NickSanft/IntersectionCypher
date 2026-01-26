@@ -322,7 +322,7 @@ const bootstrap = async (): Promise<void> => {
 
   const hud = new UIElement({
     width: 260,
-    height: 120,
+    height: 140,
     anchor: "TopLeft",
     offsetX: 16,
     offsetY: 16,
@@ -342,7 +342,7 @@ const bootstrap = async (): Promise<void> => {
       fontSize: 12,
     },
   });
-  hudText.position.set(12, 12);
+  hudText.position.set(12, 28);
   hud.addChild(hudText);
   uiLayer.addChild(hud);
 
@@ -370,7 +370,7 @@ const bootstrap = async (): Promise<void> => {
       fontSize: 11,
     },
   });
-  hudHpText.position.set(12, 54);
+  hudHpText.position.set(12, 60);
   hud.addChild(hudHpText);
 
   const chargeBar = new PIXI.Graphics();
@@ -384,7 +384,7 @@ const bootstrap = async (): Promise<void> => {
       fontSize: 11,
     },
   });
-  chargeLabel.position.set(12, 100);
+  chargeLabel.position.set(12, 116);
   hud.addChild(chargeLabel);
 
   const topRight = new UIElement({
@@ -445,7 +445,7 @@ const bootstrap = async (): Promise<void> => {
   dialogUI.setVisible(false);
   uiLayer.addChild(dialogUI.root);
 
-  const levelUpUI = new LevelUpUI(360, 220);
+  const levelUpUI = new LevelUpUI(360, 200);
   levelUpUI.setVisible(false);
   uiLayer.addChild(levelUpUI.root);
 
@@ -517,7 +517,10 @@ const bootstrap = async (): Promise<void> => {
     ],
     menu,
     hud,
+    hudBg,
+    hudText,
     hudTopRight: topRight,
+    hudTopRightBg: topRightBg,
     hudTitle,
     hudHpBar,
     hudHpText,

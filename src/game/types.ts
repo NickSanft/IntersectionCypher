@@ -163,7 +163,10 @@ export interface GameState {
   npcs: NpcState[];
   menu: MenuSystem;
   hud: UIElement;
+  hudBg: PIXI.Graphics;
+  hudText: PIXI.Text;
   hudTopRight: UIElement;
+  hudTopRightBg: PIXI.Graphics;
   hudTitle: PIXI.Text;
   hudHpBar: PIXI.Graphics;
   hudHpText: PIXI.Text;

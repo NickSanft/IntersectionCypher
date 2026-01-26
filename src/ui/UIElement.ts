@@ -37,6 +37,11 @@ export class UIElement extends PIXI.Container {
     this.position.set(x + this.offsetX, y + this.offsetY);
   }
 
+  public setSize(width: number, height: number): void {
+    this.widthPx = width;
+    this.heightPx = height;
+  }
+
   private resolveAnchor(parentWidth: number, parentHeight: number): PIXI.Point {
     switch (this.anchor) {
       case "TopRight":

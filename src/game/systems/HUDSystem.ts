@@ -2,10 +2,53 @@ import type { GameState } from "../types";
 
 export class HUDSystem {
   public update(state: GameState): void {
+    this.layoutHud(state);
     this.updatePlayerHp(state);
     this.updateChargeBar(state);
     this.updateEnemyLabel(state);
     this.updateTopRight(state);
+  }
+
+  private layoutHud(state: GameState): void {
+    const padding = 12;
+    const titleY = 8;
+    state.hudTitle.position.set(padding, titleY);
+    state.hudText.position.set(padding, titleY + state.hudTitle.height + 6);
+
+    const hpTextY = state.hudText.position.y + state.hudText.height + 8;
+    state.hudHpText.position.set(padding, hpTextY);
+
+    const chargeLabelY = hpTextY + state.hudHpText.height + 24;
+    state.chargeLabel.position.set(padding, chargeLabelY);
+
+    const hudHeight =
+      state.chargeLabel.position.y + state.chargeLabel.height + padding;
+    state.hud.setSize(state.hud.widthPx, hudHeight);
+
+    state.hudBg.clear();
+    state.hudBg.beginFill(0x0f1720, 0.7);
+    state.hudBg.lineStyle(1, 0x2b3440, 1);
+    state.hudBg.drawRoundedRect(0, 0, state.hud.widthPx, state.hud.heightPx, 8);
+    state.hudBg.endFill();
+
+    const topPadding = 10;
+    state.hudLevelText.position.set(12, topPadding);
+    state.hudExpText.position.set(12, topPadding + state.hudLevelText.height + 6);
+    const topHeight =
+      state.hudExpText.position.y + state.hudExpText.height + topPadding;
+    state.hudTopRight.setSize(state.hudTopRight.widthPx, topHeight);
+
+    state.hudTopRightBg.clear();
+    state.hudTopRightBg.beginFill(0x0f1720, 0.7);
+    state.hudTopRightBg.lineStyle(1, 0x2b3440, 1);
+    state.hudTopRightBg.drawRoundedRect(
+      0,
+      0,
+      state.hudTopRight.widthPx,
+      state.hudTopRight.heightPx,
+      8
+    );
+    state.hudTopRightBg.endFill();
   }
 
   private updatePlayerHp(state: GameState): void {
@@ -15,7 +58,7 @@ export class HUDSystem {
     const barWidth = 180;
     const barHeight = 10;
     const x = 12;
-    const y = 68;
+    const y = state.hudHpText.position.y + state.hudHpText.height + 4;
 
     state.hudHpBar.clear();
     state.hudHpBar.beginFill(0x0b1220, 0.8);
@@ -41,7 +84,7 @@ export class HUDSystem {
     const barWidth = 180;
     const barHeight = 10;
     const x = 12;
-    const y = 88;
+    const y = state.chargeLabel.position.y - barHeight - 4;
 
     state.chargeBar.clear();
     state.chargeBar.beginFill(0x0b1220, 0.8);
