@@ -260,6 +260,20 @@ const bootstrap = async (): Promise<void> => {
   hudTitle.position.set(12, 8);
   hud.addChild(hudTitle);
 
+  const hudHpBar = new PIXI.Graphics();
+  hud.addChild(hudHpBar);
+
+  const hudHpText = new PIXI.Text({
+    text: "120/120",
+    style: {
+      fill: 0xf8fafc,
+      fontFamily: "Arial",
+      fontSize: 11,
+    },
+  });
+  hudHpText.position.set(12, 54);
+  hud.addChild(hudHpText);
+
   const chargeBar = new PIXI.Graphics();
   hud.addChild(chargeBar);
 
@@ -325,11 +339,14 @@ const bootstrap = async (): Promise<void> => {
     playerController,
     playerRadius,
     playerHitTimer: 0,
+    playerKnockbackTimer: 0,
     npc,
     npcRadius,
     menu,
     hud,
     hudTitle,
+    hudHpBar,
+    hudHpText,
     chargeBar,
     chargeLabel,
     dialog: {

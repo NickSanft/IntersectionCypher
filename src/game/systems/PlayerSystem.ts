@@ -1,7 +1,17 @@
+import { moveWithCollision } from "../../core/physics/Move";
 import type { GameState } from "../types";
 
 export class PlayerSystem {
   public update(state: GameState, dt: number): void {
+    if (state.playerKnockbackTimer > 0) {
+      state.playerKnockbackTimer = Math.max(0, state.playerKnockbackTimer - dt);
+      state.player.vel.x *= 0.9;
+      state.player.vel.y *= 0.9;
+      moveWithCollision(state.player.pos, state.player.vel, dt, state.playerRadius, state.map);
+      state.player.renderUpdate();
+      return;
+    }
+
     if (state.dialog.open || state.menu.isOpen) {
       state.player.vel.x = 0;
       state.player.vel.y = 0;

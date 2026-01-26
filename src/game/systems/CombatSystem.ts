@@ -112,8 +112,8 @@ export class CombatSystem {
       entry.projectile.renderUpdate();
       entry.life -= dt;
 
-      const dx = entry.projectile.entity.pos.x - state.player.pos.x;
-      const dy = entry.projectile.entity.pos.y - state.player.pos.y;
+      const dx = state.player.pos.x - entry.projectile.entity.pos.x;
+      const dy = state.player.pos.y - entry.projectile.entity.pos.y;
       const dist = Math.hypot(dx, dy);
       if (dist <= state.playerRadius + entry.projectile.radius) {
         state.player.sprite.tint = 0xfca5a5;
@@ -121,6 +121,12 @@ export class CombatSystem {
         state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - entry.damage);
         state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.12);
         state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 5);
+        const nx = dist === 0 ? 0 : dx / dist;
+        const ny = dist === 0 ? 0 : dy / dist;
+        const knockback = 260;
+        state.player.vel.x = nx * knockback;
+        state.player.vel.y = ny * knockback;
+        state.playerKnockbackTimer = 0.2;
 
         entry.pool.inUse = false;
         entry.projectile.entity.visible = false;

@@ -121,11 +121,14 @@ export interface GameState {
   playerController: PlayerController;
   playerRadius: number;
   playerHitTimer: number;
+  playerKnockbackTimer: number;
   npc: ZEntity;
   npcRadius: number;
   menu: MenuSystem;
   hud: UIElement;
   hudTitle: PIXI.Text;
+  hudHpBar: PIXI.Graphics;
+  hudHpText: PIXI.Text;
   chargeBar: PIXI.Graphics;
   chargeLabel: PIXI.Text;
   dialog: DialogState;
