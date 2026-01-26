@@ -9,6 +9,11 @@ export interface EnemyData {
   aggroRange: number;
   stopRange: number;
   patrolRadius: number;
+  attackRange: number;
+  attackWindupSeconds: number;
+  attackCooldownSeconds: number;
+  strafeSpeed: number;
+  strafeSwitchSeconds: number;
 }
 
 export const defaultEnemyData: EnemyData = {
@@ -22,4 +27,9 @@ export const defaultEnemyData: EnemyData = {
   aggroRange: 220,
   stopRange: 36,
   patrolRadius: 42,
+  attackRange: 140,
+  attackWindupSeconds: 0.35,
+  attackCooldownSeconds: 1.2,
+  strafeSpeed: 70,
+  strafeSwitchSeconds: 1.6,
 };

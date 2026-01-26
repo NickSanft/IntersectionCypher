@@ -49,6 +49,16 @@ export interface EnemyState {
   aggroRange: number;
   stopRange: number;
   patrolRadius: number;
+  attackRange: number;
+  attackWindupSeconds: number;
+  attackCooldownSeconds: number;
+  attackCooldown: number;
+  attackTimer: number;
+  attackFlashTimer: number;
+  strafeSpeed: number;
+  strafeSwitchSeconds: number;
+  strafeSwitchTimer: number;
+  strafeDir: number;
   patrolAngle: number;
   homeX: number;
   homeY: number;
