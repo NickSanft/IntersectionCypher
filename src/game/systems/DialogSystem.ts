@@ -7,14 +7,36 @@ export class DialogSystem {
   private lastUpPressed = false;
   private lastDownPressed = false;
   private selectedIndex = 0;
+  private lastGpUp = false;
+  private lastGpDown = false;
+  private lastGpAction = false;
+  private lastGpBack = false;
 
   public update(state: GameState, dt: number): void {
     const upPressed = state.input.isActionPressed("up");
     const downPressed = state.input.isActionPressed("down");
-    const upJustPressed = upPressed && !this.lastUpPressed;
-    const downJustPressed = downPressed && !this.lastDownPressed;
+    const actionPressed = state.input.isActionPressed("action");
+
+    const gamepad = this.getGamepad();
+    const gpUp = this.isGamepadUp(gamepad);
+    const gpDown = this.isGamepadDown(gamepad);
+    const gpAction = this.isGamepadAction(gamepad);
+    const gpBack = this.isGamepadBack(gamepad);
+
+    const upJustPressed = (upPressed && !this.lastUpPressed) || (gpUp && !this.lastGpUp);
+    const downJustPressed =
+      (downPressed && !this.lastDownPressed) || (gpDown && !this.lastGpDown);
+    const actionJustPressed =
+      (actionPressed && !this.lastActionPressed) || (gpAction && !this.lastGpAction);
+    const backJustPressed = gpBack && !this.lastGpBack;
+
     this.lastUpPressed = upPressed;
     this.lastDownPressed = downPressed;
+    this.lastActionPressed = actionPressed;
+    this.lastGpUp = gpUp;
+    this.lastGpDown = gpDown;
+    this.lastGpAction = gpAction;
+    this.lastGpBack = gpBack;
 
     if (state.dialog.open && state.menu.isOpen) {
       state.dialog.engine.close();
@@ -26,22 +48,28 @@ export class DialogSystem {
       this.selectedIndex = 0;
       return;
     }
-    const actionPressed = state.input.isActionPressed("action");
-    const actionJustPressed = actionPressed && !this.lastActionPressed;
-    this.lastActionPressed = actionPressed;
+    if (backJustPressed && state.dialog.open) {
+      state.dialog.engine.close();
+      state.dialog.open = false;
+      state.dialog.activeId = null;
+      state.dialog.ui.setVisible(false);
+      state.dialog.ui.setText("");
+      state.dialog.ui.setChoices([], () => undefined);
+      this.selectedIndex = 0;
+      return;
+    }
 
     if (!state.dialog.open) {
       if (actionJustPressed && !state.menu.isOpen) {
-        const dx = state.player.pos.x - state.npc.pos.x;
-        const dy = state.player.pos.y - state.npc.pos.y;
-        if (Math.hypot(dx, dy) <= 40) {
+        const nearest = this.findNearestNpc(state);
+        if (nearest) {
           state.dialog.open = true;
-          const dialogData = state.dialog.dialogs[state.npcDialogId];
+          const dialogData = state.dialog.dialogs[nearest.dialogId];
           if (!dialogData) {
             state.dialog.open = false;
             return;
           }
-          state.dialog.activeId = state.npcDialogId;
+          state.dialog.activeId = nearest.dialogId;
           state.dialog.engine.setData(dialogData);
           state.dialog.engine.start();
           state.dialog.ui.setVisible(true);
@@ -131,5 +159,61 @@ export class DialogSystem {
       state.dialog.charIndex = fullText.length;
       state.dialog.ui.setText(fullText);
     }
+  }
+
+  private findNearestNpc(state: GameState): { dialogId: string } | null {
+    let closest: { dialogId: string; dist: number } | null = null;
+    for (const npc of state.npcs) {
+      if (npc.mapId !== state.currentMapId) {
+        continue;
+      }
+      const dx = state.player.pos.x - npc.entity.pos.x;
+      const dy = state.player.pos.y - npc.entity.pos.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= 40 && (!closest || dist < closest.dist)) {
+        closest = { dialogId: npc.dialogId, dist };
+      }
+    }
+    return closest ? { dialogId: closest.dialogId } : null;
+  }
+
+  private getGamepad(): Gamepad | null {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const pad of pads) {
+      if (pad && pad.connected) {
+        return pad;
+      }
+    }
+    return null;
+  }
+
+  private isGamepadUp(pad: Gamepad | null): boolean {
+    if (!pad) {
+      return false;
+    }
+    const axis = pad.axes[1] ?? 0;
+    return pad.buttons[12]?.pressed === true || axis < -0.6;
+  }
+
+  private isGamepadDown(pad: Gamepad | null): boolean {
+    if (!pad) {
+      return false;
+    }
+    const axis = pad.axes[1] ?? 0;
+    return pad.buttons[13]?.pressed === true || axis > 0.6;
+  }
+
+  private isGamepadAction(pad: Gamepad | null): boolean {
+    if (!pad) {
+      return false;
+    }
+    return pad.buttons[0]?.pressed === true;
+  }
+
+  private isGamepadBack(pad: Gamepad | null): boolean {
+    if (!pad) {
+      return false;
+    }
+    return pad.buttons[1]?.pressed === true;
   }
 }

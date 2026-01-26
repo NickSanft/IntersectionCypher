@@ -20,15 +20,20 @@ export class PlayerSystem {
 
     state.playerController.update(dt, state.map);
 
-    const dx = state.player.pos.x - state.npc.pos.x;
-    const dy = state.player.pos.y - state.npc.pos.y;
-    const dist = Math.hypot(dx, dy);
-    const minDist = state.playerRadius + state.npcRadius;
-    if (dist > 0 && dist < minDist) {
-      const push = (minDist - dist) / dist;
-      state.player.pos.x += dx * push;
-      state.player.pos.y += dy * push;
-      state.player.renderUpdate();
+    for (const npc of state.npcs) {
+      if (npc.mapId !== state.currentMapId) {
+        continue;
+      }
+      const dx = state.player.pos.x - npc.entity.pos.x;
+      const dy = state.player.pos.y - npc.entity.pos.y;
+      const dist = Math.hypot(dx, dy);
+      const minDist = state.playerRadius + npc.radius;
+      if (dist > 0 && dist < minDist) {
+        const push = (minDist - dist) / dist;
+        state.player.pos.x += dx * push;
+        state.player.pos.y += dy * push;
+        state.player.renderUpdate();
+      }
     }
   }
 }

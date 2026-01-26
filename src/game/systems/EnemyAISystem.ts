@@ -68,6 +68,11 @@ export class EnemyAISystem {
 
   public update(state: GameState, dt: number): void {
     const enemy = state.enemy;
+    if (state.currentMapId !== state.enemyMapId) {
+      enemy.entity.vel.x = 0;
+      enemy.entity.vel.y = 0;
+      return;
+    }
     if (enemy.dead || state.menu.isOpen || state.dialog.open) {
       enemy.entity.vel.x = 0;
       enemy.entity.vel.y = 0;

@@ -1,0 +1,24 @@
+{
+  "start": "greet",
+  "nodes": {
+    "greet": {
+      "text": "You made it through the door.",
+      "choices": [
+        { "text": "What is this place?", "next": "about" },
+        { "text": "Any tips?", "next": "tips" },
+        { "text": "See you", "next": "end" }
+      ]
+    },
+    "about": {
+      "text": "A quiet test chamber for projectiles.",
+      "next": "greet"
+    },
+    "tips": {
+      "text": "Charged shots hit harder. Keep moving.",
+      "next": "greet"
+    },
+    "end": {
+      "text": "Stay safe."
+    }
+  }
+}

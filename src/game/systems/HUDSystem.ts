@@ -64,7 +64,7 @@ export class HUDSystem {
 
   private updateEnemyLabel(state: GameState): void {
     const enemy = state.enemy;
-    if (enemy.dead) {
+    if (state.currentMapId !== state.enemyMapId || enemy.dead) {
       enemy.label.visible = false;
       return;
     }

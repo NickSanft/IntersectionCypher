@@ -115,19 +115,51 @@ export interface CameraState {
   shakeFreq: number;
 }
 
+export interface NpcState {
+  entity: ZEntity;
+  radius: number;
+  dialogId: string;
+  mapId: string;
+}
+
+export interface MapDoor {
+  to: string;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  spawnX: number;
+  spawnY: number;
+}
+
+export interface MapState {
+  id: string;
+  map: TileMap;
+  view: PIXI.Container;
+  spawnX: number;
+  spawnY: number;
+  door?: MapDoor;
+}
+
+export interface DoorMarker {
+  mapId: string;
+  view: PIXI.Container;
+}
+
 export interface GameState {
   app: PIXI.Application;
   world: PIXI.Container;
   map: TileMap;
+  mapView: PIXI.Container;
+  maps: Record<string, MapState>;
+  currentMapId: string;
   input: Input;
   player: ZEntity;
   playerController: PlayerController;
   playerRadius: number;
   playerHitTimer: number;
   playerKnockbackTimer: number;
-  npc: ZEntity;
-  npcRadius: number;
-  npcDialogId: string;
+  npcs: NpcState[];
   menu: MenuSystem;
   hud: UIElement;
   hudTitle: PIXI.Text;
@@ -144,7 +176,15 @@ export interface GameState {
   enemyProjectilePool: EnemyProjectilePoolEntry[];
   enemyProjectileTexture: PIXI.Texture;
   enemy: EnemyState;
+  enemyMapId: string;
   playerData: PlayerData;
   damageTexts: DamageTextEntry[];
   damageTextPool: DamageTextPoolEntry[];
+  doorMarkers: DoorMarker[];
+  transitionOverlay: PIXI.Graphics;
+  transitionPhase: "idle" | "fadeOut" | "fadeIn";
+  transitionTime: number;
+  transitionDuration: number;
+  transitionTargetMapId: string | null;
+  transitionTargetSpawn: { x: number; y: number } | null;
 }
