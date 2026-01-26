@@ -21,9 +21,16 @@ export class HUDSystem {
     const chargeLabelY = hpTextY + state.hudHpText.height + 24;
     state.chargeLabel.position.set(padding, chargeLabelY);
 
+    const contentWidth = Math.max(
+      state.hudTitle.width,
+      state.hudText.width,
+      state.hudHpText.width,
+      state.chargeLabel.width
+    );
+    const hudWidth = Math.max(200, contentWidth + padding * 2);
     const hudHeight =
       state.chargeLabel.position.y + state.chargeLabel.height + padding;
-    state.hud.setSize(state.hud.widthPx, hudHeight);
+    state.hud.setSize(hudWidth, hudHeight);
 
     state.hudBg.clear();
     state.hudBg.beginFill(0x0f1720, 0.7);
@@ -36,7 +43,11 @@ export class HUDSystem {
     state.hudExpText.position.set(12, topPadding + state.hudLevelText.height + 6);
     const topHeight =
       state.hudExpText.position.y + state.hudExpText.height + topPadding;
-    state.hudTopRight.setSize(state.hudTopRight.widthPx, topHeight);
+    const topWidth = Math.max(
+      160,
+      Math.max(state.hudLevelText.width, state.hudExpText.width) + topPadding * 2
+    );
+    state.hudTopRight.setSize(topWidth, topHeight);
 
     state.hudTopRightBg.clear();
     state.hudTopRightBg.beginFill(0x0f1720, 0.7);
@@ -55,7 +66,7 @@ export class HUDSystem {
     const hp = state.playerData.stats.hp;
     const maxHp = state.playerData.stats.maxHp;
     const ratio = maxHp === 0 ? 0 : hp / maxHp;
-    const barWidth = 180;
+    const barWidth = Math.max(120, state.hud.widthPx - 24);
     const barHeight = 10;
     const x = 12;
     const y = state.hudHpText.position.y + state.hudHpText.height + 4;
@@ -81,7 +92,7 @@ export class HUDSystem {
 
   private updateChargeBar(state: GameState): void {
     const ratio = state.aim.chargeRatio;
-    const barWidth = 180;
+    const barWidth = Math.max(120, state.hud.widthPx - 24);
     const barHeight = 10;
     const x = 12;
     const y = state.chargeLabel.position.y - barHeight - 4;

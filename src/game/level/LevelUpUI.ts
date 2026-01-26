@@ -6,6 +6,7 @@ export class LevelUpUI {
   private readonly background: PIXI.Graphics;
   private readonly title: PIXI.Text;
   private readonly optionsContainer: PIXI.Container;
+  private optionWidth = 0;
   private readonly optionEntries: Array<{
     background: PIXI.Graphics;
     label: PIXI.Text;
@@ -53,15 +54,28 @@ export class LevelUpUI {
   ): void {
     this.optionsContainer.removeChildren();
     this.optionEntries.length = 0;
-    const width = this.root.widthPx - 32;
     const height = 24;
     const gap = 8;
+    const maxLabelWidth = labels.reduce((max, label) => {
+      const measure = new PIXI.Text({
+        text: label,
+        style: {
+          fill: 0xe2e8f0,
+          fontFamily: "Arial",
+          fontSize: 13,
+        },
+      });
+      const width = measure.width;
+      measure.destroy();
+      return Math.max(max, width);
+    }, 0);
+    this.optionWidth = Math.max(this.root.widthPx - 32, maxLabelWidth + 40);
 
     labels.forEach((labelText, index) => {
       const bg = new PIXI.Graphics();
       bg.beginFill(0x0f172a, 0.9);
       bg.lineStyle(1, 0x334155, 1);
-      bg.drawRoundedRect(0, 0, width, height, 8);
+      bg.drawRoundedRect(0, 0, this.optionWidth, height, 8);
       bg.endFill();
 
       const label = new PIXI.Text({
@@ -94,7 +108,8 @@ export class LevelUpUI {
       gap +
       16;
     const newHeight = Math.max(this.root.heightPx, totalHeight);
-    this.root.setSize(this.root.widthPx, newHeight);
+    const newWidth = Math.max(this.root.widthPx, this.optionWidth + 32);
+    this.root.setSize(newWidth, newHeight);
     this.redrawBackground();
     this.setSelected(selectedIndex);
   }
@@ -109,7 +124,7 @@ export class LevelUpUI {
         entry.background.beginFill(0x0f172a, 0.9);
         entry.background.lineStyle(1, 0x334155, 1);
       }
-      entry.background.drawRoundedRect(0, 0, this.root.widthPx - 32, 28, 8);
+      entry.background.drawRoundedRect(0, 0, this.optionWidth, 28, 8);
       entry.background.endFill();
     });
   }
