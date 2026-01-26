@@ -4,6 +4,9 @@ export class LevelUpSystem {
   private lastUp = false;
   private lastDown = false;
   private lastAction = false;
+  private lastGpUp = false;
+  private lastGpDown = false;
+  private lastGpAction = false;
 
   public addExperience(state: GameState, amount: number): void {
     const stats = state.playerData.stats;
@@ -25,13 +28,22 @@ export class LevelUpSystem {
     const down = state.input.isActionPressed("down");
     const action = state.input.isActionPressed("action");
 
-    const upJust = up && !this.lastUp;
-    const downJust = down && !this.lastDown;
-    const actionJust = action && !this.lastAction;
+    const gamepad = this.getGamepad();
+    const gpUp = this.isGamepadUp(gamepad);
+    const gpDown = this.isGamepadDown(gamepad);
+    const gpAction = this.isGamepadAction(gamepad);
+
+    const upJust = (up && !this.lastUp) || (gpUp && !this.lastGpUp);
+    const downJust = (down && !this.lastDown) || (gpDown && !this.lastGpDown);
+    const actionJust =
+      (action && !this.lastAction) || (gpAction && !this.lastGpAction);
 
     this.lastUp = up;
     this.lastDown = down;
     this.lastAction = action;
+    this.lastGpUp = gpUp;
+    this.lastGpDown = gpDown;
+    this.lastGpAction = gpAction;
 
     if (upJust) {
       state.levelUp.selectedIndex = Math.max(0, state.levelUp.selectedIndex - 1);
@@ -58,7 +70,16 @@ export class LevelUpSystem {
     state.levelUp.options = this.buildOptions();
     state.levelUp.ui.setOptions(
       state.levelUp.options.map((opt) => opt.label),
-      0
+      0,
+      (index) => {
+        state.levelUp.selectedIndex = index;
+        const option = state.levelUp.options[index];
+        if (option) {
+          option.apply(state);
+        }
+        state.levelUp.active = false;
+        state.levelUp.ui.setVisible(false);
+      }
     );
     state.levelUp.ui.setVisible(true);
   }
@@ -104,4 +125,38 @@ export class LevelUpSystem {
       },
     ];
   }
+
+  private getGamepad(): Gamepad | null {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const pad of pads) {
+      if (pad && pad.connected) {
+        return pad;
+      }
+    }
+    return null;
+  }
+
+  private isGamepadUp(pad: Gamepad | null): boolean {
+    if (!pad) {
+      return false;
+    }
+    const axis = pad.axes[1] ?? 0;
+    return pad.buttons[12]?.pressed === true || axis < -0.6;
+  }
+
+  private isGamepadDown(pad: Gamepad | null): boolean {
+    if (!pad) {
+      return false;
+    }
+    const axis = pad.axes[1] ?? 0;
+    return pad.buttons[13]?.pressed === true || axis > 0.6;
+  }
+
+  private isGamepadAction(pad: Gamepad | null): boolean {
+    if (!pad) {
+      return false;
+    }
+    return pad.buttons[0]?.pressed === true;
+  }
+
 }

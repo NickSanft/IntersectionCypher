@@ -9,6 +9,7 @@ export class LevelUpUI {
   private readonly optionEntries: Array<{
     background: PIXI.Graphics;
     label: PIXI.Text;
+    container: PIXI.Container;
   }> = [];
 
   constructor(width: number, height: number) {
@@ -48,7 +49,11 @@ export class LevelUpUI {
     this.root.visible = visible;
   }
 
-  public setOptions(labels: string[], selectedIndex: number): void {
+  public setOptions(
+    labels: string[],
+    selectedIndex: number,
+    onSelect?: (index: number) => void
+  ): void {
     this.optionsContainer.removeChildren();
     this.optionEntries.length = 0;
     const width = this.root.widthPx - 32;
@@ -76,8 +81,14 @@ export class LevelUpUI {
       entry.addChild(bg);
       entry.addChild(label);
       entry.position.set(0, index * (height + gap));
+      if (onSelect) {
+        entry.eventMode = "static";
+        entry.cursor = "pointer";
+        entry.on("pointertap", () => onSelect(index));
+        entry.on("pointerover", () => this.setSelected(index));
+      }
       this.optionsContainer.addChild(entry);
-      this.optionEntries.push({ background: bg, label });
+      this.optionEntries.push({ background: bg, label, container: entry });
     });
 
     this.setSelected(selectedIndex);
