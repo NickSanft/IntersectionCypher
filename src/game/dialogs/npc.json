@@ -1,0 +1,24 @@
+{
+  "start": "intro",
+  "nodes": {
+    "intro": {
+      "text": "Hello! Need something?",
+      "choices": [
+        { "text": "Who are you?", "next": "about" },
+        { "text": "Open shop", "call": "openShop", "next": "shopAck" },
+        { "text": "Bye", "next": "end" }
+      ]
+    },
+    "about": {
+      "text": "I'm the custodian of this place.",
+      "next": "intro"
+    },
+    "shopAck": {
+      "text": "Take a look.",
+      "next": "end"
+    },
+    "end": {
+      "text": "See you around."
+    }
+  }
+}

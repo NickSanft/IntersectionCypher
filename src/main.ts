@@ -19,6 +19,9 @@ import { EnemyAISystem } from "./game/systems/EnemyAISystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData } from "./game/data/EnemyData";
+import npcDialog from "./game/dialogs/npc.json";
+import { DialogEngine } from "./game/dialog/DialogEngine";
+import { DialogUI } from "./game/dialog/DialogUI";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -288,38 +291,18 @@ const bootstrap = async (): Promise<void> => {
   chargeLabel.position.set(12, 100);
   hud.addChild(chargeLabel);
 
-  const dialog = new UIElement({
-    width: 260,
-    height: 90,
-    anchor: "BottomCenter",
-    offsetX: 0,
-    offsetY: -24,
-  });
-  const dialogBg = new PIXI.Graphics();
-  dialogBg.beginFill(0x111827, 0.92);
-  dialogBg.lineStyle(2, 0x3b82f6, 1);
-  dialogBg.drawRoundedRect(0, 0, dialog.widthPx, dialog.heightPx, 10);
-  dialogBg.endFill();
-  dialog.addChild(dialogBg);
-
-  const dialogContent = "Hello!";
-  const dialogText = new PIXI.Text({
-    text: "",
-    style: {
-      fill: 0xf9fafb,
-      fontFamily: "Arial",
-      fontSize: 16,
-    },
-  });
-  dialogText.anchor.set(0.5);
-  dialogText.position.set(dialog.widthPx * 0.5, dialog.heightPx * 0.5);
-  dialog.addChild(dialogText);
-  dialog.visible = false;
-  uiLayer.addChild(dialog);
-
   const menu = new MenuSystem();
   menu.registerTabs(defaultPlayerData);
   uiLayer.addChild(menu);
+
+  const dialogEngine = new DialogEngine(npcDialog, {
+    openShop: () => {
+      menu.open();
+    },
+  });
+  const dialogUI = new DialogUI(300, 140);
+  dialogUI.setVisible(false);
+  uiLayer.addChild(dialogUI.root);
 
   const aimLine = new PIXI.Graphics();
   aimLine.zIndex = 4;
@@ -351,12 +334,12 @@ const bootstrap = async (): Promise<void> => {
     chargeLabel,
     dialog: {
       open: false,
-      content: dialogContent,
-      text: dialogText,
+      data: npcDialog,
+      engine: dialogEngine,
+      ui: dialogUI,
       charIndex: 0,
       charTimer: 0,
       charsPerSecond: 28,
-      ui: dialog,
     },
     aim: {
       line: aimLine,

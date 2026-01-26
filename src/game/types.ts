@@ -7,6 +7,8 @@ import type { MenuSystem } from "../ui/menu/MenuSystem";
 import type { UIElement } from "../ui/UIElement";
 import type { Projectile } from "../projectiles/Projectile";
 import type { PlayerData } from "./data/PlayerData";
+import type { DialogEngine, DialogData } from "./dialog/DialogEngine";
+import type { DialogUI } from "./dialog/DialogUI";
 
 export interface ProjectilePoolEntry {
   entity: ZEntity;
@@ -85,12 +87,12 @@ export interface EnemyState {
 
 export interface DialogState {
   open: boolean;
-  content: string;
-  text: PIXI.Text;
+  data: DialogData;
+  engine: DialogEngine;
+  ui: DialogUI;
   charIndex: number;
   charTimer: number;
   charsPerSecond: number;
-  ui: UIElement;
 }
 
 export interface AimState {

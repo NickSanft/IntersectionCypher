@@ -15,8 +15,10 @@ export class MenuToggleSystem {
     state.menu.toggle();
     if (state.menu.isOpen) {
       state.dialog.open = false;
-      state.dialog.ui.visible = false;
-      state.dialog.text.text = "";
+      state.dialog.engine.close();
+      state.dialog.ui.setVisible(false);
+      state.dialog.ui.setText("");
+      state.dialog.ui.setChoices([], () => undefined);
       state.aim.chargeActive = false;
     }
   }
