@@ -8,6 +8,7 @@ export interface DialogNode {
   text: string;
   next?: string;
   choices?: DialogChoice[];
+  call?: string;
 }
 
 export interface DialogData {
@@ -21,6 +22,7 @@ export class DialogEngine {
   private data: DialogData;
   private callMap: DialogCallMap;
   private currentId: string | null = null;
+  private enteredId: string | null = null;
 
   constructor(data: DialogData, callMap: DialogCallMap) {
     this.data = data;
@@ -43,11 +45,12 @@ export class DialogEngine {
   }
 
   public start(): void {
-    this.currentId = this.data.start;
+    this.setCurrent(this.data.start);
   }
 
   public close(): void {
     this.currentId = null;
+    this.enteredId = null;
   }
 
   public advance(): void {
@@ -57,7 +60,7 @@ export class DialogEngine {
       return;
     }
     if (node.next) {
-      this.currentId = node.next;
+      this.setCurrent(node.next);
     } else {
       this.close();
     }
@@ -75,9 +78,27 @@ export class DialogEngine {
     }
 
     if (choice.next) {
-      this.currentId = choice.next;
+      this.setCurrent(choice.next);
     } else {
       this.close();
+    }
+  }
+
+  public setData(data: DialogData): void {
+    this.data = data;
+    this.currentId = null;
+    this.enteredId = null;
+  }
+
+  private setCurrent(id: string): void {
+    this.currentId = id;
+    if (this.enteredId === id) {
+      return;
+    }
+    this.enteredId = id;
+    const node = this.data.nodes[id];
+    if (node && node.call && this.callMap[node.call]) {
+      this.callMap[node.call]();
     }
   }
 }

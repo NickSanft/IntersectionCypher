@@ -87,7 +87,8 @@ export interface EnemyState {
 
 export interface DialogState {
   open: boolean;
-  data: DialogData;
+  dialogs: Record<string, DialogData>;
+  activeId: string | null;
   engine: DialogEngine;
   ui: DialogUI;
   charIndex: number;
@@ -126,6 +127,7 @@ export interface GameState {
   playerKnockbackTimer: number;
   npc: ZEntity;
   npcRadius: number;
+  npcDialogId: string;
   menu: MenuSystem;
   hud: UIElement;
   hudTitle: PIXI.Text;

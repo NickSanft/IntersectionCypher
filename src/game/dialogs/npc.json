@@ -3,6 +3,7 @@
   "nodes": {
     "intro": {
       "text": "Hello! Need something?",
+      "call": "onGreet",
       "choices": [
         { "text": "Who are you?", "next": "about" },
         { "text": "Open shop", "call": "openShop", "next": "shopAck" },

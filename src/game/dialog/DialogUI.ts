@@ -7,6 +7,11 @@ export class DialogUI {
   public readonly text: PIXI.Text;
   private readonly background: PIXI.Graphics;
   private readonly choicesContainer: PIXI.Container;
+  private readonly choiceEntries: Array<{
+    container: PIXI.Container;
+    background: PIXI.Graphics;
+  }> = [];
+  private selectedIndex = -1;
 
   constructor(width: number, height: number) {
     this.root = new UIElement({
@@ -55,6 +60,8 @@ export class DialogUI {
     onSelect: (index: number) => void
   ): void {
     this.choicesContainer.removeChildren();
+    this.choiceEntries.length = 0;
+    this.selectedIndex = -1;
     if (!choices || choices.length === 0) {
       return;
     }
@@ -87,22 +94,44 @@ export class DialogUI {
       entry.cursor = "pointer";
       entry.on("pointertap", () => onSelect(index));
       entry.on("pointerover", () => {
-        bg.clear();
-        bg.beginFill(0x1e293b, 0.95);
-        bg.lineStyle(1, 0x60a5fa, 1);
-        bg.drawRoundedRect(0, 0, choiceWidth, choiceHeight, 6);
-        bg.endFill();
+        this.setSelected(index);
       });
       entry.on("pointerout", () => {
-        bg.clear();
-        bg.beginFill(0x0b1220, 0.9);
-        bg.lineStyle(1, 0x334155, 1);
-        bg.drawRoundedRect(0, 0, choiceWidth, choiceHeight, 6);
-        bg.endFill();
+        this.setSelected(this.selectedIndex);
       });
 
       this.choicesContainer.addChild(entry);
+      this.choiceEntries.push({ container: entry, background: bg });
     });
+
+    this.setSelected(0);
+  }
+
+  public setSelected(index: number): void {
+    if (this.choiceEntries.length === 0) {
+      this.selectedIndex = -1;
+      return;
+    }
+    const clamped = Math.max(0, Math.min(index, this.choiceEntries.length - 1));
+    this.selectedIndex = clamped;
+    const choiceWidth = this.root.widthPx - 24;
+    const choiceHeight = 24;
+    this.choiceEntries.forEach((entry, idx) => {
+      entry.background.clear();
+      if (idx === clamped) {
+        entry.background.beginFill(0x1e293b, 0.95);
+        entry.background.lineStyle(1, 0x60a5fa, 1);
+      } else {
+        entry.background.beginFill(0x0b1220, 0.9);
+        entry.background.lineStyle(1, 0x334155, 1);
+      }
+      entry.background.drawRoundedRect(0, 0, choiceWidth, choiceHeight, 6);
+      entry.background.endFill();
+    });
+  }
+
+  public getSelected(): number {
+    return this.selectedIndex;
   }
 
   public updateLayout(width: number, height: number): void {

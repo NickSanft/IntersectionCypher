@@ -299,6 +299,12 @@ const bootstrap = async (): Promise<void> => {
     openShop: () => {
       menu.open();
     },
+    onGreet: () => {
+      player.sprite.tint = 0x93c5fd;
+      setTimeout(() => {
+        player.sprite.tint = 0xffffff;
+      }, 180);
+    },
   });
   const dialogUI = new DialogUI(300, 140);
   dialogUI.setVisible(false);
@@ -325,6 +331,7 @@ const bootstrap = async (): Promise<void> => {
     playerKnockbackTimer: 0,
     npc,
     npcRadius,
+    npcDialogId: "npc",
     menu,
     hud,
     hudTitle,
@@ -334,7 +341,8 @@ const bootstrap = async (): Promise<void> => {
     chargeLabel,
     dialog: {
       open: false,
-      data: npcDialog,
+      dialogs: { npc: npcDialog },
+      activeId: null,
       engine: dialogEngine,
       ui: dialogUI,
       charIndex: 0,

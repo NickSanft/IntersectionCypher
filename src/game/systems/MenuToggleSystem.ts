@@ -16,6 +16,7 @@ export class MenuToggleSystem {
     if (state.menu.isOpen) {
       state.dialog.open = false;
       state.dialog.engine.close();
+      state.dialog.activeId = null;
       state.dialog.ui.setVisible(false);
       state.dialog.ui.setText("");
       state.dialog.ui.setChoices([], () => undefined);
