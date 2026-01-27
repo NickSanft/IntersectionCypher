@@ -5,7 +5,7 @@ export class HUDSystem {
     this.layoutHud(state);
     this.updatePlayerHp(state);
     this.updateChargeBar(state);
-    this.updateEnemyLabel(state);
+    this.updateEnemyLabels(state);
     this.updateTopRight(state);
   }
 
@@ -122,14 +122,18 @@ export class HUDSystem {
     state.hudExpText.text = `EXP ${state.playerData.stats.exp}/${state.playerData.stats.expToNext}`;
   }
 
-  private updateEnemyLabel(state: GameState): void {
-    const enemy = state.enemy;
-    if (state.currentMapId !== state.enemyMapId || enemy.dead) {
-      enemy.label.visible = false;
-      return;
+  private updateEnemyLabels(state: GameState): void {
+    for (const enemy of state.enemies) {
+      if (enemy.mapId !== state.currentMapId || enemy.dead) {
+        enemy.label.visible = false;
+        continue;
+      }
+      enemy.label.visible = true;
+      enemy.label.position.set(
+        enemy.entity.pos.x,
+        enemy.entity.pos.y - enemy.labelOffsetY
+      );
+      enemy.label.text = `${enemy.name} ${enemy.hp}/${enemy.maxHp}`;
     }
-    enemy.label.visible = true;
-    enemy.label.position.set(enemy.entity.pos.x, enemy.entity.pos.y - enemy.labelOffsetY);
-    enemy.label.text = `${enemy.name} ${enemy.hp}/${enemy.maxHp}`;
   }
 }

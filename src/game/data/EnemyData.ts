@@ -41,3 +41,25 @@ export const defaultEnemyData: EnemyData = {
   projectileRadius: 5,
   projectileLifetime: 1.2,
 };
+
+export const turretEnemyData: EnemyData = {
+  name: "Arc Turret",
+  maxHp: 7,
+  radius: 12,
+  respawnSeconds: 3,
+  hitFlashSeconds: 0.15,
+  labelOffsetY: 44,
+  speed: 0,
+  aggroRange: 260,
+  stopRange: 0,
+  patrolRadius: 0,
+  attackRange: 220,
+  attackWindupSeconds: 0.45,
+  attackCooldownSeconds: 1.4,
+  strafeSpeed: 0,
+  strafeSwitchSeconds: 1,
+  projectileSpeed: 360,
+  projectileDamage: 1,
+  projectileRadius: 5,
+  projectileLifetime: 1.2,
+};

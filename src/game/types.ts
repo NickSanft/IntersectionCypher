@@ -48,9 +48,34 @@ export interface DamageTextEntry {
   pool: DamageTextPoolEntry;
 }
 
+export interface ImpactParticlePoolEntry {
+  gfx: PIXI.Graphics;
+  inUse: boolean;
+}
+
+export interface ImpactParticleEntry {
+  gfx: PIXI.Graphics;
+  life: number;
+  velX: number;
+  velY: number;
+  pool: ImpactParticlePoolEntry;
+}
+
+export interface HitMarkerPoolEntry {
+  gfx: PIXI.Graphics;
+  inUse: boolean;
+}
+
+export interface HitMarkerEntry {
+  gfx: PIXI.Graphics;
+  life: number;
+  pool: HitMarkerPoolEntry;
+}
+
 export interface EnemyState {
   entity: ZEntity;
   name: string;
+  type: "chaser" | "turret";
   radius: number;
   maxHp: number;
   hp: number;
@@ -61,6 +86,7 @@ export interface EnemyState {
   respawnSeconds: number;
   hitFlashSeconds: number;
   labelOffsetY: number;
+  mapId: string;
   speed: number;
   aggroRange: number;
   stopRange: number;
@@ -160,6 +186,8 @@ export interface GameState {
   playerRadius: number;
   playerHitTimer: number;
   playerKnockbackTimer: number;
+  hitStopTimer: number;
+  hitStopDuration: number;
   npcs: NpcState[];
   menu: MenuSystem;
   hud: UIElement;
@@ -184,19 +212,28 @@ export interface GameState {
   enemyProjectiles: EnemyProjectileEntry[];
   enemyProjectilePool: EnemyProjectilePoolEntry[];
   enemyProjectileTexture: PIXI.Texture;
-  enemy: EnemyState;
-  enemyMapId: string;
+  enemies: EnemyState[];
   playerData: PlayerData;
   damageTexts: DamageTextEntry[];
   damageTextPool: DamageTextPoolEntry[];
+  impactParticles: ImpactParticleEntry[];
+  impactParticlePool: ImpactParticlePoolEntry[];
+  hitMarkers: HitMarkerEntry[];
+  hitMarkerPool: HitMarkerPoolEntry[];
   doorMarkers: DoorMarker[];
+  doorPrompt: UIElement;
+  doorPromptBg: PIXI.Graphics;
+  doorPromptText: PIXI.Text;
+  minimap: UIElement;
+  minimapBg: PIXI.Graphics;
+  minimapView: PIXI.Graphics;
+  minimapScale: number;
   transitionOverlay: PIXI.Graphics;
   transitionPhase: "idle" | "fadeOut" | "fadeIn";
   transitionTime: number;
   transitionDuration: number;
   transitionTargetMapId: string | null;
   transitionTargetSpawn: { x: number; y: number } | null;
-  levelUp: LevelUpState;
 }
 
 export interface LevelUpOption {

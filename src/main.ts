@@ -17,9 +17,10 @@ import { CameraSystem } from "./game/systems/CameraSystem";
 import { HUDSystem } from "./game/systems/HUDSystem";
 import { EnemyAISystem } from "./game/systems/EnemyAISystem";
 import { MapSystem } from "./game/systems/MapSystem";
+import { CombatFXSystem } from "./game/systems/CombatFXSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
-import { defaultEnemyData } from "./game/data/EnemyData";
+import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
 import { findNearestOpen } from "./core/world/MapUtils";
 import npcDialog from "./game/dialogs/npc.json";
 import npc2Dialog from "./game/dialogs/npc2.json";
@@ -199,41 +200,120 @@ const bootstrap = async (): Promise<void> => {
     return app.renderer.generateTexture(gfx);
   })();
 
-  const enemy = new ZEntity({
-    sprite: new PIXI.Sprite(enemyTexture),
-    gravity: 0,
-    mass: 1,
-  });
-  enemy.zIndex = 2;
-  enemy.sprite.anchor.set(0.5);
-  const enemySpawn = findNearestOpen(map2, map2.tileSize * 12, map2.tileSize * 5);
-  enemy.pos.x = enemySpawn.x;
-  enemy.pos.y = enemySpawn.y;
-  enemy.pos.z = 0;
-  enemy.renderUpdate();
-  enemy.visible = false;
-  world.addChild(enemy);
+  const turretTexture = (() => {
+    const gfx = new PIXI.Graphics();
+    gfx.beginFill(0x38bdf8);
+    gfx.drawRoundedRect(0, 0, 24, 24, 6);
+    gfx.endFill();
+    return app.renderer.generateTexture(gfx);
+  })();
 
-  const enemyHpBar = new PIXI.Graphics();
-  enemyHpBar.zIndex = 3;
-  enemyHpBar.visible = false;
-  world.addChild(enemyHpBar);
+  const createEnemyState = (
+    data: EnemyData,
+    texture: PIXI.Texture,
+    map: TileMap,
+    mapId: string,
+    type: "chaser" | "turret",
+    spawnX: number,
+    spawnY: number
+  ) => {
+    const entity = new ZEntity({
+      sprite: new PIXI.Sprite(texture),
+      gravity: 0,
+      mass: 1,
+    });
+    entity.zIndex = 2;
+    entity.sprite.anchor.set(0.5);
+    const spawn = findNearestOpen(map, spawnX, spawnY);
+    entity.pos.x = spawn.x;
+    entity.pos.y = spawn.y;
+    entity.pos.z = 0;
+    entity.renderUpdate();
+    entity.visible = mapId === "map1";
+    world.addChild(entity);
 
-  const enemyLabel = new PIXI.Text({
-    text: defaultEnemyData.name,
-    style: {
-      fill: 0xf8fafc,
-      fontFamily: "Arial",
-      fontSize: 12,
-      fontWeight: "700",
-      stroke: 0x0b1220,
-      strokeThickness: 3,
-    },
-  });
-  enemyLabel.anchor.set(0.5);
-  enemyLabel.zIndex = 3;
-  enemyLabel.visible = false;
-  world.addChild(enemyLabel);
+    const hpBar = new PIXI.Graphics();
+    hpBar.zIndex = 3;
+    hpBar.visible = mapId === "map1";
+    world.addChild(hpBar);
+
+    const label = new PIXI.Text({
+      text: data.name,
+      style: {
+        fill: 0xf8fafc,
+        fontFamily: "Arial",
+        fontSize: 12,
+        fontWeight: "700",
+        stroke: 0x0b1220,
+        strokeThickness: 3,
+      },
+    });
+    label.anchor.set(0.5);
+    label.zIndex = 3;
+    label.visible = mapId === "map1";
+    world.addChild(label);
+
+    return {
+      entity,
+      name: data.name,
+      type,
+      radius: data.radius,
+      maxHp: data.maxHp,
+      hp: data.maxHp,
+      hitTimer: 0,
+      dead: false,
+      expGranted: false,
+      respawnTimer: 0,
+      respawnSeconds: data.respawnSeconds,
+      hitFlashSeconds: data.hitFlashSeconds,
+      labelOffsetY: data.labelOffsetY,
+      mapId,
+      speed: data.speed,
+      aggroRange: data.aggroRange,
+      stopRange: data.stopRange,
+      patrolRadius: data.patrolRadius,
+      attackRange: data.attackRange,
+      attackWindupSeconds: data.attackWindupSeconds,
+      attackCooldownSeconds: data.attackCooldownSeconds,
+      attackCooldown: 0,
+      attackTimer: 0,
+      attackFlashTimer: 0,
+      strafeSpeed: data.strafeSpeed,
+      strafeSwitchSeconds: data.strafeSwitchSeconds,
+      strafeSwitchTimer: data.strafeSwitchSeconds,
+      strafeDir: 1,
+      projectileSpeed: data.projectileSpeed,
+      projectileDamage: data.projectileDamage,
+      projectileRadius: data.projectileRadius,
+      projectileLifetime: data.projectileLifetime,
+      patrolAngle: 0,
+      homeX: spawn.x,
+      homeY: spawn.y,
+      hpBar,
+      label,
+    };
+  };
+
+  const enemies = [
+    createEnemyState(
+      defaultEnemyData,
+      enemyTexture,
+      map2,
+      "map2",
+      "chaser",
+      map2.tileSize * 12,
+      map2.tileSize * 5
+    ),
+    createEnemyState(
+      turretEnemyData,
+      turretTexture,
+      map2,
+      "map2",
+      "turret",
+      map2.tileSize * 5,
+      map2.tileSize * 7
+    ),
+  ];
 
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -426,6 +506,53 @@ const bootstrap = async (): Promise<void> => {
 
   uiLayer.addChild(topRight);
 
+  const doorPrompt = new UIElement({
+    width: 160,
+    height: 36,
+    anchor: "BottomCenter",
+    offsetY: -24,
+  });
+  const doorPromptBg = new PIXI.Graphics();
+  doorPromptBg.beginFill(0x0f1720, 0.85);
+  doorPromptBg.lineStyle(1, 0x2b3440, 1);
+  doorPromptBg.drawRoundedRect(0, 0, doorPrompt.widthPx, doorPrompt.heightPx, 6);
+  doorPromptBg.endFill();
+  doorPrompt.addChild(doorPromptBg);
+
+  const doorPromptText = new PIXI.Text({
+    text: "Space: Enter",
+    style: {
+      fill: 0xf8fafc,
+      fontFamily: "Arial",
+      fontSize: 11,
+      fontWeight: "600",
+    },
+  });
+  doorPromptText.anchor.set(0.5);
+  doorPromptText.position.set(doorPrompt.widthPx * 0.5, doorPrompt.heightPx * 0.5);
+  doorPrompt.addChild(doorPromptText);
+  doorPrompt.visible = false;
+  uiLayer.addChild(doorPrompt);
+
+  const minimap = new UIElement({
+    width: 140,
+    height: 90,
+    anchor: "TopRight",
+    offsetX: -16,
+    offsetY: 84,
+  });
+  const minimapBg = new PIXI.Graphics();
+  minimapBg.beginFill(0x0b1220, 0.65);
+  minimapBg.lineStyle(1, 0x1f2937, 1);
+  minimapBg.drawRoundedRect(0, 0, minimap.widthPx, minimap.heightPx, 8);
+  minimapBg.endFill();
+  minimap.addChild(minimapBg);
+  const minimapView = new PIXI.Graphics();
+  minimapView.position.set(8, 8);
+  minimap.addChild(minimapView);
+  minimap.visible = false;
+  uiLayer.addChild(minimap);
+
   const menu = new MenuSystem();
   menu.registerTabs(defaultPlayerData);
   uiLayer.addChild(menu);
@@ -511,6 +638,8 @@ const bootstrap = async (): Promise<void> => {
     playerRadius,
     playerHitTimer: 0,
     playerKnockbackTimer: 0,
+    hitStopTimer: 0,
+    hitStopDuration: 0.06,
     npcs: [
       { entity: npc, radius: npcRadius, dialogId: "npc", mapId: "map1" },
       { entity: npc2, radius: npcRadius, dialogId: "npc2", mapId: "map2" },
@@ -555,69 +684,43 @@ const bootstrap = async (): Promise<void> => {
       shakeAmp: 0,
       shakeFreq: 26,
     },
-    projectiles: [],
-    projectilePool: [],
-    enemyProjectiles: [],
-    enemyProjectilePool: [],
-    enemyProjectileTexture,
-    enemy: {
-      entity: enemy,
-      name: defaultEnemyData.name,
-      radius: defaultEnemyData.radius,
-      maxHp: defaultEnemyData.maxHp,
-      hp: defaultEnemyData.maxHp,
-      hitTimer: 0,
-      dead: false,
-      expGranted: false,
-      respawnTimer: 0,
-      respawnSeconds: defaultEnemyData.respawnSeconds,
-      hitFlashSeconds: defaultEnemyData.hitFlashSeconds,
-      labelOffsetY: defaultEnemyData.labelOffsetY,
-      speed: defaultEnemyData.speed,
-      aggroRange: defaultEnemyData.aggroRange,
-      stopRange: defaultEnemyData.stopRange,
-      patrolRadius: defaultEnemyData.patrolRadius,
-      attackRange: defaultEnemyData.attackRange,
-      attackWindupSeconds: defaultEnemyData.attackWindupSeconds,
-      attackCooldownSeconds: defaultEnemyData.attackCooldownSeconds,
-      attackCooldown: 0,
-      attackTimer: 0,
-      attackFlashTimer: 0,
-      strafeSpeed: defaultEnemyData.strafeSpeed,
-      strafeSwitchSeconds: defaultEnemyData.strafeSwitchSeconds,
-      strafeSwitchTimer: defaultEnemyData.strafeSwitchSeconds,
-      strafeDir: 1,
-      projectileSpeed: defaultEnemyData.projectileSpeed,
-      projectileDamage: defaultEnemyData.projectileDamage,
-      projectileRadius: defaultEnemyData.projectileRadius,
-      projectileLifetime: defaultEnemyData.projectileLifetime,
-      patrolAngle: 0,
-      homeX: enemySpawn.x,
-      homeY: enemySpawn.y,
-      hpBar: enemyHpBar,
-      label: enemyLabel,
-    },
-    enemyMapId: "map2",
-    damageTexts: [],
-    damageTextPool: [],
-    playerData: defaultPlayerData,
-    doorMarkers: [
-      { mapId: "map1", view: doorMarker1 },
-      { mapId: "map2", view: doorMarker2 },
-    ],
-    transitionOverlay,
-    transitionPhase: "idle",
-    transitionTime: 0,
-    transitionDuration: 0.25,
-    transitionTargetMapId: null,
-    transitionTargetSpawn: null,
+    levelUpSystem,
     levelUp: {
       active: false,
       options: [],
       selectedIndex: 0,
       ui: levelUpUI,
     },
-    levelUpSystem,
+    projectiles: [],
+    projectilePool: [],
+    enemyProjectiles: [],
+    enemyProjectilePool: [],
+    enemyProjectileTexture,
+    enemies,
+    damageTexts: [],
+    damageTextPool: [],
+    impactParticles: [],
+    impactParticlePool: [],
+    hitMarkers: [],
+    hitMarkerPool: [],
+    playerData: defaultPlayerData,
+    doorMarkers: [
+      { mapId: "map1", view: doorMarker1 },
+      { mapId: "map2", view: doorMarker2 },
+    ],
+    doorPrompt,
+    doorPromptBg,
+    doorPromptText,
+    minimap,
+    minimapBg,
+    minimapView,
+    minimapScale: 0.15,
+    transitionOverlay,
+    transitionPhase: "idle",
+    transitionTime: 0,
+    transitionDuration: 0.25,
+    transitionTargetMapId: null,
+    transitionTargetSpawn: null,
   };
 
   setupPointerSystem(state, projectileTexture);
@@ -627,6 +730,7 @@ const bootstrap = async (): Promise<void> => {
   const playerSystem = new PlayerSystem();
   const aimSystem = new AimSystem();
   const combatSystem = new CombatSystem();
+  const combatFXSystem = new CombatFXSystem();
   const uiSystem = new UISystem();
   const cameraSystem = new CameraSystem();
   const hudSystem = new HUDSystem();
@@ -635,15 +739,20 @@ const bootstrap = async (): Promise<void> => {
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
+    if (state.hitStopTimer > 0) {
+      state.hitStopTimer = Math.max(0, state.hitStopTimer - dt);
+    }
+    const simDt = state.hitStopTimer > 0 ? 0 : dt;
     menuToggleSystem.update(state);
-    dialogSystem.update(state, dt);
-    playerSystem.update(state, dt);
-    mapSystem.update(state, dt);
-    enemyAISystem.update(state, dt);
+    dialogSystem.update(state, simDt);
+    playerSystem.update(state, simDt);
+    mapSystem.update(state, simDt);
+    enemyAISystem.update(state, simDt);
     aimSystem.update(state);
-    combatSystem.update(state, dt);
+    combatSystem.update(state, simDt);
+    combatFXSystem.update(state, simDt);
     levelUpSystem.update(state);
-    cameraSystem.update(state, dt);
+    cameraSystem.update(state, simDt);
     uiSystem.update(state, dt);
     hudSystem.update(state);
   });

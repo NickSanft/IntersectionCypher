@@ -6,6 +6,10 @@ export class MapSystem {
     if (state.levelUp.active) {
       return;
     }
+    if (state.menu.isOpen || state.dialog.open) {
+      state.doorPrompt.visible = false;
+      return;
+    }
     this.updateTransition(state, dt);
     if (state.transitionPhase !== "idle") {
       return;
@@ -13,13 +17,29 @@ export class MapSystem {
 
     const mapState = state.maps[state.currentMapId];
     if (!mapState || !mapState.door) {
+      state.doorPrompt.visible = false;
       return;
     }
 
     const door = mapState.door;
     const px = state.player.pos.x;
     const py = state.player.pos.y;
-    if (px >= door.xMin && px <= door.xMax && py >= door.yMin && py <= door.yMax) {
+    const inDoor = px >= door.xMin && px <= door.xMax && py >= door.yMin && py <= door.yMax;
+    state.doorPrompt.visible = inDoor && state.transitionPhase === "idle";
+    if (state.doorPrompt.visible) {
+      state.doorPromptText.text = "Space: Enter";
+      const padding = 10;
+      const width = state.doorPromptText.width + padding * 2;
+      const height = state.doorPromptText.height + padding * 2;
+      state.doorPrompt.setSize(width, height);
+      state.doorPromptBg.clear();
+      state.doorPromptBg.beginFill(0x0f1720, 0.85);
+      state.doorPromptBg.lineStyle(1, 0x2b3440, 1);
+      state.doorPromptBg.drawRoundedRect(0, 0, width, height, 6);
+      state.doorPromptBg.endFill();
+      state.doorPromptText.position.set(width * 0.5, height * 0.5);
+    }
+    if (inDoor && state.input.isActionPressed("action")) {
       state.transitionPhase = "fadeOut";
       state.transitionTime = 0;
       state.transitionTargetMapId = door.to;
@@ -55,17 +75,19 @@ export class MapSystem {
       npc.entity.visible = npc.mapId === state.currentMapId;
     }
 
-    const enemyVisible = state.enemyMapId === state.currentMapId;
-    state.enemy.entity.visible = enemyVisible;
-    state.enemy.hpBar.visible = enemyVisible;
-    state.enemy.label.visible = enemyVisible;
-    if (enemyVisible) {
-      const enemySafe = findNearestOpen(state.map, state.enemy.homeX, state.enemy.homeY);
-      state.enemy.entity.pos.x = enemySafe.x;
-      state.enemy.entity.pos.y = enemySafe.y;
-      state.enemy.homeX = enemySafe.x;
-      state.enemy.homeY = enemySafe.y;
-      state.enemy.entity.renderUpdate();
+    for (const enemy of state.enemies) {
+      const enemyVisible = enemy.mapId === state.currentMapId && !enemy.dead;
+      enemy.entity.visible = enemyVisible;
+      enemy.hpBar.visible = enemyVisible;
+      enemy.label.visible = enemyVisible;
+      if (enemyVisible) {
+        const enemySafe = findNearestOpen(state.map, enemy.homeX, enemy.homeY);
+        enemy.entity.pos.x = enemySafe.x;
+        enemy.entity.pos.y = enemySafe.y;
+        enemy.homeX = enemySafe.x;
+        enemy.homeY = enemySafe.y;
+        enemy.entity.renderUpdate();
+      }
     }
 
     for (const entry of state.projectiles) {
@@ -92,6 +114,8 @@ export class MapSystem {
       state.transitionOverlay.visible = false;
       return;
     }
+
+    state.doorPrompt.visible = false;
 
     const width = state.app.renderer.width;
     const height = state.app.renderer.height;
