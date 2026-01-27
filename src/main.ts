@@ -18,6 +18,7 @@ import { HUDSystem } from "./game/systems/HUDSystem";
 import { EnemyAISystem } from "./game/systems/EnemyAISystem";
 import { MapSystem } from "./game/systems/MapSystem";
 import { CombatFXSystem } from "./game/systems/CombatFXSystem";
+import { MinimapSystem } from "./game/systems/MinimapSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
@@ -550,7 +551,7 @@ const bootstrap = async (): Promise<void> => {
   const minimapView = new PIXI.Graphics();
   minimapView.position.set(8, 8);
   minimap.addChild(minimapView);
-  minimap.visible = false;
+  minimap.visible = true;
   uiLayer.addChild(minimap);
 
   const menu = new MenuSystem();
@@ -736,6 +737,7 @@ const bootstrap = async (): Promise<void> => {
   const hudSystem = new HUDSystem();
   const enemyAISystem = new EnemyAISystem();
   const mapSystem = new MapSystem();
+  const minimapSystem = new MinimapSystem();
 
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
@@ -754,6 +756,7 @@ const bootstrap = async (): Promise<void> => {
     levelUpSystem.update(state);
     cameraSystem.update(state, simDt);
     uiSystem.update(state, dt);
+    minimapSystem.update(state);
     hudSystem.update(state);
   });
 };
