@@ -202,7 +202,8 @@ export class CombatSystem {
       if (dist <= state.playerRadius + entry.projectile.radius) {
         state.player.sprite.tint = 0xfca5a5;
         state.playerHitTimer = 0.2;
-        state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - entry.damage);
+        const damage = Math.max(0, entry.damage * state.playerDamageMult);
+        state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - damage);
         state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.12);
         state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 5);
         const nx = dist === 0 ? 0 : dx / dist;

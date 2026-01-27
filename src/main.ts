@@ -19,9 +19,11 @@ import { EnemyAISystem } from "./game/systems/EnemyAISystem";
 import { MapSystem } from "./game/systems/MapSystem";
 import { CombatFXSystem } from "./game/systems/CombatFXSystem";
 import { MinimapSystem } from "./game/systems/MinimapSystem";
+import { AbilitySystem } from "./game/systems/AbilitySystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
+import { createAbilityStates } from "./game/abilities/AbilityFactory";
 import { findNearestOpen } from "./core/world/MapUtils";
 import npcDialog from "./game/dialogs/npc.json";
 import npc2Dialog from "./game/dialogs/npc2.json";
@@ -554,6 +556,61 @@ const bootstrap = async (): Promise<void> => {
   minimap.visible = true;
   uiLayer.addChild(minimap);
 
+  const abilityBar = new UIElement({
+    width: 200,
+    height: 64,
+    anchor: "BottomLeft",
+    offsetX: 16,
+    offsetY: -16,
+  });
+  const abilitySlotBgs: PIXI.Graphics[] = [];
+  const abilitySlotCooldowns: PIXI.Graphics[] = [];
+  const abilitySlotCasts: PIXI.Graphics[] = [];
+  const abilitySlotLabels: PIXI.Text[] = [];
+  const abilitySlotKeys: PIXI.Text[] = [];
+
+  for (let i = 0; i < 3; i += 1) {
+    const bg = new PIXI.Graphics();
+    abilityBar.addChild(bg);
+    abilitySlotBgs.push(bg);
+
+    const cooldown = new PIXI.Graphics();
+    abilityBar.addChild(cooldown);
+    abilitySlotCooldowns.push(cooldown);
+
+    const cast = new PIXI.Graphics();
+    abilityBar.addChild(cast);
+    abilitySlotCasts.push(cast);
+
+    const label = new PIXI.Text({
+      text: "",
+      style: {
+        fill: 0xe2e8f0,
+        fontFamily: "Arial",
+        fontSize: 10,
+        fontWeight: "600",
+      },
+    });
+    label.anchor.set(0.5, 0.5);
+    abilityBar.addChild(label);
+    abilitySlotLabels.push(label);
+
+    const keyLabel = new PIXI.Text({
+      text: "",
+      style: {
+        fill: 0x93c5fd,
+        fontFamily: "Arial",
+        fontSize: 9,
+        fontWeight: "700",
+      },
+    });
+    keyLabel.anchor.set(1, 1);
+    abilityBar.addChild(keyLabel);
+    abilitySlotKeys.push(keyLabel);
+  }
+
+  uiLayer.addChild(abilityBar);
+
   const menu = new MenuSystem();
   menu.registerTabs(defaultPlayerData);
   uiLayer.addChild(menu);
@@ -641,6 +698,8 @@ const bootstrap = async (): Promise<void> => {
     playerKnockbackTimer: 0,
     hitStopTimer: 0,
     hitStopDuration: 0.06,
+    playerDamageMult: 1,
+    playerDamageMultTimer: 0,
     npcs: [
       { entity: npc, radius: npcRadius, dialogId: "npc", mapId: "map1" },
       { entity: npc2, radius: npcRadius, dialogId: "npc2", mapId: "map2" },
@@ -658,6 +717,15 @@ const bootstrap = async (): Promise<void> => {
     hudExpText,
     chargeBar,
     chargeLabel,
+    abilities: [],
+    abilityBar: {
+      root: abilityBar,
+      slotBgs: abilitySlotBgs,
+      slotLabels: abilitySlotLabels,
+      slotKeys: abilitySlotKeys,
+      slotCooldowns: abilitySlotCooldowns,
+      slotCasts: abilitySlotCasts,
+    },
     dialog: {
       open: false,
       dialogs: { npc: npcDialog, npc2: npc2Dialog },
@@ -724,11 +792,14 @@ const bootstrap = async (): Promise<void> => {
     transitionTargetSpawn: null,
   };
 
+  state.abilities = createAbilityStates(state);
+
   setupPointerSystem(state, projectileTexture);
 
   const menuToggleSystem = new MenuToggleSystem();
   const dialogSystem = new DialogSystem();
   const playerSystem = new PlayerSystem();
+  const abilitySystem = new AbilitySystem();
   const aimSystem = new AimSystem();
   const combatSystem = new CombatSystem();
   const combatFXSystem = new CombatFXSystem();
@@ -748,6 +819,7 @@ const bootstrap = async (): Promise<void> => {
     menuToggleSystem.update(state);
     dialogSystem.update(state, simDt);
     playerSystem.update(state, simDt);
+    abilitySystem.update(state, simDt);
     mapSystem.update(state, simDt);
     enemyAISystem.update(state, simDt);
     aimSystem.update(state);

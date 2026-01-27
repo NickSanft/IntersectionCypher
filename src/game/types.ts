@@ -1,6 +1,6 @@
 import type * as PIXI from "pixi.js";
 import type { TileMap } from "../core/world/TileMap";
-import type { Input } from "./Input";
+import type { Input, KeyAction } from "./Input";
 import type { PlayerController } from "./PlayerController";
 import type { ZEntity } from "../entities/ZEntity";
 import type { MenuSystem } from "../ui/menu/MenuSystem";
@@ -142,6 +142,31 @@ export interface CameraState {
   shakeFreq: number;
 }
 
+export interface AbilityDefinition {
+  id: string;
+  label: string;
+  keyLabel: string;
+  inputAction: KeyAction;
+  cooldown: number;
+  castTime: number;
+  onCast: (state: GameState) => boolean;
+}
+
+export interface AbilityState {
+  def: AbilityDefinition;
+  cooldownRemaining: number;
+  castRemaining: number;
+}
+
+export interface AbilityBarState {
+  root: UIElement;
+  slotBgs: PIXI.Graphics[];
+  slotLabels: PIXI.Text[];
+  slotKeys: PIXI.Text[];
+  slotCooldowns: PIXI.Graphics[];
+  slotCasts: PIXI.Graphics[];
+}
+
 export interface NpcState {
   entity: ZEntity;
   radius: number;
@@ -188,6 +213,8 @@ export interface GameState {
   playerKnockbackTimer: number;
   hitStopTimer: number;
   hitStopDuration: number;
+  playerDamageMult: number;
+  playerDamageMultTimer: number;
   npcs: NpcState[];
   menu: MenuSystem;
   hud: UIElement;
@@ -202,6 +229,8 @@ export interface GameState {
   hudExpText: PIXI.Text;
   chargeBar: PIXI.Graphics;
   chargeLabel: PIXI.Text;
+  abilities: AbilityState[];
+  abilityBar: AbilityBarState;
   dialog: DialogState;
   aim: AimState;
   camera: CameraState;

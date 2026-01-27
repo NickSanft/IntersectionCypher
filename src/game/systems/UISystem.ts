@@ -6,6 +6,7 @@ export class UISystem {
     state.hudTopRight.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.doorPrompt.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.minimap.updateLayout(state.app.renderer.width, state.app.renderer.height);
+    state.abilityBar.root.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.dialog.ui.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.levelUp.ui.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.menu.update(dt);
