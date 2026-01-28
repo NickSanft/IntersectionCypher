@@ -1,0 +1,9 @@
+{
+  "start": "intro",
+  "nodes": {
+    "intro": {
+      "text": "The console hums and a hidden path unlocks.",
+      "call": "unlockPath"
+    }
+  }
+}

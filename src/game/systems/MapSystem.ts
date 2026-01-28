@@ -107,6 +107,10 @@ export class MapSystem {
     for (const marker of state.doorMarkers) {
       marker.view.visible = marker.mapId === state.currentMapId;
     }
+
+    for (const trigger of state.triggers) {
+      trigger.view.visible = trigger.mapId === state.currentMapId && !trigger.triggered;
+    }
   }
 
   private updateTransition(state: GameState, dt: number): void {

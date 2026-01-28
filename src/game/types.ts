@@ -198,6 +198,24 @@ export interface DoorMarker {
   view: PIXI.Container;
 }
 
+export type TriggerType = "loot" | "checkpoint" | "event";
+
+export interface TriggerState {
+  id: string;
+  mapId: string;
+  type: TriggerType;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  prompt: string;
+  once: boolean;
+  triggered: boolean;
+  view: PIXI.Container;
+  dialogId?: string;
+  onTrigger?: (state: GameState) => void;
+}
+
 export interface GameState {
   app: PIXI.Application;
   world: PIXI.Container;
@@ -215,6 +233,7 @@ export interface GameState {
   hitStopDuration: number;
   playerDamageMult: number;
   playerDamageMultTimer: number;
+  checkpoint: { mapId: string; x: number; y: number } | null;
   npcs: NpcState[];
   menu: MenuSystem;
   hud: UIElement;
@@ -253,6 +272,10 @@ export interface GameState {
   doorPrompt: UIElement;
   doorPromptBg: PIXI.Graphics;
   doorPromptText: PIXI.Text;
+  triggers: TriggerState[];
+  triggerPrompt: UIElement;
+  triggerPromptBg: PIXI.Graphics;
+  triggerPromptText: PIXI.Text;
   minimap: UIElement;
   minimapBg: PIXI.Graphics;
   minimapView: PIXI.Graphics;

@@ -20,6 +20,7 @@ import { MapSystem } from "./game/systems/MapSystem";
 import { CombatFXSystem } from "./game/systems/CombatFXSystem";
 import { MinimapSystem } from "./game/systems/MinimapSystem";
 import { AbilitySystem } from "./game/systems/AbilitySystem";
+import { TriggerSystem } from "./game/systems/TriggerSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
@@ -27,6 +28,7 @@ import { createAbilityStates } from "./game/abilities/AbilityFactory";
 import { findNearestOpen } from "./core/world/MapUtils";
 import npcDialog from "./game/dialogs/npc.json";
 import npc2Dialog from "./game/dialogs/npc2.json";
+import eventDialog from "./game/dialogs/event.json";
 import { DialogEngine } from "./game/dialog/DialogEngine";
 import { DialogUI } from "./game/dialog/DialogUI";
 import { LevelUpUI } from "./game/level/LevelUpUI";
@@ -398,6 +400,34 @@ const bootstrap = async (): Promise<void> => {
   doorMarker2.visible = false;
   world.addChild(doorMarker2);
 
+  const chestMarker = new PIXI.Container();
+  const chestBox = new PIXI.Graphics();
+  chestBox.beginFill(0xf59e0b, 0.9);
+  chestBox.drawRoundedRect(-8, -6, 16, 12, 3);
+  chestBox.endFill();
+  chestMarker.addChild(chestBox);
+  chestMarker.position.set(map1.tileSize * 8, map1.tileSize * 8);
+  world.addChild(chestMarker);
+
+  const checkpointMarker = new PIXI.Container();
+  const checkpointRing = new PIXI.Graphics();
+  checkpointRing.lineStyle(2, 0x22c55e, 0.9);
+  checkpointRing.drawCircle(0, 0, 10);
+  checkpointRing.endFill();
+  checkpointMarker.addChild(checkpointRing);
+  checkpointMarker.position.set(map1.tileSize * 5, map1.tileSize * 9);
+  world.addChild(checkpointMarker);
+
+  const eventMarker = new PIXI.Container();
+  const eventOrb = new PIXI.Graphics();
+  eventOrb.beginFill(0x60a5fa, 0.85);
+  eventOrb.drawCircle(0, 0, 8);
+  eventOrb.endFill();
+  eventMarker.addChild(eventOrb);
+  eventMarker.position.set(map2.tileSize * 10, map2.tileSize * 2);
+  eventMarker.visible = false;
+  world.addChild(eventMarker);
+
   const uiLayer = new PIXI.Container();
   uiLayer.sortableChildren = true;
   uiLayer.zIndex = 10;
@@ -537,6 +567,37 @@ const bootstrap = async (): Promise<void> => {
   doorPrompt.visible = false;
   uiLayer.addChild(doorPrompt);
 
+  const triggerPrompt = new UIElement({
+    width: 200,
+    height: 36,
+    anchor: "BottomCenter",
+    offsetY: -64,
+  });
+  const triggerPromptBg = new PIXI.Graphics();
+  triggerPromptBg.beginFill(0x0f1720, 0.85);
+  triggerPromptBg.lineStyle(1, 0x2b3440, 1);
+  triggerPromptBg.drawRoundedRect(0, 0, triggerPrompt.widthPx, triggerPrompt.heightPx, 6);
+  triggerPromptBg.endFill();
+  triggerPrompt.addChild(triggerPromptBg);
+
+  const triggerPromptText = new PIXI.Text({
+    text: "Space: Activate",
+    style: {
+      fill: 0xf8fafc,
+      fontFamily: "Arial",
+      fontSize: 11,
+      fontWeight: "600",
+    },
+  });
+  triggerPromptText.anchor.set(0.5);
+  triggerPromptText.position.set(
+    triggerPrompt.widthPx * 0.5,
+    triggerPrompt.heightPx * 0.5
+  );
+  triggerPrompt.addChild(triggerPromptText);
+  triggerPrompt.visible = false;
+  uiLayer.addChild(triggerPrompt);
+
   const minimap = new UIElement({
     width: 140,
     height: 90,
@@ -625,6 +686,9 @@ const bootstrap = async (): Promise<void> => {
         player.sprite.tint = 0xffffff;
       }, 180);
     },
+    unlockPath: () => {
+      eventOrb.tint = 0xffffff;
+    },
   });
   const dialogUI = new DialogUI(300, 140);
   dialogUI.setVisible(false);
@@ -700,6 +764,7 @@ const bootstrap = async (): Promise<void> => {
     hitStopDuration: 0.06,
     playerDamageMult: 1,
     playerDamageMultTimer: 0,
+    checkpoint: null,
     npcs: [
       { entity: npc, radius: npcRadius, dialogId: "npc", mapId: "map1" },
       { entity: npc2, radius: npcRadius, dialogId: "npc2", mapId: "map2" },
@@ -728,7 +793,7 @@ const bootstrap = async (): Promise<void> => {
     },
     dialog: {
       open: false,
-      dialogs: { npc: npcDialog, npc2: npc2Dialog },
+      dialogs: { npc: npcDialog, npc2: npc2Dialog, event: eventDialog },
       activeId: null,
       engine: dialogEngine,
       ui: dialogUI,
@@ -780,6 +845,10 @@ const bootstrap = async (): Promise<void> => {
     doorPrompt,
     doorPromptBg,
     doorPromptText,
+    triggers: [],
+    triggerPrompt,
+    triggerPromptBg,
+    triggerPromptText,
     minimap,
     minimapBg,
     minimapView,
@@ -793,10 +862,65 @@ const bootstrap = async (): Promise<void> => {
   };
 
   state.abilities = createAbilityStates(state);
+  state.triggers = [
+    {
+      id: "chest-1",
+      mapId: "map1",
+      type: "loot",
+      xMin: chestMarker.position.x - 14,
+      xMax: chestMarker.position.x + 14,
+      yMin: chestMarker.position.y - 14,
+      yMax: chestMarker.position.y + 14,
+      prompt: "Space: Open Chest",
+      once: true,
+      triggered: false,
+      view: chestMarker,
+      onTrigger: () => {
+        chestBox.clear();
+        chestBox.beginFill(0x92400e, 0.9);
+        chestBox.drawRoundedRect(-8, -6, 16, 12, 3);
+        chestBox.endFill();
+      },
+    },
+    {
+      id: "checkpoint-1",
+      mapId: "map1",
+      type: "checkpoint",
+      xMin: checkpointMarker.position.x - 16,
+      xMax: checkpointMarker.position.x + 16,
+      yMin: checkpointMarker.position.y - 16,
+      yMax: checkpointMarker.position.y + 16,
+      prompt: "Space: Save Checkpoint",
+      once: false,
+      triggered: false,
+      view: checkpointMarker,
+      onTrigger: () => {
+        checkpointRing.tint = 0x86efac;
+      },
+    },
+    {
+      id: "event-1",
+      mapId: "map2",
+      type: "event",
+      xMin: eventMarker.position.x - 16,
+      xMax: eventMarker.position.x + 16,
+      yMin: eventMarker.position.y - 16,
+      yMax: eventMarker.position.y + 16,
+      prompt: "Space: Activate Console",
+      once: true,
+      triggered: false,
+      view: eventMarker,
+      dialogId: "event",
+      onTrigger: () => {
+        eventOrb.tint = 0x94a3b8;
+      },
+    },
+  ];
 
   setupPointerSystem(state, projectileTexture);
 
   const menuToggleSystem = new MenuToggleSystem();
+  const triggerSystem = new TriggerSystem();
   const dialogSystem = new DialogSystem();
   const playerSystem = new PlayerSystem();
   const abilitySystem = new AbilitySystem();
@@ -817,6 +941,7 @@ const bootstrap = async (): Promise<void> => {
     }
     const simDt = state.hitStopTimer > 0 ? 0 : dt;
     menuToggleSystem.update(state);
+    triggerSystem.update(state);
     dialogSystem.update(state, simDt);
     playerSystem.update(state, simDt);
     abilitySystem.update(state, simDt);
