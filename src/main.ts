@@ -875,6 +875,13 @@ const bootstrap = async (): Promise<void> => {
       once: true,
       triggered: false,
       view: chestMarker,
+      rewards: {
+        credits: 30,
+        items: [
+          { id: "coil", name: "Flux Coil", rarity: "Rare" },
+          { id: "kit", name: "Repair Kit", rarity: "Common" },
+        ],
+      },
       onTrigger: () => {
         chestBox.clear();
         chestBox.beginFill(0x92400e, 0.9);
@@ -894,6 +901,9 @@ const bootstrap = async (): Promise<void> => {
       once: false,
       triggered: false,
       view: checkpointMarker,
+      rewards: {
+        flags: ["checkpoint-1"],
+      },
       onTrigger: () => {
         checkpointRing.tint = 0x86efac;
       },
@@ -911,6 +921,9 @@ const bootstrap = async (): Promise<void> => {
       triggered: false,
       view: eventMarker,
       dialogId: "event",
+      rewards: {
+        flags: ["console-activated"],
+      },
       onTrigger: () => {
         eventOrb.tint = 0x94a3b8;
       },

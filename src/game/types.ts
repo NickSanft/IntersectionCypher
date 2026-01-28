@@ -213,6 +213,11 @@ export interface TriggerState {
   triggered: boolean;
   view: PIXI.Container;
   dialogId?: string;
+  rewards?: {
+    credits?: number;
+    items?: import("./data/Inventory").InventoryItem[];
+    flags?: string[];
+  };
   onTrigger?: (state: GameState) => void;
 }
 

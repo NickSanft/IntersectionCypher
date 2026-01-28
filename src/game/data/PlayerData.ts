@@ -1,3 +1,5 @@
+import type { InventoryItem } from "./Inventory";
+
 export interface PlayerStats {
   level: number;
   exp: number;
@@ -25,6 +27,9 @@ export interface PlayerData {
   name: string;
   stats: PlayerStats;
   equipment: PlayerEquipment;
+  credits: number;
+  inventory: InventoryItem[];
+  questFlags: Record<string, boolean>;
 }
 
 export const defaultPlayerData: PlayerData = {
@@ -49,5 +54,16 @@ export const defaultPlayerData: PlayerData = {
     body: "Prism Guard",
     arms: "Flux Bracers",
     head: "Neo Visor",
+  },
+  credits: 120,
+  inventory: [
+    { id: "potion", name: "Heat Potion", rarity: "Common" },
+    { id: "tonic", name: "Focus Tonic", rarity: "Common" },
+    { id: "coil", name: "Flux Coil", rarity: "Rare" },
+    { id: "badge", name: "Circuit Badge", rarity: "Rare" },
+  ],
+  questFlags: {
+    "tutorial-complete": false,
+    "console-activated": false,
   },
 };

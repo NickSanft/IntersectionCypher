@@ -65,8 +65,20 @@ export class TriggerSystem {
         x: state.player.pos.x,
         y: state.player.pos.y,
       };
-    } else if (trigger.type === "loot") {
-      state.levelUpSystem.addExperience(state, 3);
+    }
+
+    if (trigger.rewards) {
+      if (trigger.rewards.credits) {
+        state.playerData.credits += trigger.rewards.credits;
+      }
+      if (trigger.rewards.items && trigger.rewards.items.length > 0) {
+        state.playerData.inventory.push(...trigger.rewards.items);
+      }
+      if (trigger.rewards.flags) {
+        for (const flag of trigger.rewards.flags) {
+          state.playerData.questFlags[flag] = true;
+        }
+      }
     }
 
     if (trigger.onTrigger) {

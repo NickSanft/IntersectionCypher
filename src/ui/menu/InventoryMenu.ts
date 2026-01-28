@@ -1,19 +1,24 @@
-import * as PIXI from "pixi.js";
-
-export interface InventoryItem {
-  id: string;
-  name: string;
-  rarity: "Common" | "Rare" | "Epic";
-}
+﻿import * as PIXI from "pixi.js";
+import type { InventoryItem } from "../../game/data/Inventory";
 
 export class InventoryMenu extends PIXI.Container {
-  private readonly items: InventoryItem[];
+  private items: InventoryItem[];
+  private credits = 0;
   private widthPx = 0;
   private heightPx = 0;
 
-  constructor(items: InventoryItem[]) {
+  constructor(items: InventoryItem[], credits: number) {
     super();
     this.items = items;
+    this.credits = credits;
+  }
+
+  public setData(items: InventoryItem[], credits: number): void {
+    this.items = items;
+    this.credits = credits;
+    if (this.widthPx > 0 && this.heightPx > 0) {
+      this.resize(this.widthPx, this.heightPx);
+    }
   }
 
   public resize(width: number, height: number): void {
@@ -40,7 +45,7 @@ export class InventoryMenu extends PIXI.Container {
     const startY = padding;
 
     const title = new PIXI.Text({
-      text: "Inventory",
+      text: `Inventory  (${this.credits}c)`,
       style: {
         fill: 0xe2e8f0,
         fontFamily: "Arial",
@@ -99,7 +104,7 @@ export class InventoryMenu extends PIXI.Container {
 
       const lines = this.items
         .slice(0, 8)
-        .map((item) => `• ${item.name}`)
+        .map((item) => `- ${item.name}`)
         .join("\n");
       const list = new PIXI.Text({
         text: lines,

@@ -1,7 +1,8 @@
 import * as PIXI from "pixi.js";
 import { MenuTabButton } from "./MenuTabButton";
 import { CharacterMenu } from "./CharacterMenu";
-import { InventoryMenu, type InventoryItem } from "./InventoryMenu";
+import { InventoryMenu } from "./InventoryMenu";
+import { QuestMenu } from "./QuestMenu";
 import type { PlayerData } from "../../game/data/PlayerData";
 
 export class MenuSystem extends PIXI.Container {
@@ -14,6 +15,8 @@ export class MenuSystem extends PIXI.Container {
   private readonly tabs: MenuTabButton[] = [];
   private readonly pages = new Map<string, PIXI.Container>();
   private characterPage: CharacterMenu | null = null;
+  private inventoryPage: InventoryMenu | null = null;
+  private questPage: QuestMenu | null = null;
   private playerData: PlayerData | null = null;
 
   private isVisible = false;
@@ -165,6 +168,9 @@ export class MenuSystem extends PIXI.Container {
     const data = playerData ?? {
       name: "Lea",
       stats: {
+        level: 1,
+        exp: 0,
+        expToNext: 10,
         hp: 120,
         maxHp: 120,
         attack: 24,
@@ -172,6 +178,9 @@ export class MenuSystem extends PIXI.Container {
         focus: 12,
         dashMultiplier: 1.35,
         guardMultiplier: 1.15,
+        projectileDamage: 1,
+        projectileSpeed: 420,
+        moveSpeed: 220,
       },
       equipment: {
         weapon: "Hexa Blade",
@@ -179,6 +188,9 @@ export class MenuSystem extends PIXI.Container {
         arms: "Flux Bracers",
         head: "Neo Visor",
       },
+      credits: 0,
+      inventory: [],
+      questFlags: {},
     };
     const characterPage = new CharacterMenu({
       level: data.stats.level,
@@ -202,21 +214,15 @@ export class MenuSystem extends PIXI.Container {
     this.contentRoot.addChild(characterPage);
     this.characterPage = characterPage;
 
-    const items: InventoryItem[] = [
-      { id: "potion", name: "Heat Potion", rarity: "Common" },
-      { id: "tonic", name: "Focus Tonic", rarity: "Common" },
-      { id: "coil", name: "Flux Coil", rarity: "Rare" },
-      { id: "badge", name: "Circuit Badge", rarity: "Rare" },
-      { id: "blade", name: "Astra Blade", rarity: "Epic" },
-      { id: "shell", name: "Prism Shell", rarity: "Common" },
-      { id: "gear", name: "Repair Kit", rarity: "Common" },
-      { id: "data", name: "Data Fragment", rarity: "Rare" },
-      { id: "stone", name: "Cryst Stone", rarity: "Common" },
-      { id: "core", name: "Arc Core", rarity: "Epic" },
-    ];
-    const inventoryPage = new InventoryMenu(items);
+    const inventoryPage = new InventoryMenu(data.inventory, data.credits);
     this.pages.set("Inventory", inventoryPage);
     this.contentRoot.addChild(inventoryPage);
+    this.inventoryPage = inventoryPage;
+
+    const questPage = new QuestMenu(data.questFlags);
+    this.pages.set("Quest", questPage);
+    this.contentRoot.addChild(questPage);
+    this.questPage = questPage;
 
     const placeholder = (label: string): PIXI.Container => {
       const container = new PIXI.Container();
@@ -234,7 +240,6 @@ export class MenuSystem extends PIXI.Container {
     };
 
     this.pages.set("Stats", placeholder("Stats"));
-    this.pages.set("Quest", placeholder("Quest"));
     for (const [key, page] of this.pages) {
       if (!this.contentRoot.children.includes(page)) {
         this.contentRoot.addChild(page);
@@ -268,6 +273,13 @@ export class MenuSystem extends PIXI.Container {
       arms: data.equipment.arms,
       head: data.equipment.head,
     });
+
+    if (this.inventoryPage) {
+      this.inventoryPage.setData(data.inventory, data.credits);
+    }
+    if (this.questPage) {
+      this.questPage.setFlags(data.questFlags);
+    }
   }
 
   private addTab(label: string, onSelect: () => void): void {
