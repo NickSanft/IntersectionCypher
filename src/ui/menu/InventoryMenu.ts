@@ -88,6 +88,21 @@ export class InventoryMenu extends PIXI.Container {
       });
       label.position.set(x + 6, y + slotSize + 6);
       this.addChild(label);
+
+      if (item.quantity > 1) {
+        const count = new PIXI.Text({
+          text: `x${item.quantity}`,
+          style: {
+            fill: 0xf8fafc,
+            fontFamily: "Arial",
+            fontSize: 10,
+            fontWeight: "700",
+          },
+        });
+        count.anchor.set(1, 1);
+        count.position.set(x + slotSize - 6, y + slotSize - 6);
+        this.addChild(count);
+      }
     }
 
     const listX = startX + gridWidth + 32;
