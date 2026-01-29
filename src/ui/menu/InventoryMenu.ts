@@ -67,6 +67,8 @@ export class InventoryMenu extends PIXI.Container {
       const y = gridY + row * (slotSize + gap);
 
       const item = this.items[i];
+      const labelText =
+        item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name;
       const slot = new PIXI.Graphics();
       slot.beginFill(0x0f172a, 0.9);
       slot.lineStyle(2, this.rarityColor(item.rarity), 1);
@@ -75,7 +77,7 @@ export class InventoryMenu extends PIXI.Container {
       this.addChild(slot);
 
       const label = new PIXI.Text({
-        text: item.name,
+        text: labelText,
         style: {
           fill: 0xcbd5f5,
           fontFamily: "Arial",
@@ -104,7 +106,9 @@ export class InventoryMenu extends PIXI.Container {
 
       const lines = this.items
         .slice(0, 8)
-        .map((item) => `- ${item.name}`)
+        .map((item) =>
+          item.quantity > 1 ? `- ${item.name} x${item.quantity}` : `- ${item.name}`
+        )
         .join("\n");
       const list = new PIXI.Text({
         text: lines,

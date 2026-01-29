@@ -878,8 +878,8 @@ const bootstrap = async (): Promise<void> => {
       rewards: {
         credits: 30,
         items: [
-          { id: "coil", name: "Flux Coil", rarity: "Rare" },
-          { id: "kit", name: "Repair Kit", rarity: "Common" },
+          { id: "coil", name: "Flux Coil", rarity: "Rare", quantity: 1 },
+          { id: "kit", name: "Repair Kit", rarity: "Common", quantity: 2 },
         ],
       },
       onTrigger: () => {

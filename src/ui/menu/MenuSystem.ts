@@ -191,6 +191,7 @@ export class MenuSystem extends PIXI.Container {
       credits: 0,
       inventory: [],
       questFlags: {},
+      questLog: [],
     };
     const characterPage = new CharacterMenu({
       level: data.stats.level,
@@ -219,7 +220,7 @@ export class MenuSystem extends PIXI.Container {
     this.contentRoot.addChild(inventoryPage);
     this.inventoryPage = inventoryPage;
 
-    const questPage = new QuestMenu(data.questFlags);
+    const questPage = new QuestMenu(data.questFlags, data.questLog);
     this.pages.set("Quest", questPage);
     this.contentRoot.addChild(questPage);
     this.questPage = questPage;
@@ -278,7 +279,7 @@ export class MenuSystem extends PIXI.Container {
       this.inventoryPage.setData(data.inventory, data.credits);
     }
     if (this.questPage) {
-      this.questPage.setFlags(data.questFlags);
+      this.questPage.setData(data.questFlags, data.questLog);
     }
   }
 

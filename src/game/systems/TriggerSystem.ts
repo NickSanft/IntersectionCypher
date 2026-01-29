@@ -72,11 +72,25 @@ export class TriggerSystem {
         state.playerData.credits += trigger.rewards.credits;
       }
       if (trigger.rewards.items && trigger.rewards.items.length > 0) {
-        state.playerData.inventory.push(...trigger.rewards.items);
+        for (const item of trigger.rewards.items) {
+          const existing = state.playerData.inventory.find(
+            (entry) => entry.id === item.id
+          );
+          if (existing) {
+            existing.quantity += item.quantity;
+          } else {
+            state.playerData.inventory.push({ ...item });
+          }
+        }
       }
       if (trigger.rewards.flags) {
         for (const flag of trigger.rewards.flags) {
           state.playerData.questFlags[flag] = true;
+          for (const quest of state.playerData.questLog) {
+            if (quest.id === flag) {
+              quest.completed = true;
+            }
+          }
         }
       }
     }

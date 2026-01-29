@@ -1,17 +1,22 @@
 import * as PIXI from "pixi.js";
 
+import type { QuestEntry } from "../../game/data/Quest";
+
 export class QuestMenu extends PIXI.Container {
   private flags: Record<string, boolean>;
+  private quests: QuestEntry[];
   private widthPx = 0;
   private heightPx = 0;
 
-  constructor(flags: Record<string, boolean>) {
+  constructor(flags: Record<string, boolean>, quests: QuestEntry[]) {
     super();
     this.flags = flags;
+    this.quests = quests;
   }
 
-  public setFlags(flags: Record<string, boolean>): void {
+  public setData(flags: Record<string, boolean>, quests: QuestEntry[]): void {
     this.flags = flags;
+    this.quests = quests;
     if (this.widthPx > 0 && this.heightPx > 0) {
       this.resize(this.widthPx, this.heightPx);
     }
@@ -33,7 +38,7 @@ export class QuestMenu extends PIXI.Container {
     this.addChild(panel);
 
     const title = new PIXI.Text({
-      text: "Quest Flags",
+      text: "Quest Log",
       style: {
         fill: 0xe2e8f0,
         fontFamily: "Arial",
@@ -44,21 +49,57 @@ export class QuestMenu extends PIXI.Container {
     title.position.set(16, 12);
     this.addChild(title);
 
-    const entries = Object.entries(this.flags);
-    const lines = entries.length
-      ? entries.map(([key, value]) => `${value ? "[x]" : "[ ]"} ${key}`).join("\n")
-      : "No active flags";
+    const questLines = this.quests.length
+      ? this.quests
+          .map(
+            (quest) =>
+              `${quest.completed ? "[x]" : "[ ]"} ${quest.title}\n  ${quest.description}`
+          )
+          .join("\n\n")
+      : "No active quests";
 
-    const list = new PIXI.Text({
-      text: lines,
+    const questList = new PIXI.Text({
+      text: questLines,
       style: {
         fill: 0xcbd5f5,
         fontFamily: "Arial",
         fontSize: 12,
         lineHeight: 18,
+        wordWrap: true,
+        wordWrapWidth: width - 32,
       },
     });
-    list.position.set(16, 44);
-    this.addChild(list);
+    questList.position.set(16, 44);
+    this.addChild(questList);
+
+    const flagTitle = new PIXI.Text({
+      text: "Flags",
+      style: {
+        fill: 0xe2e8f0,
+        fontFamily: "Arial",
+        fontSize: 14,
+        fontWeight: "700",
+      },
+    });
+    const flagY = Math.min(height - 120, questList.position.y + questList.height + 24);
+    flagTitle.position.set(16, flagY);
+    this.addChild(flagTitle);
+
+    const entries = Object.entries(this.flags);
+    const flagLines = entries.length
+      ? entries.map(([key, value]) => `${value ? "[x]" : "[ ]"} ${key}`).join("\n")
+      : "No flags";
+
+    const flagList = new PIXI.Text({
+      text: flagLines,
+      style: {
+        fill: 0x94a3b8,
+        fontFamily: "Arial",
+        fontSize: 11,
+        lineHeight: 16,
+      },
+    });
+    flagList.position.set(16, flagY + 22);
+    this.addChild(flagList);
   }
 }
