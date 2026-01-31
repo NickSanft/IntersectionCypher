@@ -71,4 +71,9 @@ export class UIButton extends UIElement implements Focusable {
     this.background.drawRoundedRect(0, 0, this.widthPx, this.heightPx, 6);
     this.background.endFill();
   }
+
+  public setLabel(label: string): void {
+    this.text.text = label;
+    this.text.position.set(this.widthPx * 0.5, this.heightPx * 0.5);
+  }
 }

@@ -6,6 +6,7 @@ export type KeyAction =
   | "action"
   | "menu"
   | "summary"
+  | "settings"
   | "ability1"
   | "ability2"
   | "ability3";
@@ -18,6 +19,7 @@ const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
   action: ["Space", "Enter"],
   menu: ["Escape", "KeyM", "KeyI"],
   summary: ["KeyR"],
+  settings: ["KeyO"],
   ability1: ["KeyQ", "Digit1"],
   ability2: ["KeyE", "Digit2"],
   ability3: ["KeyF", "Digit3"],

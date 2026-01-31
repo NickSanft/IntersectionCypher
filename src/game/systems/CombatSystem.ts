@@ -51,11 +51,17 @@ export class CombatSystem {
     return entry;
   }
 
-  private spawnImpactFx(state: GameState, x: number, y: number): void {
+  private spawnImpactFx(
+    state: GameState,
+    x: number,
+    y: number,
+    color: number,
+    markerColor: number
+  ): void {
     for (let i = 0; i < 6; i += 1) {
       const particle = this.acquireImpactParticle(state);
       particle.gfx.clear();
-      particle.gfx.beginFill(0xfbbf24, 0.9);
+      particle.gfx.beginFill(color, 0.9);
       particle.gfx.drawCircle(0, 0, 2);
       particle.gfx.endFill();
       particle.gfx.position.set(x, y);
@@ -77,7 +83,7 @@ export class CombatSystem {
 
     const marker = this.acquireHitMarker(state);
     marker.gfx.clear();
-    marker.gfx.lineStyle(2, 0xfef08a, 0.9);
+    marker.gfx.lineStyle(2, markerColor, 0.9);
     marker.gfx.moveTo(-5, 0);
     marker.gfx.lineTo(5, 0);
     marker.gfx.moveTo(0, -5);
@@ -155,10 +161,14 @@ export class CombatSystem {
             state.levelUpSystem.addExperience(state, 5);
           }
           this.drawEnemyHp(enemy);
-          this.spawnImpactFx(state, enemy.entity.pos.x, enemy.entity.pos.y);
+          const onBeat = entry.onBeat;
+          const impactColor = onBeat ? 0xfacc15 : 0xfbbf24;
+          const markerColor = onBeat ? 0xfde047 : 0xfef08a;
+          this.spawnImpactFx(state, enemy.entity.pos.x, enemy.entity.pos.y, impactColor, markerColor);
 
           const damagePoolEntry = this.acquireDamageText(state);
           damagePoolEntry.text.text = `-${entry.damage}`;
+          damagePoolEntry.text.style.fill = onBeat ? 0xfacc15 : 0xf97316;
           damagePoolEntry.text.position.set(enemy.entity.pos.x, enemy.entity.pos.y - 36);
           damagePoolEntry.text.alpha = 1;
           damagePoolEntry.text.visible = true;
@@ -212,7 +222,7 @@ export class CombatSystem {
         state.player.vel.x = nx * knockback;
         state.player.vel.y = ny * knockback;
         state.playerKnockbackTimer = 0.2;
-        this.spawnImpactFx(state, state.player.pos.x, state.player.pos.y);
+        this.spawnImpactFx(state, state.player.pos.x, state.player.pos.y, 0xfbbf24, 0xfef08a);
 
         entry.pool.inUse = false;
         entry.projectile.entity.visible = false;

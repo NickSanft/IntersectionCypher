@@ -66,6 +66,10 @@ export class TriggerSystem {
         y: state.player.pos.y,
       };
     }
+    if (trigger.type === "runEnd") {
+      state.runSummary.open = true;
+      state.runSummary.ui.setVisible(true);
+    }
 
     if (trigger.rewards) {
       if (trigger.rewards.credits) {

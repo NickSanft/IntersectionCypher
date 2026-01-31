@@ -11,6 +11,7 @@ export class UISystem {
     state.dialog.ui.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.levelUp.ui.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.runSummary.ui.updateLayout(state.app.renderer.width, state.app.renderer.height);
+    state.settings.ui.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.menu.update(dt);
     state.menu.updateLayout(state.app.renderer.width, state.app.renderer.height);
     state.menu.updatePlayerData(state.playerData);

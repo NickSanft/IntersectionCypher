@@ -23,6 +23,7 @@ import { AbilitySystem } from "./game/systems/AbilitySystem";
 import { TriggerSystem } from "./game/systems/TriggerSystem";
 import { RhythmSystem } from "./game/systems/RhythmSystem";
 import { RunSummarySystem } from "./game/systems/RunSummarySystem";
+import { SettingsSystem } from "./game/systems/SettingsSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
@@ -37,6 +38,7 @@ import { LevelUpUI } from "./game/level/LevelUpUI";
 import { LevelUpSystem } from "./game/systems/LevelUpSystem";
 import { RunSummaryUI } from "./game/run/RunSummaryUI";
 import { zoneConfigs } from "./game/data/Zones";
+import { SettingsUI } from "./game/settings/SettingsUI";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -435,6 +437,20 @@ const bootstrap = async (): Promise<void> => {
   eventMarker.visible = false;
   world.addChild(eventMarker);
 
+  const finishMarker = new PIXI.Container();
+  const finishStar = new PIXI.Graphics();
+  finishStar.beginFill(0xfacc15, 0.9);
+  finishStar.moveTo(0, -10);
+  finishStar.lineTo(6, 0);
+  finishStar.lineTo(0, 10);
+  finishStar.lineTo(-6, 0);
+  finishStar.lineTo(0, -10);
+  finishStar.endFill();
+  finishMarker.addChild(finishStar);
+  finishMarker.position.set(map2.tileSize * 14, map2.tileSize * 8);
+  finishMarker.visible = false;
+  world.addChild(finishMarker);
+
   const uiLayer = new PIXI.Container();
   uiLayer.sortableChildren = true;
   uiLayer.zIndex = 10;
@@ -702,6 +718,18 @@ const bootstrap = async (): Promise<void> => {
   runSummaryUI.setVisible(false);
   uiLayer.addChild(runSummaryUI.root);
 
+  const settingsSystem = new SettingsSystem();
+  let state: GameState;
+  const settingsUI = new SettingsUI(
+    360,
+    200,
+    () => settingsSystem.toggleMetronome(state),
+    () => settingsSystem.cycleVolume(state)
+  );
+  settingsUI.root.zIndex = 30;
+  settingsUI.setVisible(false);
+  uiLayer.addChild(settingsUI.root);
+
   const menu = new MenuSystem();
   menu.registerTabs(defaultPlayerData);
   uiLayer.addChild(menu);
@@ -744,7 +772,7 @@ const bootstrap = async (): Promise<void> => {
 
   const levelUpSystem = new LevelUpSystem();
 
-  const state: GameState = {
+  state = {
     app,
     world,
     map: map1,
@@ -919,6 +947,10 @@ const bootstrap = async (): Promise<void> => {
       open: false,
       ui: runSummaryUI,
     },
+    settings: {
+      open: false,
+      ui: settingsUI,
+    },
   };
 
   state.abilities = createAbilityStates(state);
@@ -988,6 +1020,22 @@ const bootstrap = async (): Promise<void> => {
         eventOrb.tint = 0x94a3b8;
       },
     },
+    {
+      id: "run-end",
+      mapId: "map2",
+      type: "runEnd",
+      xMin: finishMarker.position.x - 16,
+      xMax: finishMarker.position.x + 16,
+      yMin: finishMarker.position.y - 16,
+      yMax: finishMarker.position.y + 16,
+      prompt: "Space: Finish Run",
+      once: true,
+      triggered: false,
+      view: finishMarker,
+      onTrigger: () => {
+        finishStar.tint = 0xfde047;
+      },
+    },
   ];
 
   setupPointerSystem(state, projectileTexture);
@@ -1022,6 +1070,7 @@ const bootstrap = async (): Promise<void> => {
     abilitySystem.update(state, simDt);
     rhythmSystem.update(state, simDt);
     runSummarySystem.update(state);
+    settingsSystem.update(state);
     mapSystem.update(state, simDt);
     enemyAISystem.update(state, simDt);
     aimSystem.update(state);

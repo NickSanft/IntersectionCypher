@@ -20,6 +20,7 @@ export interface ProjectileEntry {
   projectile: Projectile;
   life: number;
   damage: number;
+  onBeat: boolean;
   pool: ProjectilePoolEntry;
 }
 
@@ -199,7 +200,7 @@ export interface DoorMarker {
   view: PIXI.Container;
 }
 
-export type TriggerType = "loot" | "checkpoint" | "event";
+export type TriggerType = "loot" | "checkpoint" | "event" | "runEnd";
 
 export interface TriggerState {
   id: string;
@@ -257,6 +258,7 @@ export interface GameState {
   hudBeatRing: PIXI.Graphics;
   hudBeatLabel: PIXI.Text;
   rhythmOverlay: PIXI.Graphics;
+  hudBeatWindow: PIXI.Graphics;
   abilities: AbilityState[];
   abilityBar: AbilityBarState;
   dialog: DialogState;
@@ -297,6 +299,7 @@ export interface GameState {
   transitionTargetMapId: string | null;
   transitionTargetSpawn: { x: number; y: number } | null;
   runSummary: RunSummaryState;
+  settings: SettingsState;
 }
 
 export interface RhythmState {
@@ -324,6 +327,11 @@ export interface RhythmState {
 export interface RunSummaryState {
   open: boolean;
   ui: import("./run/RunSummaryUI").RunSummaryUI;
+}
+
+export interface SettingsState {
+  open: boolean;
+  ui: import("./settings/SettingsUI").SettingsUI;
 }
 
 export interface ZoneRhythmConfig {

@@ -37,7 +37,8 @@ export const setupPointerSystem = (
     dirY: number,
     radius: number,
     speed: number,
-    damage: number
+    damage: number,
+    onBeat: boolean
   ): void => {
     const { entry, entity, projectile } = acquireProjectile(radius);
     entity.sprite.scale.set(radius / 4);
@@ -56,6 +57,7 @@ export const setupPointerSystem = (
       projectile,
       life: 1,
       damage,
+      onBeat,
       pool: entry,
     });
   };
@@ -134,10 +136,11 @@ export const setupPointerSystem = (
         normY,
         8,
         baseSpeed * 0.9,
-        baseDamage * 3 * damageMult
+        baseDamage * 3 * damageMult,
+        onBeat
       );
     } else {
-      spawnProjectile(normX, normY, 4, baseSpeed, baseDamage * damageMult);
+      spawnProjectile(normX, normY, 4, baseSpeed, baseDamage * damageMult, onBeat);
     }
     state.aim.chargeActive = false;
   });
