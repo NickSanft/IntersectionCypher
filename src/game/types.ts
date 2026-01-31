@@ -190,6 +190,7 @@ export interface MapState {
   view: PIXI.Container;
   spawnX: number;
   spawnY: number;
+  bpm: number;
   door?: MapDoor;
 }
 
@@ -253,10 +254,13 @@ export interface GameState {
   hudExpText: PIXI.Text;
   chargeBar: PIXI.Graphics;
   chargeLabel: PIXI.Text;
+  hudBeatRing: PIXI.Graphics;
+  hudBeatLabel: PIXI.Text;
   abilities: AbilityState[];
   abilityBar: AbilityBarState;
   dialog: DialogState;
   aim: AimState;
+  rhythm: RhythmState;
   camera: CameraState;
   levelUpSystem: import("./systems/LevelUpSystem").LevelUpSystem;
   levelUp: LevelUpState;
@@ -291,6 +295,19 @@ export interface GameState {
   transitionDuration: number;
   transitionTargetMapId: string | null;
   transitionTargetSpawn: { x: number; y: number } | null;
+}
+
+export interface RhythmState {
+  bpm: number;
+  beatInterval: number;
+  time: number;
+  windowSeconds: number;
+  onBeat: boolean;
+  pulse: number;
+  pulseDecay: number;
+  lastBeat: number;
+  onBeatDamageMult: number;
+  startTimeMs: number | null;
 }
 
 export interface LevelUpOption {

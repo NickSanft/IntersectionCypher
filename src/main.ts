@@ -21,6 +21,7 @@ import { CombatFXSystem } from "./game/systems/CombatFXSystem";
 import { MinimapSystem } from "./game/systems/MinimapSystem";
 import { AbilitySystem } from "./game/systems/AbilitySystem";
 import { TriggerSystem } from "./game/systems/TriggerSystem";
+import { RhythmSystem } from "./game/systems/RhythmSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
@@ -120,6 +121,9 @@ const drawMap = (map: TileMap): PIXI.Container => {
 };
 
 const bootstrap = async (): Promise<void> => {
+  if (typeof window === "undefined") {
+    return;
+  }
   const app = new PIXI.Application();
   await app.init({
     background: "#0b0f14",
@@ -500,6 +504,19 @@ const bootstrap = async (): Promise<void> => {
   chargeLabel.position.set(12, 116);
   hud.addChild(chargeLabel);
 
+  const hudBeatRing = new PIXI.Graphics();
+  hud.addChild(hudBeatRing);
+
+  const hudBeatLabel = new PIXI.Text({
+    text: "Beat 120",
+    style: {
+      fill: 0x93c5fd,
+      fontFamily: "Arial",
+      fontSize: 11,
+    },
+  });
+  hud.addChild(hudBeatLabel);
+
   const topRight = new UIElement({
     width: 200,
     height: 54,
@@ -722,11 +739,12 @@ const bootstrap = async (): Promise<void> => {
     maps: {
       map1: {
         id: "map1",
-        map: map1,
-        view: mapView1,
-        spawnX: map1.tileSize * 4,
-        spawnY: map1.tileSize * 4,
-        door: {
+      map: map1,
+      view: mapView1,
+      spawnX: map1.tileSize * 4,
+      spawnY: map1.tileSize * 4,
+      bpm: 120,
+      door: {
           to: "map2",
           xMin: map1.tileSize * (map1.width - 2),
           xMax: map1.tileSize * (map1.width - 1),
@@ -738,11 +756,12 @@ const bootstrap = async (): Promise<void> => {
       },
       map2: {
         id: "map2",
-        map: map2,
-        view: mapView2,
-        spawnX: map2.tileSize * 2,
-        spawnY: map2.tileSize * 5,
-        door: {
+      map: map2,
+      view: mapView2,
+      spawnX: map2.tileSize * 2,
+      spawnY: map2.tileSize * 5,
+      bpm: 96,
+      door: {
           to: "map1",
           xMin: map2.tileSize * 1,
           xMax: map2.tileSize * 2,
@@ -782,6 +801,8 @@ const bootstrap = async (): Promise<void> => {
     hudExpText,
     chargeBar,
     chargeLabel,
+    hudBeatRing,
+    hudBeatLabel,
     abilities: [],
     abilityBar: {
       root: abilityBar,
@@ -811,6 +832,18 @@ const bootstrap = async (): Promise<void> => {
       chargeRatio: 0,
       chargeThresholdMs: 2000,
       chargeRing,
+    },
+    rhythm: {
+      bpm: 120,
+      beatInterval: 0.5,
+      time: 0,
+      windowSeconds: 0.12,
+      onBeat: false,
+      pulse: 0,
+      pulseDecay: 6,
+      lastBeat: -1,
+      onBeatDamageMult: 2,
+      startTimeMs: null,
     },
     camera: {
       world,
@@ -937,6 +970,7 @@ const bootstrap = async (): Promise<void> => {
   const dialogSystem = new DialogSystem();
   const playerSystem = new PlayerSystem();
   const abilitySystem = new AbilitySystem();
+  const rhythmSystem = new RhythmSystem();
   const aimSystem = new AimSystem();
   const combatSystem = new CombatSystem();
   const combatFXSystem = new CombatFXSystem();
@@ -958,6 +992,7 @@ const bootstrap = async (): Promise<void> => {
     dialogSystem.update(state, simDt);
     playerSystem.update(state, simDt);
     abilitySystem.update(state, simDt);
+    rhythmSystem.update(state, simDt);
     mapSystem.update(state, simDt);
     enemyAISystem.update(state, simDt);
     aimSystem.update(state);
@@ -971,4 +1006,6 @@ const bootstrap = async (): Promise<void> => {
   });
 };
 
-void bootstrap();
+if (typeof window !== "undefined") {
+  void bootstrap();
+}

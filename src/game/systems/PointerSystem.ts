@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import { Projectile } from "../../projectiles/Projectile";
 import { ZEntity } from "../../entities/ZEntity";
 import type { GameState } from "../types";
+import { isOnBeat } from "./RhythmSystem";
 
 export const setupPointerSystem = (
   state: GameState,
@@ -107,10 +108,18 @@ export const setupPointerSystem = (
     const normY = dirY / len;
     const baseSpeed = state.playerData.stats.projectileSpeed;
     const baseDamage = state.playerData.stats.projectileDamage;
+    const rhythmMult = isOnBeat(state) ? state.rhythm.onBeatDamageMult : 1;
+    const damageMult = Math.max(1, Math.round(rhythmMult));
     if (isCharged) {
-      spawnProjectile(normX, normY, 8, baseSpeed * 0.9, baseDamage * 3);
+      spawnProjectile(
+        normX,
+        normY,
+        8,
+        baseSpeed * 0.9,
+        baseDamage * 3 * damageMult
+      );
     } else {
-      spawnProjectile(normX, normY, 4, baseSpeed, baseDamage);
+      spawnProjectile(normX, normY, 4, baseSpeed, baseDamage * damageMult);
     }
     state.aim.chargeActive = false;
   });

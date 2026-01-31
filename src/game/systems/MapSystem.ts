@@ -63,6 +63,13 @@ export class MapSystem {
     state.world.addChildAt(state.mapView, 0);
     state.map = next.map;
     state.currentMapId = mapId;
+    state.rhythm.bpm = next.bpm;
+    state.rhythm.beatInterval = 60 / next.bpm;
+    state.rhythm.time = 0;
+    state.rhythm.lastBeat = -1;
+    state.rhythm.pulse = 0;
+    state.rhythm.onBeat = false;
+    state.rhythm.startTimeMs = performance.now();
 
     const desiredX = spawnX ?? next.spawnX;
     const desiredY = spawnY ?? next.spawnY;

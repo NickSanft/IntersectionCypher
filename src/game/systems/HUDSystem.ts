@@ -5,6 +5,7 @@ export class HUDSystem {
     this.layoutHud(state);
     this.updatePlayerHp(state);
     this.updateChargeBar(state);
+    this.updateRhythmIndicator(state);
     this.updateEnemyLabels(state);
     this.updateTopRight(state);
   }
@@ -21,15 +22,21 @@ export class HUDSystem {
     const chargeLabelY = hpTextY + state.hudHpText.height + 24;
     state.chargeLabel.position.set(padding, chargeLabelY);
 
+    const beatY = state.chargeLabel.position.y + state.chargeLabel.height + 14;
+    state.hudBeatLabel.text = `Beat ${state.rhythm.bpm}`;
+    state.hudBeatLabel.position.set(padding + 22, beatY - 2);
+    state.hudBeatRing.position.set(padding + 8, beatY + 6);
+
     const contentWidth = Math.max(
       state.hudTitle.width,
       state.hudText.width,
       state.hudHpText.width,
-      state.chargeLabel.width
+      state.chargeLabel.width,
+      state.hudBeatLabel.width + 22
     );
     const hudWidth = Math.max(200, contentWidth + padding * 2);
     const hudHeight =
-      state.chargeLabel.position.y + state.chargeLabel.height + padding;
+      state.hudBeatLabel.position.y + state.hudBeatLabel.height + padding;
     state.hud.setSize(hudWidth, hudHeight);
 
     state.hudBg.clear();
@@ -115,6 +122,18 @@ export class HUDSystem {
     state.chargeBar.endFill();
 
     state.chargeLabel.text = ratio >= 1 ? "Charged" : "Charging";
+  }
+
+  private updateRhythmIndicator(state: GameState): void {
+    const radius = state.rhythm.onBeat ? 7 : 5;
+    const pulse = state.rhythm.pulse;
+    const alpha = 0.35 + pulse * 0.65;
+    const color = state.rhythm.onBeat ? 0xfbbf24 : 0x38bdf8;
+
+    state.hudBeatRing.clear();
+    state.hudBeatRing.lineStyle(2, color, alpha);
+    state.hudBeatRing.drawCircle(0, 0, radius + pulse * 3);
+    state.hudBeatRing.endFill();
   }
 
   private updateTopRight(state: GameState): void {
