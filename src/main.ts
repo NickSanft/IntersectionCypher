@@ -22,6 +22,7 @@ import { MinimapSystem } from "./game/systems/MinimapSystem";
 import { AbilitySystem } from "./game/systems/AbilitySystem";
 import { TriggerSystem } from "./game/systems/TriggerSystem";
 import { RhythmSystem } from "./game/systems/RhythmSystem";
+import { RunSummarySystem } from "./game/systems/RunSummarySystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
@@ -34,6 +35,8 @@ import { DialogEngine } from "./game/dialog/DialogEngine";
 import { DialogUI } from "./game/dialog/DialogUI";
 import { LevelUpUI } from "./game/level/LevelUpUI";
 import { LevelUpSystem } from "./game/systems/LevelUpSystem";
+import { RunSummaryUI } from "./game/run/RunSummaryUI";
+import { zoneConfigs } from "./game/data/Zones";
 
 const buildTestMap = (tileSize: number): TileMap => {
   const width = 20;
@@ -437,6 +440,11 @@ const bootstrap = async (): Promise<void> => {
   uiLayer.zIndex = 10;
   app.stage.addChild(uiLayer);
 
+  const rhythmOverlay = new PIXI.Graphics();
+  rhythmOverlay.zIndex = -1;
+  rhythmOverlay.visible = false;
+  uiLayer.addChild(rhythmOverlay);
+
   const hud = new UIElement({
     width: 260,
     height: 140,
@@ -689,6 +697,11 @@ const bootstrap = async (): Promise<void> => {
 
   uiLayer.addChild(abilityBar);
 
+  const runSummaryUI = new RunSummaryUI(360, 220);
+  runSummaryUI.root.zIndex = 20;
+  runSummaryUI.setVisible(false);
+  uiLayer.addChild(runSummaryUI.root);
+
   const menu = new MenuSystem();
   menu.registerTabs(defaultPlayerData);
   uiLayer.addChild(menu);
@@ -743,7 +756,7 @@ const bootstrap = async (): Promise<void> => {
       view: mapView1,
       spawnX: map1.tileSize * 4,
       spawnY: map1.tileSize * 4,
-      bpm: 120,
+      rhythm: zoneConfigs.map1.rhythm,
       door: {
           to: "map2",
           xMin: map1.tileSize * (map1.width - 2),
@@ -760,7 +773,7 @@ const bootstrap = async (): Promise<void> => {
       view: mapView2,
       spawnX: map2.tileSize * 2,
       spawnY: map2.tileSize * 5,
-      bpm: 96,
+      rhythm: zoneConfigs.map2.rhythm,
       door: {
           to: "map1",
           xMin: map2.tileSize * 1,
@@ -803,6 +816,7 @@ const bootstrap = async (): Promise<void> => {
     chargeLabel,
     hudBeatRing,
     hudBeatLabel,
+    rhythmOverlay,
     abilities: [],
     abilityBar: {
       root: abilityBar,
@@ -834,16 +848,25 @@ const bootstrap = async (): Promise<void> => {
       chargeRing,
     },
     rhythm: {
-      bpm: 120,
-      beatInterval: 0.5,
+      bpm: zoneConfigs.map1.rhythm.bpm,
+      beatInterval: 60 / zoneConfigs.map1.rhythm.bpm,
       time: 0,
-      windowSeconds: 0.12,
+      totalTime: 0,
+      windowSeconds: zoneConfigs.map1.rhythm.windowSeconds,
       onBeat: false,
       pulse: 0,
       pulseDecay: 6,
       lastBeat: -1,
-      onBeatDamageMult: 2,
+      onBeatDamageMult: zoneConfigs.map1.rhythm.onBeatDamageMult,
       startTimeMs: null,
+      overlayAlpha: 0,
+      overlayDecay: 2.5,
+      audioEnabled: true,
+      audioUnlocked: false,
+      audioContext: null,
+      tickVolume: 0.12,
+      shotsOnBeat: 0,
+      shotsTotal: 0,
     },
     camera: {
       world,
@@ -892,6 +915,10 @@ const bootstrap = async (): Promise<void> => {
     transitionDuration: 0.25,
     transitionTargetMapId: null,
     transitionTargetSpawn: null,
+    runSummary: {
+      open: false,
+      ui: runSummaryUI,
+    },
   };
 
   state.abilities = createAbilityStates(state);
@@ -971,6 +998,7 @@ const bootstrap = async (): Promise<void> => {
   const playerSystem = new PlayerSystem();
   const abilitySystem = new AbilitySystem();
   const rhythmSystem = new RhythmSystem();
+  const runSummarySystem = new RunSummarySystem();
   const aimSystem = new AimSystem();
   const combatSystem = new CombatSystem();
   const combatFXSystem = new CombatFXSystem();
@@ -993,6 +1021,7 @@ const bootstrap = async (): Promise<void> => {
     playerSystem.update(state, simDt);
     abilitySystem.update(state, simDt);
     rhythmSystem.update(state, simDt);
+    runSummarySystem.update(state);
     mapSystem.update(state, simDt);
     enemyAISystem.update(state, simDt);
     aimSystem.update(state);

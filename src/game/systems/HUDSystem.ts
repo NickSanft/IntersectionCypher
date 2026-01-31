@@ -129,6 +129,7 @@ export class HUDSystem {
     const pulse = state.rhythm.pulse;
     const alpha = 0.35 + pulse * 0.65;
     const color = state.rhythm.onBeat ? 0xfbbf24 : 0x38bdf8;
+    state.hudBeatLabel.tint = state.rhythm.onBeat ? 0xfef08a : 0x93c5fd;
 
     state.hudBeatRing.clear();
     state.hudBeatRing.lineStyle(2, color, alpha);

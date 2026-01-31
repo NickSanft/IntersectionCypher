@@ -63,8 +63,10 @@ export class MapSystem {
     state.world.addChildAt(state.mapView, 0);
     state.map = next.map;
     state.currentMapId = mapId;
-    state.rhythm.bpm = next.bpm;
-    state.rhythm.beatInterval = 60 / next.bpm;
+    state.rhythm.bpm = next.rhythm.bpm;
+    state.rhythm.beatInterval = 60 / next.rhythm.bpm;
+    state.rhythm.windowSeconds = next.rhythm.windowSeconds;
+    state.rhythm.onBeatDamageMult = next.rhythm.onBeatDamageMult;
     state.rhythm.time = 0;
     state.rhythm.lastBeat = -1;
     state.rhythm.pulse = 0;

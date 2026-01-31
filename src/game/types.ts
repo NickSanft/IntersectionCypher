@@ -190,7 +190,7 @@ export interface MapState {
   view: PIXI.Container;
   spawnX: number;
   spawnY: number;
-  bpm: number;
+  rhythm: ZoneRhythmConfig;
   door?: MapDoor;
 }
 
@@ -256,6 +256,7 @@ export interface GameState {
   chargeLabel: PIXI.Text;
   hudBeatRing: PIXI.Graphics;
   hudBeatLabel: PIXI.Text;
+  rhythmOverlay: PIXI.Graphics;
   abilities: AbilityState[];
   abilityBar: AbilityBarState;
   dialog: DialogState;
@@ -295,12 +296,14 @@ export interface GameState {
   transitionDuration: number;
   transitionTargetMapId: string | null;
   transitionTargetSpawn: { x: number; y: number } | null;
+  runSummary: RunSummaryState;
 }
 
 export interface RhythmState {
   bpm: number;
   beatInterval: number;
   time: number;
+  totalTime: number;
   windowSeconds: number;
   onBeat: boolean;
   pulse: number;
@@ -308,6 +311,25 @@ export interface RhythmState {
   lastBeat: number;
   onBeatDamageMult: number;
   startTimeMs: number | null;
+  overlayAlpha: number;
+  overlayDecay: number;
+  audioEnabled: boolean;
+  audioUnlocked: boolean;
+  audioContext: AudioContext | null;
+  tickVolume: number;
+  shotsOnBeat: number;
+  shotsTotal: number;
+}
+
+export interface RunSummaryState {
+  open: boolean;
+  ui: import("./run/RunSummaryUI").RunSummaryUI;
+}
+
+export interface ZoneRhythmConfig {
+  bpm: number;
+  windowSeconds: number;
+  onBeatDamageMult: number;
 }
 
 export interface LevelUpOption {

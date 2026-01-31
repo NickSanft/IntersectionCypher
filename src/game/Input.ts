@@ -5,6 +5,7 @@ export type KeyAction =
   | "right"
   | "action"
   | "menu"
+  | "summary"
   | "ability1"
   | "ability2"
   | "ability3";
@@ -16,6 +17,7 @@ const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
   right: ["KeyD", "ArrowRight"],
   action: ["Space", "Enter"],
   menu: ["Escape", "KeyM", "KeyI"],
+  summary: ["KeyR"],
   ability1: ["KeyQ", "Digit1"],
   ability2: ["KeyE", "Digit2"],
   ability3: ["KeyF", "Digit3"],
@@ -44,6 +46,10 @@ export class Input {
       }
     }
     return false;
+  }
+
+  public isAnyPressed(): boolean {
+    return this.pressed.size > 0;
   }
 
   private onKeyDown = (event: KeyboardEvent): void => {

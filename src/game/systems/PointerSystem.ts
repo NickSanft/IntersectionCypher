@@ -67,6 +67,19 @@ export const setupPointerSystem = (
     if (state.dialog.open || state.menu.isOpen || state.levelUp.active) {
       return;
     }
+    if (!state.rhythm.audioUnlocked) {
+      state.rhythm.audioUnlocked = true;
+      if (
+        state.rhythm.audioEnabled &&
+        !state.rhythm.audioContext &&
+        typeof AudioContext !== "undefined"
+      ) {
+        state.rhythm.audioContext = new AudioContext();
+        if (state.rhythm.audioContext.state === "suspended") {
+          void state.rhythm.audioContext.resume();
+        }
+      }
+    }
     const local = state.world.toLocal(event.global);
     state.aim.x = local.x;
     state.aim.y = local.y;
@@ -108,8 +121,13 @@ export const setupPointerSystem = (
     const normY = dirY / len;
     const baseSpeed = state.playerData.stats.projectileSpeed;
     const baseDamage = state.playerData.stats.projectileDamage;
-    const rhythmMult = isOnBeat(state) ? state.rhythm.onBeatDamageMult : 1;
+    const onBeat = isOnBeat(state);
+    const rhythmMult = onBeat ? state.rhythm.onBeatDamageMult : 1;
     const damageMult = Math.max(1, Math.round(rhythmMult));
+    state.rhythm.shotsTotal += 1;
+    if (onBeat) {
+      state.rhythm.shotsOnBeat += 1;
+    }
     if (isCharged) {
       spawnProjectile(
         normX,
