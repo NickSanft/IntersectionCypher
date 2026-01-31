@@ -1,7 +1,6 @@
 import * as PIXI from "pixi.js";
 import { ZEntity } from "./entities/ZEntity";
-import type { TileMap, TileDef } from "./core/world/TileMap";
-import { tileIndex } from "./core/world/TileMap";
+import type { TileMap } from "./core/world/TileMap";
 import { Input } from "./game/Input";
 import { PlayerController } from "./game/PlayerController";
 import { UIElement } from "./ui/UIElement";
@@ -39,90 +38,44 @@ import { LevelUpSystem } from "./game/systems/LevelUpSystem";
 import { RunSummaryUI } from "./game/run/RunSummaryUI";
 import { zoneConfigs } from "./game/data/Zones";
 import { SettingsUI } from "./game/settings/SettingsUI";
+import { zoneMaps } from "./game/data/ZoneMaps";
+import { buildTileMap, drawMap, rectToWorld, tileToWorld } from "./game/maps/MapBuilder";
 
-const buildTestMap = (tileSize: number): TileMap => {
-  const width = 20;
-  const height = 12;
-  const defs: TileDef[] = [
-    { id: 0, solid: "None", height: 0 },
-    { id: 1, solid: "Solid", height: 96 },
-  ];
-  const tiles = new Uint16Array(width * height);
-
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const isBorder = x === 0 || y === 0 || x === width - 1 || y === height - 1;
-      tiles[tileIndex(x, y, width)] = isBorder ? 1 : 0;
-    }
+const buildMapState = (
+  config: (typeof zoneMaps)[keyof typeof zoneMaps],
+  map: TileMap,
+  view: PIXI.Container,
+  mapCatalog: Record<string, TileMap>
+): GameState["maps"][string] => {
+  const spawn = tileToWorld(map, config.spawn.x, config.spawn.y);
+  let door: GameState["maps"][string]["door"];
+  if (config.door) {
+    const rect = rectToWorld(map, config.door.rect);
+    const targetMap = mapCatalog[config.door.to];
+    const targetSpawn = tileToWorld(
+      targetMap,
+      config.door.spawn.x,
+      config.door.spawn.y
+    );
+    door = {
+      to: config.door.to,
+      xMin: rect.xMin,
+      xMax: rect.xMax,
+      yMin: rect.yMin,
+      yMax: rect.yMax,
+      spawnX: targetSpawn.x,
+      spawnY: targetSpawn.y,
+    };
   }
-
-  const pillars = [
-    { x: 6, y: 4 },
-    { x: 13, y: 7 },
-    { x: 9, y: 2 },
-  ];
-  for (const pillar of pillars) {
-    tiles[tileIndex(pillar.x, pillar.y, width)] = 1;
-  }
-
-  return { width, height, tileSize, tiles, defs };
-};
-
-const buildTestMap2 = (tileSize: number): TileMap => {
-  const width = 18;
-  const height = 10;
-  const defs: TileDef[] = [
-    { id: 0, solid: "None", height: 0 },
-    { id: 1, solid: "Solid", height: 96 },
-  ];
-  const tiles = new Uint16Array(width * height);
-
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const isBorder = x === 0 || y === 0 || x === width - 1 || y === height - 1;
-      tiles[tileIndex(x, y, width)] = isBorder ? 1 : 0;
-    }
-  }
-
-  for (let x = 3; x < 15; x += 1) {
-    tiles[tileIndex(x, 4, width)] = 1;
-  }
-
-  return { width, height, tileSize, tiles, defs };
-};
-
-const drawMap = (map: TileMap): PIXI.Container => {
-  const container = new PIXI.Container();
-  const gfx = new PIXI.Graphics();
-
-  gfx.beginFill(0x15202b);
-  gfx.drawRect(0, 0, map.width * map.tileSize, map.height * map.tileSize);
-  gfx.endFill();
-
-  gfx.beginFill(0x2c3e50);
-  for (let y = 0; y < map.height; y += 1) {
-    for (let x = 0; x < map.width; x += 1) {
-      const def = map.defs[map.tiles[tileIndex(x, y, map.width)]];
-      if (def.solid !== "Solid") {
-        continue;
-      }
-      gfx.drawRect(x * map.tileSize, y * map.tileSize, map.tileSize, map.tileSize);
-    }
-  }
-  gfx.endFill();
-
-  gfx.lineStyle(1, 0x0f141a, 0.6);
-  for (let y = 0; y <= map.height; y += 1) {
-    gfx.moveTo(0, y * map.tileSize);
-    gfx.lineTo(map.width * map.tileSize, y * map.tileSize);
-  }
-  for (let x = 0; x <= map.width; x += 1) {
-    gfx.moveTo(x * map.tileSize, 0);
-    gfx.lineTo(x * map.tileSize, map.height * map.tileSize);
-  }
-
-  container.addChild(gfx);
-  return container;
+  return {
+    id: config.id,
+    map,
+    view,
+    spawnX: spawn.x,
+    spawnY: spawn.y,
+    rhythm: zoneConfigs[config.id].rhythm,
+    door,
+  };
 };
 
 const bootstrap = async (): Promise<void> => {
@@ -150,13 +103,18 @@ const bootstrap = async (): Promise<void> => {
   world.zIndex = 0;
   app.stage.addChild(world);
 
-  const map1 = buildTestMap(48);
-  const map2 = buildTestMap2(48);
+  const map1 = buildTileMap(zoneMaps.map1.layout);
+  const map2 = buildTileMap(zoneMaps.map2.layout);
   const mapView1 = drawMap(map1);
   const mapView2 = drawMap(map2);
   mapView1.zIndex = 0;
   mapView2.zIndex = 0;
   world.addChild(mapView1);
+  const mapCatalog = { map1, map2 };
+  const mapStates = {
+    map1: buildMapState(zoneMaps.map1, map1, mapView1, mapCatalog),
+    map2: buildMapState(zoneMaps.map2, map2, mapView2, mapCatalog),
+  };
 
   const playerTexture = (() => {
     const gfx = new PIXI.Graphics();
@@ -173,8 +131,8 @@ const bootstrap = async (): Promise<void> => {
   });
   player.zIndex = 2;
   player.sprite.anchor.set(0.5);
-  player.pos.x = map1.tileSize * 4;
-  player.pos.y = map1.tileSize * 4;
+  player.pos.x = mapStates.map1.spawnX;
+  player.pos.y = mapStates.map1.spawnY;
   player.pos.z = 0;
   world.addChild(player);
 
@@ -308,6 +266,8 @@ const bootstrap = async (): Promise<void> => {
     };
   };
 
+  const chaserSpawn = tileToWorld(map2, 12, 5);
+  const turretSpawn = tileToWorld(map2, 5, 7);
   const enemies = [
     createEnemyState(
       defaultEnemyData,
@@ -315,8 +275,8 @@ const bootstrap = async (): Promise<void> => {
       map2,
       "map2",
       "chaser",
-      map2.tileSize * 12,
-      map2.tileSize * 5
+      chaserSpawn.x,
+      chaserSpawn.y
     ),
     createEnemyState(
       turretEnemyData,
@@ -324,8 +284,8 @@ const bootstrap = async (): Promise<void> => {
       map2,
       "map2",
       "turret",
-      map2.tileSize * 5,
-      map2.tileSize * 7
+      turretSpawn.x,
+      turretSpawn.y
     ),
   ];
 
@@ -343,8 +303,9 @@ const bootstrap = async (): Promise<void> => {
     mass: 1,
   });
   npc.sprite.anchor.set(0.5);
-  npc.pos.x = map1.tileSize * 12;
-  npc.pos.y = map1.tileSize * 6;
+  const npc1Pos = tileToWorld(map1, 12, 6);
+  npc.pos.x = npc1Pos.x;
+  npc.pos.y = npc1Pos.y;
   npc.pos.z = 0;
   npc.renderUpdate();
   world.addChild(npc);
@@ -363,12 +324,20 @@ const bootstrap = async (): Promise<void> => {
     mass: 1,
   });
   npc2.sprite.anchor.set(0.5);
-  npc2.pos.x = map2.tileSize * 6;
-  npc2.pos.y = map2.tileSize * 6;
+  const npc2Pos = tileToWorld(map2, 6, 6);
+  npc2.pos.x = npc2Pos.x;
+  npc2.pos.y = npc2Pos.y;
   npc2.pos.z = 0;
   npc2.renderUpdate();
   npc2.visible = false;
   world.addChild(npc2);
+
+  const map1DoorRect = zoneMaps.map1.door
+    ? rectToWorld(map1, zoneMaps.map1.door.rect)
+    : null;
+  const map2DoorRect = zoneMaps.map2.door
+    ? rectToWorld(map2, zoneMaps.map2.door.rect)
+    : null;
 
   const doorMarker1 = new PIXI.Container();
   const doorFrame1 = new PIXI.Graphics();
@@ -386,7 +355,12 @@ const bootstrap = async (): Promise<void> => {
   });
   doorLabel1.position.set(-6, -14);
   doorMarker1.addChild(doorLabel1);
-  doorMarker1.position.set(map1.tileSize * (map1.width - 2), map1.tileSize * 5);
+  if (map1DoorRect) {
+    doorMarker1.position.set(
+      map1DoorRect.xMin,
+      map1DoorRect.centerY - map1.tileSize * 0.5
+    );
+  }
   world.addChild(doorMarker1);
 
   const doorMarker2 = new PIXI.Container();
@@ -405,7 +379,12 @@ const bootstrap = async (): Promise<void> => {
   });
   doorLabel2.position.set(-6, -14);
   doorMarker2.addChild(doorLabel2);
-  doorMarker2.position.set(map2.tileSize * 1, map2.tileSize * 5);
+  if (map2DoorRect) {
+    doorMarker2.position.set(
+      map2DoorRect.xMin,
+      map2DoorRect.centerY - map2.tileSize * 0.5
+    );
+  }
   doorMarker2.visible = false;
   world.addChild(doorMarker2);
 
@@ -415,7 +394,8 @@ const bootstrap = async (): Promise<void> => {
   chestBox.drawRoundedRect(-8, -6, 16, 12, 3);
   chestBox.endFill();
   chestMarker.addChild(chestBox);
-  chestMarker.position.set(map1.tileSize * 8, map1.tileSize * 8);
+  const chestPos = tileToWorld(map1, 8, 8);
+  chestMarker.position.set(chestPos.x, chestPos.y);
   world.addChild(chestMarker);
 
   const checkpointMarker = new PIXI.Container();
@@ -424,7 +404,8 @@ const bootstrap = async (): Promise<void> => {
   checkpointRing.drawCircle(0, 0, 10);
   checkpointRing.endFill();
   checkpointMarker.addChild(checkpointRing);
-  checkpointMarker.position.set(map1.tileSize * 5, map1.tileSize * 9);
+  const checkpointPos = tileToWorld(map1, 5, 9);
+  checkpointMarker.position.set(checkpointPos.x, checkpointPos.y);
   world.addChild(checkpointMarker);
 
   const eventMarker = new PIXI.Container();
@@ -433,7 +414,8 @@ const bootstrap = async (): Promise<void> => {
   eventOrb.drawCircle(0, 0, 8);
   eventOrb.endFill();
   eventMarker.addChild(eventOrb);
-  eventMarker.position.set(map2.tileSize * 10, map2.tileSize * 2);
+  const eventPos = tileToWorld(map2, 10, 2);
+  eventMarker.position.set(eventPos.x, eventPos.y);
   eventMarker.visible = false;
   world.addChild(eventMarker);
 
@@ -447,7 +429,8 @@ const bootstrap = async (): Promise<void> => {
   finishStar.lineTo(0, -10);
   finishStar.endFill();
   finishMarker.addChild(finishStar);
-  finishMarker.position.set(map2.tileSize * 14, map2.tileSize * 8);
+  const finishPos = tileToWorld(map2, 14, 8);
+  finishMarker.position.set(finishPos.x, finishPos.y);
   finishMarker.visible = false;
   world.addChild(finishMarker);
 
@@ -775,44 +758,9 @@ const bootstrap = async (): Promise<void> => {
   state = {
     app,
     world,
-    map: map1,
-    mapView: mapView1,
-    maps: {
-      map1: {
-        id: "map1",
-      map: map1,
-      view: mapView1,
-      spawnX: map1.tileSize * 4,
-      spawnY: map1.tileSize * 4,
-      rhythm: zoneConfigs.map1.rhythm,
-      door: {
-          to: "map2",
-          xMin: map1.tileSize * (map1.width - 2),
-          xMax: map1.tileSize * (map1.width - 1),
-          yMin: map1.tileSize * 4,
-          yMax: map1.tileSize * 7,
-          spawnX: map2.tileSize * 3,
-          spawnY: map2.tileSize * 3,
-        },
-      },
-      map2: {
-        id: "map2",
-      map: map2,
-      view: mapView2,
-      spawnX: map2.tileSize * 2,
-      spawnY: map2.tileSize * 5,
-      rhythm: zoneConfigs.map2.rhythm,
-      door: {
-          to: "map1",
-          xMin: map2.tileSize * 1,
-          xMax: map2.tileSize * 2,
-          yMin: map2.tileSize * 4,
-          yMax: map2.tileSize * 6,
-          spawnX: map1.tileSize * 3,
-          spawnY: map1.tileSize * 5,
-        },
-      },
-    },
+    map: mapStates.map1.map,
+    mapView: mapStates.map1.view,
+    maps: mapStates,
     currentMapId: "map1",
     input,
     player,
