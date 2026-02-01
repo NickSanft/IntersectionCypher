@@ -200,7 +200,7 @@ export interface DoorMarker {
   view: PIXI.Container;
 }
 
-export type TriggerType = "loot" | "checkpoint" | "event" | "runEnd";
+export type TriggerType = "loot" | "checkpoint" | "event" | "runEnd" | "shop";
 
 export interface TriggerState {
   id: string;
@@ -215,6 +215,7 @@ export interface TriggerState {
   triggered: boolean;
   view: PIXI.Container;
   dialogId?: string;
+  shopId?: string;
   rewards?: {
     credits?: number;
     items?: import("./data/Inventory").InventoryItem[];

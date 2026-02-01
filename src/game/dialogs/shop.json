@@ -1,0 +1,14 @@
+{
+  "start": "intro",
+  "nodes": {
+    "intro": {
+      "text": "Station Merchant: Need supplies? Beats are cheaper than bruises.",
+      "choices": [
+        { "text": "Buy Heat Potion (10c)", "call": "buyPotion", "next": "intro" },
+        { "text": "Buy Focus Tonic (15c)", "call": "buyTonic", "next": "intro" },
+        { "text": "Buy Repair Kit (12c)", "call": "buyKit", "next": "intro" },
+        { "text": "Leave" }
+      ]
+    }
+  }
+}

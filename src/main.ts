@@ -31,6 +31,7 @@ import { findNearestOpen } from "./core/world/MapUtils";
 import npcDialog from "./game/dialogs/npc.json";
 import npc2Dialog from "./game/dialogs/npc2.json";
 import eventDialog from "./game/dialogs/event.json";
+import shopDialog from "./game/dialogs/shop.json";
 import { DialogEngine } from "./game/dialog/DialogEngine";
 import { DialogUI } from "./game/dialog/DialogUI";
 import { LevelUpUI } from "./game/level/LevelUpUI";
@@ -40,6 +41,9 @@ import { zoneConfigs } from "./game/data/Zones";
 import { SettingsUI } from "./game/settings/SettingsUI";
 import { zoneMaps } from "./game/data/ZoneMaps";
 import { buildTileMap, drawMap, rectToWorld, tileToWorld } from "./game/maps/MapBuilder";
+import { addItemById } from "./game/data/InventoryUtils";
+import { itemDefs } from "./game/data/Items";
+import { ItemSystem } from "./game/systems/ItemSystem";
 
 const buildMapState = (
   config: (typeof zoneMaps)[keyof typeof zoneMaps],
@@ -144,7 +148,8 @@ const bootstrap = async (): Promise<void> => {
     moveSpeed: 220,
     radius: 10,
   });
-  playerController.setMoveSpeed(defaultPlayerData.stats.moveSpeed);
+  const playerData = defaultPlayerData;
+  playerController.setMoveSpeed(playerData.stats.moveSpeed);
   const playerRadius = 10;
   const npcRadius = 10;
 
@@ -408,6 +413,16 @@ const bootstrap = async (): Promise<void> => {
   checkpointMarker.position.set(checkpointPos.x, checkpointPos.y);
   world.addChild(checkpointMarker);
 
+  const shopMarker = new PIXI.Container();
+  const shopBox = new PIXI.Graphics();
+  shopBox.beginFill(0xf472b6, 0.9);
+  shopBox.drawRoundedRect(-10, -8, 20, 16, 4);
+  shopBox.endFill();
+  shopMarker.addChild(shopBox);
+  const shopPos = tileToWorld(map1, 14, 3);
+  shopMarker.position.set(shopPos.x, shopPos.y);
+  world.addChild(shopMarker);
+
   const eventMarker = new PIXI.Container();
   const eventOrb = new PIXI.Graphics();
   eventOrb.beginFill(0x60a5fa, 0.85);
@@ -459,7 +474,7 @@ const bootstrap = async (): Promise<void> => {
   hud.addChild(hudBg);
 
   const hudText = new PIXI.Text({
-    text: "WASD / Arrows to move\nSpace to interact\nM/Esc for menu",
+    text: "WASD / Arrows to move\nSpace to interact\nH: use item\nM/Esc for menu",
     style: {
       fill: 0xcbd5f5,
       fontFamily: "Arial",
@@ -721,6 +736,27 @@ const bootstrap = async (): Promise<void> => {
     openShop: () => {
       menu.open();
     },
+    buyPotion: () => {
+      if (playerData.credits < itemDefs.potion.price) {
+        return;
+      }
+      playerData.credits -= itemDefs.potion.price;
+      addItemById(playerData, itemDefs.potion.id, 1);
+    },
+    buyTonic: () => {
+      if (playerData.credits < itemDefs.tonic.price) {
+        return;
+      }
+      playerData.credits -= itemDefs.tonic.price;
+      addItemById(playerData, itemDefs.tonic.id, 1);
+    },
+    buyKit: () => {
+      if (playerData.credits < itemDefs.kit.price) {
+        return;
+      }
+      playerData.credits -= itemDefs.kit.price;
+      addItemById(playerData, itemDefs.kit.id, 1);
+    },
     onGreet: () => {
       player.sprite.tint = 0x93c5fd;
       setTimeout(() => {
@@ -804,7 +840,7 @@ const bootstrap = async (): Promise<void> => {
     },
     dialog: {
       open: false,
-      dialogs: { npc: npcDialog, npc2: npc2Dialog, event: eventDialog },
+      dialogs: { npc: npcDialog, npc2: npc2Dialog, event: eventDialog, shop: shopDialog },
       activeId: null,
       engine: dialogEngine,
       ui: dialogUI,
@@ -869,7 +905,7 @@ const bootstrap = async (): Promise<void> => {
     impactParticlePool: [],
     hitMarkers: [],
     hitMarkerPool: [],
-    playerData: defaultPlayerData,
+    playerData,
     doorMarkers: [
       { mapId: "map1", view: doorMarker1 },
       { mapId: "map2", view: doorMarker2 },
@@ -969,6 +1005,20 @@ const bootstrap = async (): Promise<void> => {
       },
     },
     {
+      id: "shop-1",
+      mapId: "map1",
+      type: "shop",
+      xMin: shopMarker.position.x - 16,
+      xMax: shopMarker.position.x + 16,
+      yMin: shopMarker.position.y - 16,
+      yMax: shopMarker.position.y + 16,
+      prompt: "Space: Shop",
+      once: false,
+      triggered: false,
+      view: shopMarker,
+      dialogId: "shop",
+    },
+    {
       id: "run-end",
       mapId: "map2",
       type: "runEnd",
@@ -992,6 +1042,7 @@ const bootstrap = async (): Promise<void> => {
   const triggerSystem = new TriggerSystem();
   const dialogSystem = new DialogSystem();
   const playerSystem = new PlayerSystem();
+  const itemSystem = new ItemSystem();
   const abilitySystem = new AbilitySystem();
   const rhythmSystem = new RhythmSystem();
   const runSummarySystem = new RunSummarySystem();
@@ -1015,6 +1066,7 @@ const bootstrap = async (): Promise<void> => {
     triggerSystem.update(state);
     dialogSystem.update(state, simDt);
     playerSystem.update(state, simDt);
+    itemSystem.update(state);
     abilitySystem.update(state, simDt);
     rhythmSystem.update(state, simDt);
     runSummarySystem.update(state);
