@@ -1,4 +1,6 @@
 import type { GameState, TriggerState } from "../types";
+import { questUpgradeRewards } from "../data/QuestRewards";
+import { applyUpgradeById } from "../data/UpgradeUtils";
 
 export class TriggerSystem {
   private lastActionPressed = false;
@@ -89,10 +91,17 @@ export class TriggerSystem {
       }
       if (trigger.rewards.flags) {
         for (const flag of trigger.rewards.flags) {
+          const wasSet = state.playerData.questFlags[flag] === true;
           state.playerData.questFlags[flag] = true;
           for (const quest of state.playerData.questLog) {
             if (quest.id === flag) {
               quest.completed = true;
+            }
+          }
+          if (!wasSet) {
+            const reward = questUpgradeRewards[flag];
+            if (reward) {
+              applyUpgradeById(state, reward.upgradeId);
             }
           }
         }

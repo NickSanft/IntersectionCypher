@@ -99,6 +99,10 @@ const upgradePool: UpgradeDefinition[] = [
   },
 ];
 
+export const getUpgradeById = (id: string): UpgradeDefinition | null => {
+  return upgradePool.find((entry) => entry.id === id) ?? null;
+};
+
 const rarityWeights: Record<UpgradeDefinition["rarity"], number> = {
   Common: 70,
   Rare: 25,

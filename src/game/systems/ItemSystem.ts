@@ -1,6 +1,5 @@
 import type { GameState } from "../types";
-import { findFirstConsumable, removeItemById } from "../data/InventoryUtils";
-import { itemDefs } from "../data/Items";
+import { findFirstConsumable, useConsumableById } from "../data/InventoryUtils";
 
 export class ItemSystem {
   private lastUsePressed = false;
@@ -21,21 +20,8 @@ export class ItemSystem {
     if (!itemId) {
       return;
     }
-    const def = itemDefs[itemId];
-    if (!def || !def.effect) {
-      return;
-    }
-
-    if (def.effect.type === "heal") {
-      const stats = state.playerData.stats;
-      if (stats.hp >= stats.maxHp) {
-        return;
-      }
-      const ok = removeItemById(state.playerData, itemId, 1);
-      if (!ok) {
-        return;
-      }
-      stats.hp = Math.min(stats.maxHp, stats.hp + def.effect.amount);
+    const healed = useConsumableById(state.playerData, itemId);
+    if (healed > 0) {
       state.player.sprite.tint = 0x86efac;
       setTimeout(() => {
         state.player.sprite.tint = 0xffffff;

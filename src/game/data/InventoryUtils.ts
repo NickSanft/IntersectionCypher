@@ -47,3 +47,24 @@ export const findFirstConsumable = (player: PlayerData): string | null => {
   }
   return null;
 };
+
+export const useConsumableById = (player: PlayerData, id: string): number => {
+  const def = itemDefs[id];
+  if (!def || def.kind !== "consumable" || !def.effect) {
+    return 0;
+  }
+  if (def.effect.type === "heal") {
+    const stats = player.stats;
+    if (stats.hp >= stats.maxHp) {
+      return 0;
+    }
+    const ok = removeItemById(player, id, 1);
+    if (!ok) {
+      return 0;
+    }
+    const before = stats.hp;
+    stats.hp = Math.min(stats.maxHp, stats.hp + def.effect.amount);
+    return stats.hp - before;
+  }
+  return 0;
+};

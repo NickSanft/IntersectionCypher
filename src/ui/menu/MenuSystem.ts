@@ -4,6 +4,7 @@ import { CharacterMenu } from "./CharacterMenu";
 import { InventoryMenu } from "./InventoryMenu";
 import { QuestMenu } from "./QuestMenu";
 import type { PlayerData } from "../../game/data/PlayerData";
+import { useConsumableById } from "../../game/data/InventoryUtils";
 
 export class MenuSystem extends PIXI.Container {
   private readonly overlay: PIXI.Graphics;
@@ -217,7 +218,12 @@ export class MenuSystem extends PIXI.Container {
     this.contentRoot.addChild(characterPage);
     this.characterPage = characterPage;
 
-    const inventoryPage = new InventoryMenu(data.inventory, data.credits);
+    const inventoryPage = new InventoryMenu(data.inventory, data.credits, (id) => {
+      if (!this.playerData) {
+        return;
+      }
+      useConsumableById(this.playerData, id);
+    });
     this.pages.set("Inventory", inventoryPage);
     this.contentRoot.addChild(inventoryPage);
     this.inventoryPage = inventoryPage;

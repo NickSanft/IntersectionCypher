@@ -4,13 +4,19 @@ import type { InventoryItem } from "../../game/data/Inventory";
 export class InventoryMenu extends PIXI.Container {
   private items: InventoryItem[];
   private credits = 0;
+  private readonly onUseItem?: (id: string) => void;
   private widthPx = 0;
   private heightPx = 0;
 
-  constructor(items: InventoryItem[], credits: number) {
+  constructor(
+    items: InventoryItem[],
+    credits: number,
+    onUseItem?: (id: string) => void
+  ) {
     super();
     this.items = items;
     this.credits = credits;
+    this.onUseItem = onUseItem;
   }
 
   public setData(items: InventoryItem[], credits: number): void {
@@ -74,6 +80,11 @@ export class InventoryMenu extends PIXI.Container {
       slot.lineStyle(2, this.rarityColor(item.rarity), 1);
       slot.drawRoundedRect(x, y, slotSize, slotSize, 8);
       slot.endFill();
+      if (this.onUseItem) {
+        slot.eventMode = "static";
+        slot.cursor = "pointer";
+        slot.on("pointertap", () => this.onUseItem?.(item.id));
+      }
       this.addChild(slot);
 
       const label = new PIXI.Text({
@@ -87,6 +98,11 @@ export class InventoryMenu extends PIXI.Container {
         },
       });
       label.position.set(x + 6, y + slotSize + 6);
+      if (this.onUseItem) {
+        label.eventMode = "static";
+        label.cursor = "pointer";
+        label.on("pointertap", () => this.onUseItem?.(item.id));
+      }
       this.addChild(label);
 
       if (item.quantity > 1) {
