@@ -1,4 +1,5 @@
 import type { GameState, LevelUpOption } from "../types";
+import { pickUpgradeOptions, type UpgradeDefinition } from "../data/Upgrades";
 
 export class LevelUpSystem {
   private lastUp = false;
@@ -85,45 +86,49 @@ export class LevelUpSystem {
   }
 
   private buildOptions(): LevelUpOption[] {
-    return [
-      {
-        id: "damage",
-        label: "+1 Projectile Damage",
-        apply: (state) => {
-          state.playerData.stats.projectileDamage += 1;
-        },
-      },
-      {
-        id: "projSpeed",
-        label: "+30 Projectile Speed",
-        apply: (state) => {
-          state.playerData.stats.projectileSpeed += 30;
-        },
-      },
-      {
-        id: "moveSpeed",
-        label: "+20 Move Speed",
-        apply: (state) => {
-          state.playerData.stats.moveSpeed += 20;
-          state.playerController.setMoveSpeed(state.playerData.stats.moveSpeed);
-        },
-      },
-      {
-        id: "maxHp",
-        label: "+10 Max HP",
-        apply: (state) => {
-          state.playerData.stats.maxHp += 10;
-          state.playerData.stats.hp += 10;
-        },
-      },
-      {
-        id: "focus",
-        label: "+2 Focus",
-        apply: (state) => {
-          state.playerData.stats.focus += 2;
-        },
-      },
-    ];
+    const upgrades = pickUpgradeOptions(3);
+    return upgrades.map((upgrade) => ({
+      id: upgrade.id,
+      label: upgrade.label,
+      apply: (state) => this.applyUpgrade(state, upgrade),
+    }));
+  }
+
+  private applyUpgrade(state: GameState, upgrade: UpgradeDefinition): void {
+    const effect = upgrade.effect;
+    if (effect.type === "stat") {
+      const stats = state.playerData.stats;
+      if (effect.stat === "moveSpeed") {
+        stats.moveSpeed += effect.amount;
+        state.playerController.setMoveSpeed(stats.moveSpeed);
+        return;
+      }
+      if (effect.stat === "maxHp") {
+        stats.maxHp += effect.amount;
+        stats.hp += effect.amount;
+        return;
+      }
+      stats[effect.stat] += effect.amount;
+      return;
+    }
+
+    if (effect.type === "ability") {
+      const ability = state.abilities.find((entry) => entry.def.id === effect.abilityId);
+      if (!ability) {
+        return;
+      }
+      if (effect.field === "cooldown") {
+        ability.def.cooldown = Math.max(0.2, ability.def.cooldown + effect.delta);
+        ability.cooldownRemaining = Math.min(
+          ability.cooldownRemaining,
+          ability.def.cooldown
+        );
+        return;
+      }
+      if (effect.field === "castTime") {
+        ability.def.castTime = Math.max(0, ability.def.castTime + effect.delta);
+      }
+    }
   }
 
   private getGamepad(): Gamepad | null {
