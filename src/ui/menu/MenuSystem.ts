@@ -192,6 +192,7 @@ export class MenuSystem extends PIXI.Container {
       inventory: [],
       questFlags: {},
       questLog: [],
+      upgradeHistory: [],
     };
     const characterPage = new CharacterMenu({
       level: data.stats.level,
@@ -210,6 +211,7 @@ export class MenuSystem extends PIXI.Container {
       body: data.equipment.body,
       arms: data.equipment.arms,
       head: data.equipment.head,
+      upgrades: [],
     });
     this.pages.set("Character", characterPage);
     this.contentRoot.addChild(characterPage);
@@ -273,6 +275,7 @@ export class MenuSystem extends PIXI.Container {
       body: data.equipment.body,
       arms: data.equipment.arms,
       head: data.equipment.head,
+      upgrades: this.playerData?.upgradeHistory ?? [],
     });
 
     if (this.inventoryPage) {

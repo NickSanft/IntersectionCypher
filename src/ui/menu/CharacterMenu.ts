@@ -17,6 +17,7 @@ export interface CharacterStats {
   body: string;
   arms: string;
   head: string;
+  upgrades: Array<{ label: string; rarity: "Common" | "Rare" | "Epic" }>;
 }
 
 export class CharacterMenu extends PIXI.Container {
@@ -116,5 +117,27 @@ export class CharacterMenu extends PIXI.Container {
     });
     gearText.position.set(width * 0.5 + 28, 44);
     this.addChild(gearText);
+
+    const upgradeHeader = new PIXI.Text({ text: "Upgrades", style: headerStyle });
+    upgradeHeader.position.set(width * 0.5 + 28, 168);
+    this.addChild(upgradeHeader);
+
+    const upgradesText = this.data.upgrades.length
+      ? this.data.upgrades
+          .slice(0, 8)
+          .map((entry) => `- ${entry.label} (${entry.rarity})`)
+          .join("\n")
+      : "None yet";
+    const upgradeList = new PIXI.Text({
+      text: upgradesText,
+      style: {
+        fill: 0x94a3b8,
+        fontFamily: "Arial",
+        fontSize: 12,
+        lineHeight: 18,
+      },
+    });
+    upgradeList.position.set(width * 0.5 + 28, 198);
+    this.addChild(upgradeList);
   }
 }

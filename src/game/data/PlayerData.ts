@@ -1,5 +1,6 @@
 import type { InventoryItem } from "./Inventory";
 import type { QuestEntry } from "./Quest";
+import type { UpgradeHistoryEntry } from "../types";
 
 export interface PlayerStats {
   level: number;
@@ -32,6 +33,7 @@ export interface PlayerData {
   inventory: InventoryItem[];
   questFlags: Record<string, boolean>;
   questLog: QuestEntry[];
+  upgradeHistory: UpgradeHistoryEntry[];
 }
 
 export const defaultPlayerData: PlayerData = {
@@ -83,4 +85,5 @@ export const defaultPlayerData: PlayerData = {
       completed: false,
     },
   ],
+  upgradeHistory: [],
 };

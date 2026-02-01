@@ -266,6 +266,7 @@ export interface GameState {
   aim: AimState;
   rhythm: RhythmState;
   camera: CameraState;
+  ui: UIState;
   levelUpSystem: import("./systems/LevelUpSystem").LevelUpSystem;
   levelUp: LevelUpState;
   projectiles: ProjectileEntry[];
@@ -303,6 +304,11 @@ export interface GameState {
   settings: SettingsState;
 }
 
+export interface UpgradeHistoryEntry {
+  label: string;
+  rarity: "Common" | "Rare" | "Epic";
+}
+
 export interface RhythmState {
   bpm: number;
   beatInterval: number;
@@ -334,6 +340,7 @@ export interface SettingsState {
   open: boolean;
   ui: import("./settings/SettingsUI").SettingsUI;
 }
+
 
 export interface ZoneRhythmConfig {
   bpm: number;
