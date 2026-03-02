@@ -41,8 +41,8 @@ export class QuestMenu extends PIXI.Container {
       text: "Quest Log",
       style: {
         fill: 0xe2e8f0,
-        fontFamily: "Arial",
-        fontSize: 16,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         fontWeight: "700",
       },
     });
@@ -62,8 +62,8 @@ export class QuestMenu extends PIXI.Container {
       text: questLines,
       style: {
         fill: 0xcbd5f5,
-        fontFamily: "Arial",
-        fontSize: 12,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
         lineHeight: 18,
         wordWrap: true,
         wordWrapWidth: width - 32,
@@ -76,8 +76,8 @@ export class QuestMenu extends PIXI.Container {
       text: "Flags",
       style: {
         fill: 0xe2e8f0,
-        fontFamily: "Arial",
-        fontSize: 14,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
         fontWeight: "700",
       },
     });
@@ -94,8 +94,8 @@ export class QuestMenu extends PIXI.Container {
       text: flagLines,
       style: {
         fill: 0x94a3b8,
-        fontFamily: "Arial",
-        fontSize: 11,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 7,
         lineHeight: 16,
       },
     });

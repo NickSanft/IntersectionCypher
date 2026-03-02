@@ -66,8 +66,8 @@ export class CharacterMenu extends PIXI.Container {
 
     const headerStyle: Partial<PIXI.TextStyle> = {
       fill: 0xe2e8f0,
-      fontFamily: "Arial",
-      fontSize: 16,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 10,
       fontWeight: "700",
     };
 
@@ -90,8 +90,8 @@ export class CharacterMenu extends PIXI.Container {
         `Guard  ${this.data.guard}\n`,
       style: {
         fill: 0xcbd5f5,
-        fontFamily: "Arial",
-        fontSize: 13,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
         lineHeight: 20,
       },
     });
@@ -110,8 +110,8 @@ export class CharacterMenu extends PIXI.Container {
         `Head: ${this.data.head}\n`,
       style: {
         fill: 0xcbd5f5,
-        fontFamily: "Arial",
-        fontSize: 13,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
         lineHeight: 20,
       },
     });
@@ -132,8 +132,8 @@ export class CharacterMenu extends PIXI.Container {
       text: upgradesText,
       style: {
         fill: 0x94a3b8,
-        fontFamily: "Arial",
-        fontSize: 12,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
         lineHeight: 18,
       },
     });

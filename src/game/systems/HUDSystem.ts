@@ -1,4 +1,84 @@
+import * as PIXI from "pixi.js";
 import type { GameState } from "../types";
+
+const BORDER_DARK = 0x080c10;
+const BORDER_MID = 0x1e2d3d;
+const BORDER_HI = 0x4a6278;
+const PANEL_BG = 0x0d1b2a;
+
+/** Draws an SNES-style bordered panel rectangle into a Graphics object. */
+function drawSnesPanel(gfx: PIXI.Graphics, w: number, h: number, alpha = 0.88): void {
+  gfx.clear();
+
+  // Background fill
+  gfx.rect(0, 0, w, h).fill({ color: PANEL_BG, alpha });
+
+  // Outer border (dark)
+  gfx.rect(0, 0, w, 2).fill(BORDER_DARK);           // top
+  gfx.rect(0, h - 2, w, 2).fill(BORDER_DARK);       // bottom
+  gfx.rect(0, 0, 2, h).fill(BORDER_DARK);           // left
+  gfx.rect(w - 2, 0, 2, h).fill(BORDER_DARK);       // right
+
+  // Inner border (medium)
+  gfx.rect(2, 2, w - 4, 2).fill(BORDER_MID);        // top inner
+  gfx.rect(2, h - 4, w - 4, 2).fill(BORDER_MID);   // bottom inner
+  gfx.rect(2, 2, 2, h - 4).fill(BORDER_MID);        // left inner
+  gfx.rect(w - 4, 2, 2, h - 4).fill(BORDER_MID);   // right inner
+
+  // Highlight corners (bright accent pixel)
+  gfx.rect(3, 3, 1, 1).fill(BORDER_HI);             // TL
+  gfx.rect(w - 4, 3, 1, 1).fill(BORDER_HI);         // TR
+  gfx.rect(3, h - 4, 1, 1).fill(BORDER_HI);         // BL
+  gfx.rect(w - 4, h - 4, 1, 1).fill(BORDER_HI);    // BR
+}
+
+const SEGMENT_COUNT = 10;
+const SEGMENT_GAP = 2;
+
+/** Draws a segmented SNES-style HP bar (10 blocks). */
+function drawSegmentedHpBar(
+  gfx: PIXI.Graphics,
+  x: number,
+  y: number,
+  barWidth: number,
+  ratio: number,
+  ghostRatio: number,
+): void {
+  const segW = Math.floor((barWidth - SEGMENT_GAP * (SEGMENT_COUNT - 1)) / SEGMENT_COUNT);
+  const segH = 8;
+
+  for (let i = 0; i < SEGMENT_COUNT; i++) {
+    const segX = x + i * (segW + SEGMENT_GAP);
+    const threshold = (i + 1) / SEGMENT_COUNT;
+    const halfThreshold = (i + 0.5) / SEGMENT_COUNT;
+
+    let fillColor: number;
+    let fillAlpha: number;
+
+    if (ratio >= threshold) {
+      // Full segment
+      fillColor = ratio > 0.4 ? 0x22c55e : ratio > 0.2 ? 0xf59e0b : 0xef4444;
+      fillAlpha = 0.95;
+    } else if (ghostRatio >= halfThreshold) {
+      // Ghost (grey partial segment)
+      fillColor = 0x4b5563;
+      fillAlpha = 0.7;
+    } else {
+      // Empty segment — dark outline only
+      gfx.rect(segX, y, segW, segH).fill({ color: 0x0b1220, alpha: 0.8 });
+      gfx.rect(segX, y, segW, 1).fill({ color: 0x1f2937, alpha: 0.9 });
+      gfx.rect(segX, y + segH - 1, segW, 1).fill({ color: 0x1f2937, alpha: 0.9 });
+      continue;
+    }
+
+    // Filled segment body
+    gfx.rect(segX, y, segW, segH).fill({ color: fillColor, alpha: fillAlpha });
+    // Top highlight pixel
+    gfx.rect(segX, y, segW, 1).fill({ color: 0xffffff, alpha: 0.25 });
+    // Bottom shadow pixel
+    gfx.rect(segX, y + segH - 1, segW, 1).fill({ color: 0x000000, alpha: 0.3 });
+  }
+}
 
 export class HUDSystem {
   public update(state: GameState, dt: number): void {
@@ -13,17 +93,17 @@ export class HUDSystem {
 
   private layoutHud(state: GameState): void {
     const padding = 12;
-    const titleY = 8;
+    const titleY = 10;
     state.hudTitle.position.set(padding, titleY);
-    state.hudText.position.set(padding, titleY + state.hudTitle.height + 6);
+    state.hudText.position.set(padding, titleY + state.hudTitle.height + 8);
 
-    const hpTextY = state.hudText.position.y + state.hudText.height + 8;
+    const hpTextY = state.hudText.position.y + state.hudText.height + 10;
     state.hudHpText.position.set(padding, hpTextY);
 
-    const chargeLabelY = hpTextY + state.hudHpText.height + 24;
+    const chargeLabelY = hpTextY + state.hudHpText.height + 28;
     state.chargeLabel.position.set(padding, chargeLabelY);
 
-    const beatY = state.chargeLabel.position.y + state.chargeLabel.height + 14;
+    const beatY = state.chargeLabel.position.y + state.chargeLabel.height + 16;
     state.hudBeatLabel.text = `Beat ${state.rhythm.bpm}`;
     state.hudBeatLabel.position.set(padding + 22, beatY - 2);
     state.hudBeatRing.position.set(padding + 8, beatY + 6);
@@ -31,7 +111,7 @@ export class HUDSystem {
     const elementY = beatY + state.hudBeatLabel.height + 10;
     state.element.hudIcon.position.set(padding + 4, elementY);
 
-    const comboY = elementY + state.element.hudIcon.height + 6;
+    const comboY = elementY + state.element.hudIcon.height + 8;
     state.combo.hudText.position.set(padding + 4, comboY);
 
     const contentWidth = Math.max(
@@ -39,18 +119,14 @@ export class HUDSystem {
       state.hudText.width,
       state.hudHpText.width,
       state.chargeLabel.width,
-      state.hudBeatLabel.width + 22
+      state.hudBeatLabel.width + 22,
     );
     const hudWidth = Math.max(200, contentWidth + padding * 2);
     const hudHeight =
       state.combo.hudText.position.y + state.combo.hudText.height + padding;
     state.hud.setSize(hudWidth, hudHeight);
 
-    state.hudBg.clear();
-    state.hudBg.beginFill(0x0f1720, 0.7);
-    state.hudBg.lineStyle(1, 0x2b3440, 1);
-    state.hudBg.drawRoundedRect(0, 0, state.hud.widthPx, state.hud.heightPx, 8);
-    state.hudBg.endFill();
+    drawSnesPanel(state.hudBg, state.hud.widthPx, state.hud.heightPx);
 
     const topPadding = 10;
     state.hudLevelText.position.set(12, topPadding);
@@ -59,21 +135,10 @@ export class HUDSystem {
       state.hudExpText.position.y + state.hudExpText.height + topPadding;
     const topWidth = Math.max(
       160,
-      Math.max(state.hudLevelText.width, state.hudExpText.width) + topPadding * 2
+      Math.max(state.hudLevelText.width, state.hudExpText.width) + topPadding * 2,
     );
     state.hudTopRight.setSize(topWidth, topHeight);
-
-    state.hudTopRightBg.clear();
-    state.hudTopRightBg.beginFill(0x0f1720, 0.7);
-    state.hudTopRightBg.lineStyle(1, 0x2b3440, 1);
-    state.hudTopRightBg.drawRoundedRect(
-      0,
-      0,
-      state.hudTopRight.widthPx,
-      state.hudTopRight.heightPx,
-      8
-    );
-    state.hudTopRightBg.endFill();
+    drawSnesPanel(state.hudTopRightBg, state.hudTopRight.widthPx, state.hudTopRight.heightPx);
   }
 
   private updatePlayerHp(state: GameState, dt: number): void {
@@ -89,39 +154,11 @@ export class HUDSystem {
     }
 
     const barWidth = Math.max(120, state.hud.widthPx - 24);
-    const barHeight = 10;
     const x = 12;
     const y = state.hudHpText.position.y + state.hudHpText.height + 4;
 
     state.hudHpBar.clear();
-    state.hudHpBar.beginFill(0x0b1220, 0.8);
-    state.hudHpBar.lineStyle(1, 0x1f2937, 1);
-    state.hudHpBar.drawRoundedRect(x, y, barWidth, barHeight, 4);
-    state.hudHpBar.endFill();
-
-    // Ghost bar (orange, behind green)
-    if (state.playerHpGhostRatio > ratio) {
-      state.hudHpBar.beginFill(0xf97316, 0.55);
-      state.hudHpBar.drawRoundedRect(
-        x + 1,
-        y + 1,
-        Math.max(2, (barWidth - 2) * state.playerHpGhostRatio),
-        barHeight - 2,
-        3
-      );
-      state.hudHpBar.endFill();
-    }
-
-    // Real HP bar
-    state.hudHpBar.beginFill(0x22c55e, 0.95);
-    state.hudHpBar.drawRoundedRect(
-      x + 1,
-      y + 1,
-      Math.max(2, (barWidth - 2) * ratio),
-      barHeight - 2,
-      3
-    );
-    state.hudHpBar.endFill();
+    drawSegmentedHpBar(state.hudHpBar, x, y, barWidth, ratio, state.playerHpGhostRatio);
 
     state.hudHpText.text = `${hp}/${maxHp}`;
   }
@@ -129,52 +166,50 @@ export class HUDSystem {
   private updateChargeBar(state: GameState): void {
     const ratio = state.aim.chargeRatio;
     const barWidth = Math.max(120, state.hud.widthPx - 24);
-    const barHeight = 10;
+    const barHeight = 8;
     const x = 12;
     const y = state.chargeLabel.position.y - barHeight - 4;
 
     state.chargeBar.clear();
-    state.chargeBar.beginFill(0x0b1220, 0.8);
-    state.chargeBar.lineStyle(1, 0x1f2937, 1);
-    state.chargeBar.drawRoundedRect(x, y, barWidth, barHeight, 4);
-    state.chargeBar.endFill();
+    // Outer border
+    state.chargeBar.rect(x, y, barWidth, barHeight).fill({ color: 0x0b1220, alpha: 0.8 });
+    state.chargeBar.rect(x, y, barWidth, 1).fill({ color: 0x1f2937, alpha: 0.9 });
 
-    const fillColor = ratio >= 1 ? 0xf97316 : 0x38bdf8;
-    state.chargeBar.beginFill(fillColor, 0.95);
-    state.chargeBar.drawRoundedRect(
-      x + 1,
-      y + 1,
-      Math.max(2, (barWidth - 2) * ratio),
-      barHeight - 2,
-      3
-    );
-    state.chargeBar.endFill();
+    if (ratio > 0) {
+      const fillColor = ratio >= 1 ? 0xf97316 : 0x38bdf8;
+      const fillW = Math.max(2, (barWidth - 2) * ratio);
+      state.chargeBar.rect(x + 1, y + 1, fillW, barHeight - 2).fill({ color: fillColor, alpha: 0.95 });
+      // Top highlight
+      state.chargeBar.rect(x + 1, y + 1, fillW, 1).fill({ color: 0xffffff, alpha: 0.3 });
+    }
 
     state.chargeLabel.text = ratio >= 1 ? "Charged" : "Charging";
   }
 
   private updateRhythmIndicator(state: GameState): void {
     const pulse = state.rhythm.pulse;
-    const color = state.rhythm.onBeat ? 0xfbbf24 : 0x38bdf8;
-    const innerAlpha = 0.35 + pulse * 0.45;
-    state.hudBeatLabel.tint = state.rhythm.onBeat ? 0xfef08a : 0x93c5fd;
+    const onBeat = state.rhythm.onBeat;
+    const color = onBeat ? 0xfbbf24 : 0x38bdf8;
+    state.hudBeatLabel.tint = onBeat ? 0xfef08a : 0x93c5fd;
 
     state.hudBeatRing.clear();
 
-    // Static inner ring
-    state.hudBeatRing.lineStyle(1.5, color, innerAlpha);
-    state.hudBeatRing.drawCircle(0, 0, 5);
+    // Pixel-art beat dot: filled square instead of circle
+    const dotSize = onBeat ? 4 : 3;
+    const alpha = 0.4 + pulse * 0.6;
+    state.hudBeatRing.rect(-dotSize / 2, -dotSize / 2, dotSize, dotSize).fill({ color, alpha });
 
-    // Filled center dot
-    state.hudBeatRing.beginFill(color, innerAlpha);
-    state.hudBeatRing.drawCircle(0, 0, state.rhythm.onBeat ? 3.5 : 2.5);
-    state.hudBeatRing.endFill();
-
-    // Expanding outer ring on beat pulse
-    if (pulse > 0.01) {
-      const outerRadius = 5 + pulse * 9;
-      state.hudBeatRing.lineStyle(2, color, pulse * 0.8);
-      state.hudBeatRing.drawCircle(0, 0, outerRadius);
+    // Expanding outer square on beat
+    if (pulse > 0.05) {
+      const outerSize = 8 + pulse * 10;
+      state.hudBeatRing
+        .rect(-outerSize / 2, -outerSize / 2, outerSize, 1).fill({ color, alpha: pulse * 0.7 });
+      state.hudBeatRing
+        .rect(-outerSize / 2, outerSize / 2 - 1, outerSize, 1).fill({ color, alpha: pulse * 0.7 });
+      state.hudBeatRing
+        .rect(-outerSize / 2, -outerSize / 2, 1, outerSize).fill({ color, alpha: pulse * 0.7 });
+      state.hudBeatRing
+        .rect(outerSize / 2 - 1, -outerSize / 2, 1, outerSize).fill({ color, alpha: pulse * 0.7 });
     }
   }
 
@@ -191,9 +226,9 @@ export class HUDSystem {
       return;
     }
     combo.hudText.visible = true;
-    const multStr = combo.multiplier > 1 ? ` ×${combo.multiplier}` : "";
+    const multStr = combo.multiplier > 1 ? ` x${combo.multiplier}` : "";
     combo.hudText.text = `${combo.count} hits${multStr}`;
-    const scale = 1 + combo.hudPulse * 0.3;
+    const scale = 1 + combo.hudPulse * 0.25;
     combo.hudText.scale.set(scale);
     combo.hudText.alpha = 0.6 + combo.hudPulse * 0.4;
     const tiers = combo.count >= 8 ? 0xfacc15 : combo.count >= 4 ? 0xfb923c : 0xf0f9ff;
@@ -208,8 +243,8 @@ export class HUDSystem {
       }
       enemy.label.visible = true;
       enemy.label.position.set(
-        enemy.entity.pos.x,
-        enemy.entity.pos.y - enemy.labelOffsetY
+        Math.round(enemy.entity.pos.x),
+        Math.round(enemy.entity.pos.y) - enemy.labelOffsetY,
       );
       enemy.label.text = `${enemy.name} ${enemy.hp}/${enemy.maxHp}`;
     }

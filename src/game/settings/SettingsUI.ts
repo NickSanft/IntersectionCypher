@@ -30,8 +30,8 @@ export class SettingsUI {
       text: "Settings",
       style: {
         fill: 0xf8fafc,
-        fontFamily: "Arial",
-        fontSize: 18,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         fontWeight: "700",
       },
     });
@@ -42,8 +42,8 @@ export class SettingsUI {
       text: "Metronome",
       style: {
         fill: 0xe2e8f0,
-        fontFamily: "Arial",
-        fontSize: 14,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
       },
     });
     this.metronomeLabel.position.set(16, 52);
@@ -62,8 +62,8 @@ export class SettingsUI {
       text: "Tick Volume",
       style: {
         fill: 0xe2e8f0,
-        fontFamily: "Arial",
-        fontSize: 14,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
       },
     });
     this.volumeLabel.position.set(16, 98);
@@ -82,8 +82,8 @@ export class SettingsUI {
       text: "Press O to close",
       style: {
         fill: 0x94a3b8,
-        fontFamily: "Arial",
-        fontSize: 12,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
       },
     });
     this.hintText.position.set(16, height - 28);

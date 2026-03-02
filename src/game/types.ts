@@ -9,6 +9,8 @@ import type { Projectile } from "../projectiles/Projectile";
 import type { PlayerData } from "./data/PlayerData";
 import type { DialogEngine, DialogData } from "./dialog/DialogEngine";
 import type { DialogUI } from "./dialog/DialogUI";
+import type { AnimationState } from "./animation/AnimationConfig";
+import type { SpriteAtlas } from "./assets/SpriteLoader";
 
 export type Element = "Neutral" | "Heat" | "Wave";
 
@@ -110,6 +112,7 @@ export interface EnemyState {
   entity: ZEntity;
   name: string;
   type: "chaser" | "turret" | "shield";
+  animState: AnimationState;
   radius: number;
   maxHp: number;
   hp: number;
@@ -287,6 +290,7 @@ export interface GameState {
   currentMapId: string;
   input: Input;
   player: ZEntity;
+  playerAnimState: AnimationState;
   playerController: PlayerController;
   playerRadius: number;
   playerHitTimer: number;
@@ -329,6 +333,7 @@ export interface GameState {
   enemyProjectilePool: EnemyProjectilePoolEntry[];
   enemyProjectileTexture: PIXI.Texture;
   enemies: EnemyState[];
+  spriteAtlas: SpriteAtlas;
   playerData: PlayerData;
   damageTexts: DamageTextEntry[];
   damageTextPool: DamageTextPoolEntry[];

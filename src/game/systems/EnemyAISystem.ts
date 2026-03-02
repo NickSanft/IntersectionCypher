@@ -20,8 +20,14 @@ export class EnemyAISystem {
       }
     }
 
+    const enemyProjFrames = state.spriteAtlas.enemyProjectile.length > 0
+      ? state.spriteAtlas.enemyProjectile
+      : [state.enemyProjectileTexture];
+    const enemyProjSprite = new PIXI.AnimatedSprite(enemyProjFrames);
+    enemyProjSprite.animationSpeed = 0.15;
+    enemyProjSprite.play();
     const entity = new ZEntity({
-      sprite: new PIXI.Sprite(state.enemyProjectileTexture),
+      sprite: enemyProjSprite,
       gravity: 0,
       mass: 1,
     });

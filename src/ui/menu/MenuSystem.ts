@@ -46,8 +46,8 @@ export class MenuSystem extends PIXI.Container {
       text: "Character",
       style: {
         fill: 0xf8fafc,
-        fontFamily: "Arial",
-        fontSize: 18,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         fontWeight: "700",
       },
     });
@@ -239,8 +239,8 @@ export class MenuSystem extends PIXI.Container {
         text: `${label} page`,
         style: {
           fill: 0x94a3b8,
-          fontFamily: "Arial",
-          fontSize: 16,
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 10,
         },
       });
       text.position.set(16, 16);

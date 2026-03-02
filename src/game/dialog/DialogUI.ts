@@ -33,8 +33,8 @@ export class DialogUI {
       text: "",
       style: {
         fill: 0xf9fafb,
-        fontFamily: "Arial",
-        fontSize: 16,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         wordWrap: true,
         wordWrapWidth: width - 24,
       },
@@ -82,8 +82,8 @@ export class DialogUI {
         text: choice.text,
         style: {
           fill: 0xe2e8f0,
-          fontFamily: "Arial",
-          fontSize: 12,
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 8,
         },
       });
       label.position.set(10, 4);

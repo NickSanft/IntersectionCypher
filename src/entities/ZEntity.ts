@@ -64,20 +64,15 @@ export class ZEntity extends PIXI.Container {
   }
 
   public renderUpdate(): void {
-    this.position.set(this.pos.x, this.pos.y);
-    this.sprite.position.y = -this.pos.z;
+    this.position.set(Math.round(this.pos.x), Math.round(this.pos.y));
+    this.sprite.position.y = -Math.round(this.pos.z);
 
     if (this.shadow) {
       const scale = Math.max(0.3, 1 - this.pos.z / 80);
       this.shadow.clear();
-      this.shadow.beginFill(0x000000, 0.32 * scale);
-      this.shadow.drawEllipse(
-        0,
-        this.shadowOffsetY,
-        this.shadowRadiusX * scale,
-        this.shadowRadiusY * scale
-      );
-      this.shadow.endFill();
+      this.shadow
+        .ellipse(0, this.shadowOffsetY, this.shadowRadiusX * scale, this.shadowRadiusY * scale)
+        .fill({ color: 0x000000, alpha: 0.32 * scale });
     }
   }
 }

@@ -41,8 +41,8 @@ export class RunSummaryUI {
       text: "Run Summary",
       style: {
         fill: 0xf8fafc,
-        fontFamily: "Arial",
-        fontSize: 18,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         fontWeight: "700",
       },
     });
@@ -53,8 +53,8 @@ export class RunSummaryUI {
       text: "",
       style: {
         fill: 0xe2e8f0,
-        fontFamily: "Arial",
-        fontSize: 14,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
         lineHeight: 20,
       },
     });
@@ -65,8 +65,8 @@ export class RunSummaryUI {
       text: "Press R to close",
       style: {
         fill: 0x94a3b8,
-        fontFamily: "Arial",
-        fontSize: 12,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
       },
     });
     this.hintText.position.set(16, height - 28);

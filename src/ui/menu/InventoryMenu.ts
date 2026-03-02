@@ -54,8 +54,8 @@ export class InventoryMenu extends PIXI.Container {
       text: `Inventory  (${this.credits}c)`,
       style: {
         fill: 0xe2e8f0,
-        fontFamily: "Arial",
-        fontSize: 16,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         fontWeight: "700",
       },
     });
@@ -91,8 +91,8 @@ export class InventoryMenu extends PIXI.Container {
         text: labelText,
         style: {
           fill: 0xcbd5f5,
-          fontFamily: "Arial",
-          fontSize: 11,
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 7,
           wordWrap: true,
           wordWrapWidth: slotSize - 8,
         },
@@ -110,8 +110,8 @@ export class InventoryMenu extends PIXI.Container {
           text: `x${item.quantity}`,
           style: {
             fill: 0xf8fafc,
-            fontFamily: "Arial",
-            fontSize: 10,
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: 7,
             fontWeight: "700",
           },
         });
@@ -127,8 +127,8 @@ export class InventoryMenu extends PIXI.Container {
         text: "Items",
         style: {
           fill: 0xe2e8f0,
-          fontFamily: "Arial",
-          fontSize: 14,
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 8,
           fontWeight: "600",
         },
       });
@@ -145,8 +145,8 @@ export class InventoryMenu extends PIXI.Container {
         text: lines,
         style: {
           fill: 0x94a3b8,
-          fontFamily: "Arial",
-          fontSize: 12,
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 8,
           lineHeight: 18,
         },
       });

@@ -30,8 +30,8 @@ export class LevelUpUI {
       text: "Level Up!",
       style: {
         fill: 0xf8fafc,
-        fontFamily: "Arial",
-        fontSize: 18,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         fontWeight: "700",
       },
     });
@@ -61,8 +61,8 @@ export class LevelUpUI {
         text: label,
         style: {
           fill: 0xe2e8f0,
-          fontFamily: "Arial",
-          fontSize: 13,
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 8,
         },
       });
       const width = measure.width;
@@ -82,8 +82,8 @@ export class LevelUpUI {
         text: labelText,
         style: {
           fill: 0xe2e8f0,
-          fontFamily: "Arial",
-          fontSize: 13,
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: 8,
         },
       });
       label.position.set(10, 6);

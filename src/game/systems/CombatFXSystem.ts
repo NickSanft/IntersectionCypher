@@ -61,16 +61,20 @@ export class CombatFXSystem {
       }
     }
 
-    // Impact rings (G3)
+    // Impact rings (pixel-art square ring)
     for (let i = state.impactRings.length - 1; i >= 0; i -= 1) {
       const ring = state.impactRings[i];
       ring.life -= dt;
       const t = 1 - ring.life / ring.duration;
-      const radius = ring.maxRadius * t;
+      const r = Math.round(ring.maxRadius * t);
       const alpha = (1 - t) * 0.75;
       ring.gfx.clear();
-      ring.gfx.lineStyle(2, ring.color, alpha);
-      ring.gfx.drawCircle(0, 0, radius);
+      // Draw square ring as 4 line segments (pixel-aligned)
+      const a = ring.color;
+      ring.gfx.rect(-r, -r, r * 2, 2).fill({ color: a, alpha });
+      ring.gfx.rect(-r, r - 2, r * 2, 2).fill({ color: a, alpha });
+      ring.gfx.rect(-r, -r, 2, r * 2).fill({ color: a, alpha });
+      ring.gfx.rect(r - 2, -r, 2, r * 2).fill({ color: a, alpha });
       if (ring.life <= 0) {
         ring.pool.inUse = false;
         ring.gfx.visible = false;

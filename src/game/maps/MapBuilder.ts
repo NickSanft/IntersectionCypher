@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import type { TileDef, TileMap } from "../../core/world/TileMap";
 import { tileIndex } from "../../core/world/TileMap";
 import type { ZonePalette } from "../types";
+import type { TileTextureSet } from "../assets/TileSpriteGenerator";
 
 export interface TileLayout {
   tileSize: number;
@@ -109,6 +110,54 @@ export const drawMap = (map: TileMap, palette: ZonePalette = DEFAULT_PALETTE): P
   }
 
   container.addChild(gfx);
+  return container;
+};
+
+/**
+ * Tile-sprite based map rendering — replaces drawMap() with crisp 16×16 pixel tiles
+ * displayed at tileSize×tileSize (3× scale for 16→48px tiles).
+ */
+export const drawMapSprites = (
+  map: TileMap,
+  tiles: TileTextureSet,
+): PIXI.Container => {
+  const container = new PIXI.Container();
+  const frontFaceH = Math.round(map.tileSize * 0.35);
+  const scale = map.tileSize / 16; // e.g. 48/16 = 3
+
+  for (let y = 0; y < map.height; y += 1) {
+    for (let x = 0; x < map.width; x += 1) {
+      const idx = tileIndex(x, y, map.width);
+      const def = map.defs[map.tiles[idx]];
+      const wx = x * map.tileSize;
+      const wy = y * map.tileSize;
+
+      if (def.solid === "Solid") {
+        // Wall top face
+        const wallTop = new PIXI.Sprite(tiles.wallTop);
+        wallTop.scale.set(scale);
+        wallTop.position.set(wx, wy);
+        container.addChild(wallTop);
+
+        // Wall front face — only south-exposed walls
+        const belowIdx = y + 1 < map.height ? map.tiles[tileIndex(x, y + 1, map.width)] : 0;
+        if (map.defs[belowIdx]?.solid !== "Solid") {
+          const frontSprite = new PIXI.Sprite(tiles.wallFront);
+          frontSprite.scale.set(scale, frontFaceH / 16);
+          frontSprite.position.set(wx, (y + 1) * map.tileSize);
+          container.addChild(frontSprite);
+        }
+      } else {
+        // Floor tile — checkerboard alternation
+        const isAlt = (x + y) % 2 === 0;
+        const floorSprite = new PIXI.Sprite(isAlt ? tiles.floorAlt : tiles.floor);
+        floorSprite.scale.set(scale);
+        floorSprite.position.set(wx, wy);
+        container.addChild(floorSprite);
+      }
+    }
+  }
+
   return container;
 };
 

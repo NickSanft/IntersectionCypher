@@ -20,8 +20,8 @@ export class CombatSystem {
       text: "",
       style: {
         fill: 0xf97316,
-        fontFamily: "Arial",
-        fontSize: 18,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 10,
         fontWeight: "700",
       },
     });
@@ -78,15 +78,16 @@ export class CombatSystem {
     markerColor: number,
     isCharged = false
   ): void {
-    const particleCount = isCharged ? 12 : 6;
-    const particleRadius = isCharged ? 4 : 2;
+    // Pixel-art impact particles: small square sparks instead of circles
+    const particleCount = isCharged ? 10 : 5;
+    const particleSize = isCharged ? 4 : 2;
     for (let i = 0; i < particleCount; i += 1) {
       const particle = this.acquireImpactParticle(state);
       particle.gfx.clear();
-      particle.gfx.beginFill(color, 0.9);
-      particle.gfx.drawCircle(0, 0, particleRadius);
-      particle.gfx.endFill();
-      particle.gfx.position.set(x, y);
+      // Draw a pixel-cross spark
+      particle.gfx.rect(-particleSize / 2, -1, particleSize, 2).fill({ color, alpha: 0.9 });
+      particle.gfx.rect(-1, -particleSize / 2, 2, particleSize).fill({ color, alpha: 0.9 });
+      particle.gfx.position.set(Math.round(x), Math.round(y));
       particle.gfx.alpha = 1;
       particle.gfx.visible = true;
       if (!state.world.children.includes(particle.gfx)) {
@@ -103,14 +104,18 @@ export class CombatSystem {
       });
     }
 
+    // SNES-style hit marker: pixel cross
     const marker = this.acquireHitMarker(state);
+    const mSize = isCharged ? 8 : 5;
     marker.gfx.clear();
-    marker.gfx.lineStyle(2, markerColor, 0.9);
-    marker.gfx.moveTo(-5, 0);
-    marker.gfx.lineTo(5, 0);
-    marker.gfx.moveTo(0, -5);
-    marker.gfx.lineTo(0, 5);
-    marker.gfx.position.set(x, y);
+    marker.gfx.rect(-mSize, -1, mSize * 2, 2).fill({ color: markerColor, alpha: 0.95 });
+    marker.gfx.rect(-1, -mSize, 2, mSize * 2).fill({ color: markerColor, alpha: 0.95 });
+    // Corner dots
+    marker.gfx.rect(-mSize, -mSize, 2, 2).fill({ color: markerColor, alpha: 0.7 });
+    marker.gfx.rect(mSize - 2, -mSize, 2, 2).fill({ color: markerColor, alpha: 0.7 });
+    marker.gfx.rect(-mSize, mSize - 2, 2, 2).fill({ color: markerColor, alpha: 0.7 });
+    marker.gfx.rect(mSize - 2, mSize - 2, 2, 2).fill({ color: markerColor, alpha: 0.7 });
+    marker.gfx.position.set(Math.round(x), Math.round(y));
     marker.gfx.alpha = 1;
     marker.gfx.visible = true;
     if (!state.world.children.includes(marker.gfx)) {

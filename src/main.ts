@@ -24,6 +24,7 @@ import { RhythmSystem } from "./game/systems/RhythmSystem";
 import { ElementSystem } from "./game/systems/ElementSystem";
 import { RunSummarySystem } from "./game/systems/RunSummarySystem";
 import { SettingsSystem } from "./game/systems/SettingsSystem";
+import { AnimationSystem } from "./game/systems/AnimationSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
 import { defaultEnemyData, turretEnemyData, shieldEnemyData, type EnemyData } from "./game/data/EnemyData";
@@ -41,10 +42,12 @@ import { RunSummaryUI } from "./game/run/RunSummaryUI";
 import { zoneConfigs } from "./game/data/Zones";
 import { SettingsUI } from "./game/settings/SettingsUI";
 import { zoneMaps } from "./game/data/ZoneMaps";
-import { buildTileMap, drawMap, rectToWorld, tileToWorld } from "./game/maps/MapBuilder";
+import { buildTileMap, drawMapSprites, rectToWorld, tileToWorld } from "./game/maps/MapBuilder";
+import { generateTileTextures } from "./game/assets/TileSpriteGenerator";
 import { addItemById } from "./game/data/InventoryUtils";
 import { itemDefs } from "./game/data/Items";
 import { ItemSystem } from "./game/systems/ItemSystem";
+import { loadSprites } from "./game/assets/SpriteLoader";
 
 const buildMapState = (
   config: (typeof zoneMaps)[keyof typeof zoneMaps],
@@ -87,11 +90,12 @@ const bootstrap = async (): Promise<void> => {
   if (typeof window === "undefined") {
     return;
   }
+  PIXI.AbstractRenderer.defaultOptions.roundPixels = true;
   const app = new PIXI.Application();
   await app.init({
     background: "#0b0f14",
     resizeTo: window,
-    antialias: true,
+    antialias: false,
   });
 
   const host = document.querySelector<HTMLDivElement>("#app");
@@ -110,8 +114,15 @@ const bootstrap = async (): Promise<void> => {
 
   const map1 = buildTileMap(zoneMaps.map1.layout);
   const map2 = buildTileMap(zoneMaps.map2.layout);
-  const mapView1 = drawMap(map1, zoneConfigs.map1.rhythm.palette);
-  const mapView2 = drawMap(map2, zoneConfigs.map2.rhythm.palette);
+
+  // Load sprite atlas (falls back to placeholders if real assets are absent)
+  const spriteAtlas = await loadSprites(app.renderer as PIXI.Renderer);
+
+  // Build tile texture sets per zone and render maps as tile sprites
+  const map1Tiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map1.rhythm.palette);
+  const map2Tiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map2.rhythm.palette);
+  const mapView1 = drawMapSprites(map1, map1Tiles);
+  const mapView2 = drawMapSprites(map2, map2Tiles);
   mapView1.zIndex = 0;
   mapView2.zIndex = 0;
   world.addChild(mapView1);
@@ -121,14 +132,17 @@ const bootstrap = async (): Promise<void> => {
     map2: buildMapState(zoneMaps.map2, map2, mapView2, mapCatalog),
   };
 
-  const playerTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.circle(0, 0, 10).fill(0x4ade80);
-    return app.renderer.generateTexture(gfx);
-  })();
+  function makeAnim(frames: PIXI.Texture[], speed = 0.1, autoPlay = true): PIXI.AnimatedSprite {
+    const anim = new PIXI.AnimatedSprite(frames.length > 0 ? frames : [PIXI.Texture.WHITE]);
+    anim.animationSpeed = speed;
+    if (autoPlay) anim.play();
+    return anim;
+  }
 
+  const playerSprite = makeAnim(spriteAtlas.entities.player.idle, 0.08);
+  playerSprite.scale.set(3); // 16px → 48px
   const player = new ZEntity({
-    sprite: new PIXI.Sprite(playerTexture),
+    sprite: playerSprite,
     gravity: 0,
     mass: 1,
     shadowRadiusX: 10,
@@ -155,41 +169,24 @@ const bootstrap = async (): Promise<void> => {
   const playerRadius = 10;
   const npcRadius = 10;
 
-  const projectileTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.circle(0, 0, 4).fill(0xfbbf24);
-    return app.renderer.generateTexture(gfx);
-  })();
+  // Use atlas pixel-art projectile frames
+  const projectileFrames = spriteAtlas.playerProjectile;
+  const enemyProjectileTexture = spriteAtlas.enemyProjectile[0] ?? PIXI.Texture.WHITE;
 
-  const enemyProjectileTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.circle(0, 0, 5).fill(0x38bdf8);
-    return app.renderer.generateTexture(gfx);
-  })();
-
-  const enemyTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.roundRect(0, 0, 26, 26, 6).fill(0xef4444);
-    return app.renderer.generateTexture(gfx);
-  })();
-
-  const turretTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.roundRect(0, 0, 24, 24, 6).fill(0x38bdf8);
-    return app.renderer.generateTexture(gfx);
-  })();
 
   const createEnemyState = (
     data: EnemyData,
-    texture: PIXI.Texture,
+    frames: PIXI.Texture[],
     map: TileMap,
     mapId: string,
     type: "chaser" | "turret" | "shield",
     spawnX: number,
     spawnY: number
   ) => {
+    const enemySprite = makeAnim(frames, 0.08);
+    enemySprite.scale.set(3); // 16px → 48px
     const entity = new ZEntity({
-      sprite: new PIXI.Sprite(texture),
+      sprite: enemySprite,
       gravity: 0,
       mass: 1,
       shadowRadiusX: data.radius,
@@ -215,8 +212,8 @@ const bootstrap = async (): Promise<void> => {
       text: data.name,
       style: {
         fill: 0xf8fafc,
-        fontFamily: "Arial",
-        fontSize: 12,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 8,
         fontWeight: "700",
         stroke: { color: 0x0b1220, width: 3 },
       },
@@ -238,6 +235,7 @@ const bootstrap = async (): Promise<void> => {
       entity,
       name: data.name,
       type,
+      animState: "idle" as const,
       element: data.element,
       shieldAngle: type === "shield" ? 0 : undefined,
       shieldArcDeg: type === "shield" ? 120 : undefined,
@@ -279,19 +277,13 @@ const bootstrap = async (): Promise<void> => {
     };
   };
 
-  const shieldTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.roundRect(0, 0, 28, 28, 8).fill(0x0ea5e9);
-    return app.renderer.generateTexture(gfx);
-  })();
-
   const chaserSpawn = tileToWorld(map2, 12, 5);
   const turretSpawn = tileToWorld(map2, 5, 7);
   const shieldSpawn = tileToWorld(map2, 14, 7);
   const enemies = [
     createEnemyState(
       defaultEnemyData,
-      enemyTexture,
+      spriteAtlas.entities.chaser.idle,
       map2,
       "map2",
       "chaser",
@@ -300,7 +292,7 @@ const bootstrap = async (): Promise<void> => {
     ),
     createEnemyState(
       turretEnemyData,
-      turretTexture,
+      spriteAtlas.entities.turret.idle,
       map2,
       "map2",
       "turret",
@@ -309,7 +301,7 @@ const bootstrap = async (): Promise<void> => {
     ),
     createEnemyState(
       shieldEnemyData,
-      shieldTexture,
+      spriteAtlas.entities.shield.idle,
       map2,
       "map2",
       "shield",
@@ -318,14 +310,10 @@ const bootstrap = async (): Promise<void> => {
     ),
   ];
 
-  const npcTexture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.circle(0, 0, 10).fill(0xf472b6);
-    return app.renderer.generateTexture(gfx);
-  })();
-
+  const npcSprite = makeAnim(spriteAtlas.entities.npc.idle, 0.07);
+  npcSprite.scale.set(3);
   const npc = new ZEntity({
-    sprite: new PIXI.Sprite(npcTexture),
+    sprite: npcSprite,
     gravity: 0,
     mass: 1,
   });
@@ -337,14 +325,10 @@ const bootstrap = async (): Promise<void> => {
   npc.renderUpdate();
   world.addChild(npc);
 
-  const npc2Texture = (() => {
-    const gfx = new PIXI.Graphics();
-    gfx.circle(0, 0, 10).fill(0xa855f7);
-    return app.renderer.generateTexture(gfx);
-  })();
-
+  const npc2Sprite = makeAnim(spriteAtlas.entities.npc2.idle, 0.07);
+  npc2Sprite.scale.set(3);
   const npc2 = new ZEntity({
-    sprite: new PIXI.Sprite(npc2Texture),
+    sprite: npc2Sprite,
     gravity: 0,
     mass: 1,
   });
@@ -372,8 +356,8 @@ const bootstrap = async (): Promise<void> => {
     text: "Door",
     style: {
       fill: 0x93c5fd,
-      fontFamily: "Arial",
-      fontSize: 10,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
     },
   });
   doorLabel1.position.set(-6, -14);
@@ -394,8 +378,8 @@ const bootstrap = async (): Promise<void> => {
     text: "Door",
     style: {
       fill: 0x93c5fd,
-      fontFamily: "Arial",
-      fontSize: 10,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
     },
   });
   doorLabel2.position.set(-6, -14);
@@ -491,8 +475,8 @@ const bootstrap = async (): Promise<void> => {
     text: "WASD / Arrows to move\nSpace to interact\nH: use item\nM/Esc for menu",
     style: {
       fill: 0xcbd5f5,
-      fontFamily: "Arial",
-      fontSize: 12,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 8,
     },
   });
   hudText.position.set(12, 28);
@@ -503,8 +487,8 @@ const bootstrap = async (): Promise<void> => {
     text: "SYSTEMS",
     style: {
       fill: 0xe2e8f0,
-      fontFamily: "Arial",
-      fontSize: 12,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 8,
       fontWeight: "700",
       letterSpacing: 2,
     },
@@ -519,8 +503,8 @@ const bootstrap = async (): Promise<void> => {
     text: "120/120",
     style: {
       fill: 0xf8fafc,
-      fontFamily: "Arial",
-      fontSize: 11,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
     },
   });
   hudHpText.position.set(12, 60);
@@ -533,8 +517,8 @@ const bootstrap = async (): Promise<void> => {
     text: "Charging",
     style: {
       fill: 0x93c5fd,
-      fontFamily: "Arial",
-      fontSize: 11,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
     },
   });
   chargeLabel.position.set(12, 116);
@@ -547,8 +531,8 @@ const bootstrap = async (): Promise<void> => {
     text: "Beat 120",
     style: {
       fill: 0x93c5fd,
-      fontFamily: "Arial",
-      fontSize: 11,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
     },
   });
   hud.addChild(hudBeatLabel);
@@ -568,8 +552,8 @@ const bootstrap = async (): Promise<void> => {
     text: "LV 1",
     style: {
       fill: 0xf8fafc,
-      fontFamily: "Arial",
-      fontSize: 12,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 8,
       fontWeight: "700",
     },
   });
@@ -580,8 +564,8 @@ const bootstrap = async (): Promise<void> => {
     text: "EXP 0/10",
     style: {
       fill: 0x93c5fd,
-      fontFamily: "Arial",
-      fontSize: 11,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
     },
   });
   hudExpText.position.set(12, 30);
@@ -603,8 +587,8 @@ const bootstrap = async (): Promise<void> => {
     text: "Space: Enter",
     style: {
       fill: 0xf8fafc,
-      fontFamily: "Arial",
-      fontSize: 11,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
       fontWeight: "600",
     },
   });
@@ -628,8 +612,8 @@ const bootstrap = async (): Promise<void> => {
     text: "Space: Activate",
     style: {
       fill: 0xf8fafc,
-      fontFamily: "Arial",
-      fontSize: 11,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 7,
       fontWeight: "600",
     },
   });
@@ -688,8 +672,8 @@ const bootstrap = async (): Promise<void> => {
       text: "",
       style: {
         fill: 0xe2e8f0,
-        fontFamily: "Arial",
-        fontSize: 10,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 7,
         fontWeight: "600",
       },
     });
@@ -701,7 +685,7 @@ const bootstrap = async (): Promise<void> => {
       text: "",
       style: {
         fill: 0x93c5fd,
-        fontFamily: "Arial",
+        fontFamily: '"Press Start 2P", monospace',
         fontSize: 9,
         fontWeight: "700",
       },
@@ -792,14 +776,14 @@ const bootstrap = async (): Promise<void> => {
 
   const elementHudIcon = new PIXI.Text({
     text: "Neutral",
-    style: { fill: 0xfbbf24, fontFamily: "Arial", fontSize: 11, fontWeight: "700" },
+    style: { fill: 0xfbbf24, fontFamily: '"Press Start 2P", monospace', fontSize: 7, fontWeight: "700" },
   });
   elementHudIcon.anchor.set(0, 0.5);
   hud.addChild(elementHudIcon);
 
   const comboHudText = new PIXI.Text({
     text: "",
-    style: { fill: 0xffffff, fontFamily: "Arial", fontSize: 13, fontWeight: "900" },
+    style: { fill: 0xffffff, fontFamily: '"Press Start 2P", monospace', fontSize: 8, fontWeight: "900" },
   });
   comboHudText.anchor.set(0, 0.5);
   comboHudText.visible = false;
@@ -821,6 +805,7 @@ const bootstrap = async (): Promise<void> => {
     currentMapId: "map1",
     input,
     player,
+    playerAnimState: "idle",
     playerController,
     playerRadius,
     playerHitTimer: 0,
@@ -935,6 +920,7 @@ const bootstrap = async (): Promise<void> => {
     enemyProjectilePool: [],
     enemyProjectileTexture,
     enemies,
+    spriteAtlas,
     damageTexts: [],
     damageTextPool: [],
     impactParticles: [],
@@ -1083,7 +1069,7 @@ const bootstrap = async (): Promise<void> => {
     },
   ];
 
-  setupPointerSystem(state, projectileTexture);
+  setupPointerSystem(state, projectileFrames);
 
   const menuToggleSystem = new MenuToggleSystem();
   const triggerSystem = new TriggerSystem();
@@ -1101,6 +1087,7 @@ const bootstrap = async (): Promise<void> => {
   const cameraSystem = new CameraSystem();
   const hudSystem = new HUDSystem();
   const enemyAISystem = new EnemyAISystem();
+  const animationSystem = new AnimationSystem();
   const mapSystem = new MapSystem();
   const minimapSystem = new MinimapSystem();
 
@@ -1121,6 +1108,7 @@ const bootstrap = async (): Promise<void> => {
     settingsSystem.update(state);
     mapSystem.update(state, simDt);
     enemyAISystem.update(state, simDt);
+    animationSystem.update(state, simDt);
     elementSystem.update(state);
     aimSystem.update(state);
     combatSystem.update(state, simDt);

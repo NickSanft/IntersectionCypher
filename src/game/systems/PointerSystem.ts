@@ -12,7 +12,7 @@ const ELEMENT_TINTS: Record<Element, number> = {
 
 export const setupPointerSystem = (
   state: GameState,
-  projectileTexture: PIXI.Texture
+  projectileFrames: PIXI.Texture[]
 ): void => {
   const acquireProjectile = (radius: number): {
     entry: GameState["projectilePool"][number];
@@ -26,8 +26,12 @@ export const setupPointerSystem = (
       }
     }
 
+    const frames = projectileFrames.length > 0 ? projectileFrames : [PIXI.Texture.WHITE];
+    const projSprite = new PIXI.AnimatedSprite(frames);
+    projSprite.animationSpeed = 0.2;
+    projSprite.play();
     const entity = new ZEntity({
-      sprite: new PIXI.Sprite(projectileTexture),
+      sprite: projSprite,
       gravity: 0,
       mass: 1,
     });
