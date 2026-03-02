@@ -1,9 +1,9 @@
 import type { GameState } from "../types";
 
 export class HUDSystem {
-  public update(state: GameState): void {
+  public update(state: GameState, dt: number): void {
     this.layoutHud(state);
-    this.updatePlayerHp(state);
+    this.updatePlayerHp(state, dt);
     this.updateChargeBar(state);
     this.updateRhythmIndicator(state);
     this.updateEnemyLabels(state);
@@ -69,10 +69,18 @@ export class HUDSystem {
     state.hudTopRightBg.endFill();
   }
 
-  private updatePlayerHp(state: GameState): void {
+  private updatePlayerHp(state: GameState, dt: number): void {
     const hp = state.playerData.stats.hp;
     const maxHp = state.playerData.stats.maxHp;
     const ratio = maxHp === 0 ? 0 : hp / maxHp;
+
+    // Decay ghost ratio toward real ratio
+    if (state.playerHpGhostRatio > ratio) {
+      state.playerHpGhostRatio = Math.max(ratio, state.playerHpGhostRatio - 0.4 * dt);
+    } else {
+      state.playerHpGhostRatio = ratio;
+    }
+
     const barWidth = Math.max(120, state.hud.widthPx - 24);
     const barHeight = 10;
     const x = 12;
@@ -84,6 +92,20 @@ export class HUDSystem {
     state.hudHpBar.drawRoundedRect(x, y, barWidth, barHeight, 4);
     state.hudHpBar.endFill();
 
+    // Ghost bar (orange, behind green)
+    if (state.playerHpGhostRatio > ratio) {
+      state.hudHpBar.beginFill(0xf97316, 0.55);
+      state.hudHpBar.drawRoundedRect(
+        x + 1,
+        y + 1,
+        Math.max(2, (barWidth - 2) * state.playerHpGhostRatio),
+        barHeight - 2,
+        3
+      );
+      state.hudHpBar.endFill();
+    }
+
+    // Real HP bar
     state.hudHpBar.beginFill(0x22c55e, 0.95);
     state.hudHpBar.drawRoundedRect(
       x + 1,
@@ -125,16 +147,28 @@ export class HUDSystem {
   }
 
   private updateRhythmIndicator(state: GameState): void {
-    const radius = state.rhythm.onBeat ? 7 : 5;
     const pulse = state.rhythm.pulse;
-    const alpha = 0.35 + pulse * 0.65;
     const color = state.rhythm.onBeat ? 0xfbbf24 : 0x38bdf8;
+    const innerAlpha = 0.35 + pulse * 0.45;
     state.hudBeatLabel.tint = state.rhythm.onBeat ? 0xfef08a : 0x93c5fd;
 
     state.hudBeatRing.clear();
-    state.hudBeatRing.lineStyle(2, color, alpha);
-    state.hudBeatRing.drawCircle(0, 0, radius + pulse * 3);
+
+    // Static inner ring
+    state.hudBeatRing.lineStyle(1.5, color, innerAlpha);
+    state.hudBeatRing.drawCircle(0, 0, 5);
+
+    // Filled center dot
+    state.hudBeatRing.beginFill(color, innerAlpha);
+    state.hudBeatRing.drawCircle(0, 0, state.rhythm.onBeat ? 3.5 : 2.5);
     state.hudBeatRing.endFill();
+
+    // Expanding outer ring on beat pulse
+    if (pulse > 0.01) {
+      const outerRadius = 5 + pulse * 9;
+      state.hudBeatRing.lineStyle(2, color, pulse * 0.8);
+      state.hudBeatRing.drawCircle(0, 0, outerRadius);
+    }
   }
 
   private updateTopRight(state: GameState): void {

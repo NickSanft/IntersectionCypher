@@ -27,7 +27,8 @@ export const setupPointerSystem = (
     });
     entity.sprite.anchor.set(0.5);
     const projectile = new Projectile({ entity, radius, bounciness: 1 });
-    const entry = { entity, projectile, inUse: true };
+    const trailGfx = new PIXI.Graphics();
+    const entry = { entity, projectile, inUse: true, trailPositions: [] as Array<{ x: number; y: number }>, trailGfx };
     state.projectilePool.push(entry);
     return { entry, entity, projectile };
   };

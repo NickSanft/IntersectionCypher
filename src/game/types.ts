@@ -14,6 +14,8 @@ export interface ProjectilePoolEntry {
   entity: ZEntity;
   projectile: Projectile;
   inUse: boolean;
+  trailPositions: Array<{ x: number; y: number }>;
+  trailGfx: PIXI.Graphics;
 }
 
 export interface ProjectileEntry {
@@ -49,6 +51,32 @@ export interface DamageTextEntry {
   life: number;
   velY: number;
   pool: DamageTextPoolEntry;
+  scaleTimer: number;
+}
+
+export interface ImpactRingPoolEntry {
+  gfx: PIXI.Graphics;
+  inUse: boolean;
+}
+
+export interface ImpactRingEntry {
+  gfx: PIXI.Graphics;
+  life: number;
+  duration: number;
+  maxRadius: number;
+  color: number;
+  pool: ImpactRingPoolEntry;
+}
+
+export interface DodgeRollState {
+  active: boolean;
+  timer: number;
+  duration: number;
+  invincStart: number;
+  invincEnd: number;
+  dirX: number;
+  dirY: number;
+  speed: number;
 }
 
 export interface ImpactParticlePoolEntry {
@@ -243,6 +271,8 @@ export interface GameState {
   hitStopDuration: number;
   playerDamageMult: number;
   playerDamageMultTimer: number;
+  playerHpGhostRatio: number;
+  dodgeRoll: DodgeRollState;
   checkpoint: { mapId: string; x: number; y: number } | null;
   npcs: NpcState[];
   menu: MenuSystem;
@@ -284,6 +314,8 @@ export interface GameState {
   impactParticlePool: ImpactParticlePoolEntry[];
   hitMarkers: HitMarkerEntry[];
   hitMarkerPool: HitMarkerPoolEntry[];
+  impactRings: ImpactRingEntry[];
+  impactRingPool: ImpactRingPoolEntry[];
   doorMarkers: DoorMarker[];
   doorPrompt: UIElement;
   doorPromptBg: PIXI.Graphics;

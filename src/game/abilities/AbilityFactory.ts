@@ -31,22 +31,21 @@ export const createAbilityStates = (state: GameState): AbilityState[] => {
   return [
     {
       def: {
-        id: "dash",
-        label: "Dash",
+        id: "roll",
+        label: "Roll",
         keyLabel: "Q",
         inputAction: "ability1",
-        cooldown: 2.5,
-        castTime: 0.05,
+        cooldown: 1.8,
+        castTime: 0,
         onCast: (game) => {
           const dir = getAimDirection(game);
           if (!dir) {
             return false;
           }
-          const dashSpeed = 900;
-          const dashTime = 0.12;
-          const vel = { x: dir.x * dashSpeed, y: dir.y * dashSpeed, z: 0 };
-          moveWithCollision(game.player.pos, vel, dashTime, game.playerRadius, game.map);
-          game.player.renderUpdate();
+          game.dodgeRoll.active = true;
+          game.dodgeRoll.timer = game.dodgeRoll.duration;
+          game.dodgeRoll.dirX = dir.x;
+          game.dodgeRoll.dirY = dir.y;
           return true;
         },
       },

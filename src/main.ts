@@ -831,6 +831,17 @@ const bootstrap = async (): Promise<void> => {
     hitStopDuration: 0.06,
     playerDamageMult: 1,
     playerDamageMultTimer: 0,
+    playerHpGhostRatio: 1,
+    dodgeRoll: {
+      active: false,
+      timer: 0,
+      duration: 0.35,
+      invincStart: 0.075,
+      invincEnd: 0.275,
+      dirX: 0,
+      dirY: 0,
+      speed: 560,
+    },
     checkpoint: null,
     npcs: [
       { entity: npc, radius: npcRadius, dialogId: "npc", mapId: "map1" },
@@ -928,6 +939,8 @@ const bootstrap = async (): Promise<void> => {
     impactParticlePool: [],
     hitMarkers: [],
     hitMarkerPool: [],
+    impactRings: [],
+    impactRingPool: [],
     playerData,
     doorMarkers: [
       { mapId: "map1", view: doorMarker1 },
@@ -1103,7 +1116,7 @@ const bootstrap = async (): Promise<void> => {
     cameraSystem.update(state, simDt);
     uiSystem.update(state, dt);
     minimapSystem.update(state);
-    hudSystem.update(state);
+    hudSystem.update(state, dt);
   });
 };
 

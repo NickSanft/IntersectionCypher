@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import type { GameState, ImpactParticlePoolEntry, HitMarkerPoolEntry } from "../types";
+import type { GameState, ImpactParticlePoolEntry, HitMarkerPoolEntry, ImpactRingPoolEntry } from "../types";
 
 export class CombatSystem {
   private acquireDamageText(state: GameState): GameState["damageTextPool"][number] {
@@ -15,7 +15,7 @@ export class CombatSystem {
       style: {
         fill: 0xf97316,
         fontFamily: "Arial",
-        fontSize: 14,
+        fontSize: 18,
         fontWeight: "700",
       },
     });
@@ -35,6 +35,19 @@ export class CombatSystem {
     const gfx = new PIXI.Graphics();
     const entry = { gfx, inUse: true };
     state.impactParticlePool.push(entry);
+    return entry;
+  }
+
+  private acquireImpactRing(state: GameState): ImpactRingPoolEntry {
+    for (const entry of state.impactRingPool) {
+      if (!entry.inUse) {
+        entry.inUse = true;
+        return entry;
+      }
+    }
+    const gfx = new PIXI.Graphics();
+    const entry = { gfx, inUse: true };
+    state.impactRingPool.push(entry);
     return entry;
   }
 
@@ -98,6 +111,22 @@ export class CombatSystem {
       state.world.addChild(marker.gfx);
     }
     state.hitMarkers.push({ gfx: marker.gfx, life: 0.2, pool: marker });
+
+    const ring = this.acquireImpactRing(state);
+    const ringDuration = 0.35;
+    ring.gfx.position.set(x, y);
+    ring.gfx.visible = true;
+    if (!state.world.children.includes(ring.gfx)) {
+      state.world.addChild(ring.gfx);
+    }
+    state.impactRings.push({
+      gfx: ring.gfx,
+      life: ringDuration,
+      duration: ringDuration,
+      maxRadius: isCharged ? 42 : 28,
+      color,
+      pool: ring,
+    });
 
     state.hitStopTimer = state.hitStopDuration;
   }
@@ -181,16 +210,23 @@ export class CombatSystem {
           if (!state.world.children.includes(damagePoolEntry.text)) {
             state.world.addChild(damagePoolEntry.text);
           }
+          damagePoolEntry.text.scale.set(1.4);
           state.damageTexts.push({
             text: damagePoolEntry.text,
             life: 0.6,
             velY: -20,
             pool: damagePoolEntry,
+            scaleTimer: 0.12,
           });
 
           entry.pool.inUse = false;
           entry.projectile.entity.visible = false;
           state.world.removeChild(entry.projectile.entity);
+          entry.pool.trailPositions = [];
+          entry.pool.trailGfx.clear();
+          if (state.world.children.includes(entry.pool.trailGfx)) {
+            state.world.removeChild(entry.pool.trailGfx);
+          }
           const shakeAmp = entry.isCharged ? 12 : 6;
           const shakeTime = entry.isCharged ? 0.2 : 0.12;
           state.camera.shakeTime = Math.max(state.camera.shakeTime, shakeTime);
@@ -204,6 +240,11 @@ export class CombatSystem {
         entry.pool.inUse = false;
         entry.projectile.entity.visible = false;
         state.world.removeChild(entry.projectile.entity);
+        entry.pool.trailPositions = [];
+        entry.pool.trailGfx.clear();
+        if (state.world.children.includes(entry.pool.trailGfx)) {
+          state.world.removeChild(entry.pool.trailGfx);
+        }
         state.projectiles.splice(i, 1);
       }
     }
@@ -252,9 +293,17 @@ export class CombatSystem {
       entry.life -= dt;
       entry.text.alpha = Math.max(0, entry.life / 0.6);
       entry.text.position.y += entry.velY * dt;
+      if (entry.scaleTimer > 0) {
+        entry.scaleTimer -= dt;
+        const s = 1 + 0.4 * Math.max(0, entry.scaleTimer / 0.12);
+        entry.text.scale.set(s);
+      } else {
+        entry.text.scale.set(1);
+      }
       if (entry.life <= 0) {
         entry.pool.inUse = false;
         entry.text.visible = false;
+        entry.text.scale.set(1);
         state.world.removeChild(entry.text);
         state.damageTexts.splice(i, 1);
       }
