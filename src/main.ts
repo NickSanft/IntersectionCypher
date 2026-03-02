@@ -26,7 +26,7 @@ import { RunSummarySystem } from "./game/systems/RunSummarySystem";
 import { SettingsSystem } from "./game/systems/SettingsSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
-import { defaultEnemyData, turretEnemyData, type EnemyData } from "./game/data/EnemyData";
+import { defaultEnemyData, turretEnemyData, shieldEnemyData, type EnemyData } from "./game/data/EnemyData";
 import { createAbilityStates } from "./game/abilities/AbilityFactory";
 import { findNearestOpen } from "./core/world/MapUtils";
 import npcDialog from "./game/dialogs/npc.json";
@@ -194,7 +194,7 @@ const bootstrap = async (): Promise<void> => {
     texture: PIXI.Texture,
     map: TileMap,
     mapId: string,
-    type: "chaser" | "turret",
+    type: "chaser" | "turret" | "shield",
     spawnX: number,
     spawnY: number
   ) => {
@@ -237,11 +237,22 @@ const bootstrap = async (): Promise<void> => {
     label.visible = mapId === "map1";
     world.addChild(label);
 
+    let shieldGfx: PIXI.Graphics | undefined;
+    if (type === "shield") {
+      shieldGfx = new PIXI.Graphics();
+      shieldGfx.zIndex = 2;
+      shieldGfx.visible = mapId === "map1";
+      world.addChild(shieldGfx);
+    }
+
     return {
       entity,
       name: data.name,
       type,
       element: data.element,
+      shieldAngle: type === "shield" ? 0 : undefined,
+      shieldArcDeg: type === "shield" ? 120 : undefined,
+      shieldGfx,
       radius: data.radius,
       maxHp: data.maxHp,
       hp: data.maxHp,
@@ -279,8 +290,17 @@ const bootstrap = async (): Promise<void> => {
     };
   };
 
+  const shieldTexture = (() => {
+    const gfx = new PIXI.Graphics();
+    gfx.beginFill(0x0ea5e9);
+    gfx.drawRoundedRect(0, 0, 28, 28, 8);
+    gfx.endFill();
+    return app.renderer.generateTexture(gfx);
+  })();
+
   const chaserSpawn = tileToWorld(map2, 12, 5);
   const turretSpawn = tileToWorld(map2, 5, 7);
+  const shieldSpawn = tileToWorld(map2, 14, 7);
   const enemies = [
     createEnemyState(
       defaultEnemyData,
@@ -299,6 +319,15 @@ const bootstrap = async (): Promise<void> => {
       "turret",
       turretSpawn.x,
       turretSpawn.y
+    ),
+    createEnemyState(
+      shieldEnemyData,
+      shieldTexture,
+      map2,
+      "map2",
+      "shield",
+      shieldSpawn.x,
+      shieldSpawn.y
     ),
   ];
 

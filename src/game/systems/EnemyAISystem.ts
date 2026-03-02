@@ -112,6 +112,47 @@ export class EnemyAISystem {
       const dy = state.player.pos.y - enemy.entity.pos.y;
       const dist = Math.hypot(dx, dy);
 
+      if (enemy.type === "shield") {
+        // Rotate shield to always face the player
+        enemy.shieldAngle = Math.atan2(dy, dx);
+
+        // Draw shield arc in world-space
+        if (enemy.shieldGfx) {
+          enemy.shieldGfx.clear();
+          const arcHalf = ((enemy.shieldArcDeg ?? 120) / 2) * (Math.PI / 180);
+          const sa = enemy.shieldAngle;
+          const r = enemy.radius + 7;
+          const shieldColor = enemy.hitTimer > 0 ? 0xffffff : 0x38bdf8;
+          enemy.shieldGfx.lineStyle(4, shieldColor, 0.92);
+          enemy.shieldGfx.arc(enemy.entity.pos.x, enemy.entity.pos.y, r, sa - arcHalf, sa + arcHalf);
+          // End-caps
+          enemy.shieldGfx.lineStyle(0);
+          enemy.shieldGfx.beginFill(shieldColor, 0.5);
+          enemy.shieldGfx.drawCircle(
+            enemy.entity.pos.x + Math.cos(sa - arcHalf) * r,
+            enemy.entity.pos.y + Math.sin(sa - arcHalf) * r,
+            3
+          );
+          enemy.shieldGfx.drawCircle(
+            enemy.entity.pos.x + Math.cos(sa + arcHalf) * r,
+            enemy.entity.pos.y + Math.sin(sa + arcHalf) * r,
+            3
+          );
+          enemy.shieldGfx.endFill();
+        }
+
+        // Slow approach toward player when in aggro range
+        enemy.entity.vel.x = 0;
+        enemy.entity.vel.y = 0;
+        if (dist <= enemy.aggroRange && dist > enemy.stopRange && dist > 0) {
+          enemy.entity.vel.x = (dx / dist) * enemy.speed;
+          enemy.entity.vel.y = (dy / dist) * enemy.speed;
+        }
+        moveWithCollision(enemy.entity.pos, enemy.entity.vel, dt, enemy.radius, state.map);
+        enemy.entity.renderUpdate();
+        continue;
+      }
+
       if (enemy.type === "turret") {
         enemy.entity.vel.x = 0;
         enemy.entity.vel.y = 0;

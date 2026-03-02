@@ -109,7 +109,7 @@ export interface HitMarkerEntry {
 export interface EnemyState {
   entity: ZEntity;
   name: string;
-  type: "chaser" | "turret";
+  type: "chaser" | "turret" | "shield";
   radius: number;
   maxHp: number;
   hp: number;
@@ -143,6 +143,9 @@ export interface EnemyState {
   homeX: number;
   homeY: number;
   element: Element;
+  shieldAngle?: number;
+  shieldArcDeg?: number;
+  shieldGfx?: PIXI.Graphics;
   hpBar: PIXI.Graphics;
   label: PIXI.Text;
 }

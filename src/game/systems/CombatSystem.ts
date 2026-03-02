@@ -181,6 +181,9 @@ export class CombatSystem {
           enemy.entity.visible = visible;
           enemy.hpBar.visible = visible;
           enemy.label.visible = visible;
+          if (enemy.shieldGfx) {
+            enemy.shieldGfx.visible = visible;
+          }
           enemy.entity.sprite.tint = 0xffffff;
           this.drawEnemyHp(enemy);
         }
@@ -204,6 +207,39 @@ export class CombatSystem {
         const dy = entry.projectile.entity.pos.y - enemy.entity.pos.y;
         const dist = Math.hypot(dx, dy);
         if (dist <= enemy.radius + entry.projectile.radius) {
+          // Shield block check
+          if (
+            enemy.type === "shield" &&
+            (enemy.shieldArcDeg ?? 0) > 0 &&
+            enemy.shieldAngle !== undefined
+          ) {
+            const vx = entry.projectile.entity.vel.x;
+            const vy = entry.projectile.entity.vel.y;
+            const isElementMatch = entry.element !== "Neutral" && entry.element === enemy.element;
+            if (!isElementMatch) {
+              // Check if shot arrives from the shielded direction
+              const projAngle = Math.atan2(vy, vx);
+              let diff = projAngle - (enemy.shieldAngle + Math.PI);
+              while (diff > Math.PI) diff -= 2 * Math.PI;
+              while (diff < -Math.PI) diff += 2 * Math.PI;
+              const arcHalf = ((enemy.shieldArcDeg ?? 120) / 2) * (Math.PI / 180);
+              if (Math.abs(diff) <= arcHalf) {
+                // Reflect off the shield normal
+                const nx = Math.cos(enemy.shieldAngle);
+                const ny = Math.sin(enemy.shieldAngle);
+                const dot = vx * nx + vy * ny;
+                entry.projectile.entity.vel.x = vx - 2 * dot * nx;
+                entry.projectile.entity.vel.y = vy - 2 * dot * ny;
+                // Push shot out of collision zone
+                entry.projectile.entity.pos.x += nx * (enemy.radius + entry.projectile.radius + 2);
+                entry.projectile.entity.pos.y += ny * (enemy.radius + entry.projectile.radius + 2);
+                enemy.entity.sprite.tint = 0x88ccff;
+                enemy.hitTimer = 0.08;
+                continue; // deflected — no damage
+              }
+            }
+          }
+
           const elementMatch = entry.element !== "Neutral" && entry.element === enemy.element;
           const elementBonus = elementMatch ? 1.5 : 1;
           const comboBonus = state.combo.multiplier;
@@ -214,6 +250,10 @@ export class CombatSystem {
           if (enemy.hp === 0 && !enemy.expGranted) {
             enemy.dead = true;
             enemy.entity.visible = false;
+            if (enemy.shieldGfx) {
+              enemy.shieldGfx.clear();
+              enemy.shieldGfx.visible = false;
+            }
             enemy.respawnTimer = enemy.respawnSeconds;
             enemy.expGranted = true;
             state.levelUpSystem.addExperience(state, 5);

@@ -90,6 +90,9 @@ export class MapSystem {
       enemy.entity.visible = enemyVisible;
       enemy.hpBar.visible = enemyVisible;
       enemy.label.visible = enemyVisible;
+      if (enemy.shieldGfx) {
+        enemy.shieldGfx.visible = enemyVisible;
+      }
       if (enemyVisible) {
         const enemySafe = findNearestOpen(state.map, enemy.homeX, enemy.homeY);
         enemy.entity.pos.x = enemySafe.x;

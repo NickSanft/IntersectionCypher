@@ -68,3 +68,26 @@ export const turretEnemyData: EnemyData = {
   projectileLifetime: 1.2,
   element: "Wave",
 };
+
+export const shieldEnemyData: EnemyData = {
+  name: "Shield Guard",
+  maxHp: 12,
+  radius: 14,
+  respawnSeconds: 4,
+  hitFlashSeconds: 0.12,
+  labelOffsetY: 54,
+  speed: 45,
+  aggroRange: 280,
+  stopRange: 50,
+  patrolRadius: 24,
+  attackRange: 0,
+  attackWindupSeconds: 0,
+  attackCooldownSeconds: 999,
+  strafeSpeed: 0,
+  strafeSwitchSeconds: 1,
+  projectileSpeed: 0,
+  projectileDamage: 0,
+  projectileRadius: 5,
+  projectileLifetime: 1,
+  element: "Wave",
+};
