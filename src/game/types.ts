@@ -315,14 +315,12 @@ export interface GameState {
   hudBeatRing: PIXI.Graphics;
   hudBeatLabel: PIXI.Text;
   rhythmOverlay: PIXI.Graphics;
-  hudBeatWindow: PIXI.Graphics;
   abilities: AbilityState[];
   abilityBar: AbilityBarState;
   dialog: DialogState;
   aim: AimState;
   rhythm: RhythmState;
   camera: CameraState;
-  ui: UIState;
   levelUpSystem: import("./systems/LevelUpSystem").LevelUpSystem;
   levelUp: LevelUpState;
   projectiles: ProjectileEntry[];

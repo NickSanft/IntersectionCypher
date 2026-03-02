@@ -123,9 +123,7 @@ const bootstrap = async (): Promise<void> => {
 
   const playerTexture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0x4ade80);
-    gfx.drawCircle(0, 0, 10);
-    gfx.endFill();
+    gfx.circle(0, 0, 10).fill(0x4ade80);
     return app.renderer.generateTexture(gfx);
   })();
 
@@ -159,33 +157,25 @@ const bootstrap = async (): Promise<void> => {
 
   const projectileTexture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0xfbbf24);
-    gfx.drawCircle(0, 0, 4);
-    gfx.endFill();
+    gfx.circle(0, 0, 4).fill(0xfbbf24);
     return app.renderer.generateTexture(gfx);
   })();
 
   const enemyProjectileTexture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0x38bdf8);
-    gfx.drawCircle(0, 0, 5);
-    gfx.endFill();
+    gfx.circle(0, 0, 5).fill(0x38bdf8);
     return app.renderer.generateTexture(gfx);
   })();
 
   const enemyTexture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0xef4444);
-    gfx.drawRoundedRect(0, 0, 26, 26, 6);
-    gfx.endFill();
+    gfx.roundRect(0, 0, 26, 26, 6).fill(0xef4444);
     return app.renderer.generateTexture(gfx);
   })();
 
   const turretTexture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0x38bdf8);
-    gfx.drawRoundedRect(0, 0, 24, 24, 6);
-    gfx.endFill();
+    gfx.roundRect(0, 0, 24, 24, 6).fill(0x38bdf8);
     return app.renderer.generateTexture(gfx);
   })();
 
@@ -228,8 +218,7 @@ const bootstrap = async (): Promise<void> => {
         fontFamily: "Arial",
         fontSize: 12,
         fontWeight: "700",
-        stroke: 0x0b1220,
-        strokeThickness: 3,
+        stroke: { color: 0x0b1220, width: 3 },
       },
     });
     label.anchor.set(0.5);
@@ -292,9 +281,7 @@ const bootstrap = async (): Promise<void> => {
 
   const shieldTexture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0x0ea5e9);
-    gfx.drawRoundedRect(0, 0, 28, 28, 8);
-    gfx.endFill();
+    gfx.roundRect(0, 0, 28, 28, 8).fill(0x0ea5e9);
     return app.renderer.generateTexture(gfx);
   })();
 
@@ -333,9 +320,7 @@ const bootstrap = async (): Promise<void> => {
 
   const npcTexture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0xf472b6);
-    gfx.drawCircle(0, 0, 10);
-    gfx.endFill();
+    gfx.circle(0, 0, 10).fill(0xf472b6);
     return app.renderer.generateTexture(gfx);
   })();
 
@@ -354,9 +339,7 @@ const bootstrap = async (): Promise<void> => {
 
   const npc2Texture = (() => {
     const gfx = new PIXI.Graphics();
-    gfx.beginFill(0xa855f7);
-    gfx.drawCircle(0, 0, 10);
-    gfx.endFill();
+    gfx.circle(0, 0, 10).fill(0xa855f7);
     return app.renderer.generateTexture(gfx);
   })();
 
@@ -383,9 +366,7 @@ const bootstrap = async (): Promise<void> => {
 
   const doorMarker1 = new PIXI.Container();
   const doorFrame1 = new PIXI.Graphics();
-  doorFrame1.lineStyle(2, 0x38bdf8, 0.9);
-  doorFrame1.drawRoundedRect(0, 0, 18, 36, 6);
-  doorFrame1.endFill();
+  doorFrame1.roundRect(0, 0, 18, 36, 6).stroke({ width: 2, color: 0x38bdf8, alpha: 0.9 });
   doorMarker1.addChild(doorFrame1);
   const doorLabel1 = new PIXI.Text({
     text: "Door",
@@ -407,9 +388,7 @@ const bootstrap = async (): Promise<void> => {
 
   const doorMarker2 = new PIXI.Container();
   const doorFrame2 = new PIXI.Graphics();
-  doorFrame2.lineStyle(2, 0x38bdf8, 0.9);
-  doorFrame2.drawRoundedRect(0, 0, 18, 36, 6);
-  doorFrame2.endFill();
+  doorFrame2.roundRect(0, 0, 18, 36, 6).stroke({ width: 2, color: 0x38bdf8, alpha: 0.9 });
   doorMarker2.addChild(doorFrame2);
   const doorLabel2 = new PIXI.Text({
     text: "Door",
@@ -432,9 +411,7 @@ const bootstrap = async (): Promise<void> => {
 
   const chestMarker = new PIXI.Container();
   const chestBox = new PIXI.Graphics();
-  chestBox.beginFill(0xf59e0b, 0.9);
-  chestBox.drawRoundedRect(-8, -6, 16, 12, 3);
-  chestBox.endFill();
+  chestBox.roundRect(-8, -6, 16, 12, 3).fill({ color: 0xf59e0b, alpha: 0.9 });
   chestMarker.addChild(chestBox);
   const chestPos = tileToWorld(map1, 8, 8);
   chestMarker.position.set(chestPos.x, chestPos.y);
@@ -442,9 +419,7 @@ const bootstrap = async (): Promise<void> => {
 
   const checkpointMarker = new PIXI.Container();
   const checkpointRing = new PIXI.Graphics();
-  checkpointRing.lineStyle(2, 0x22c55e, 0.9);
-  checkpointRing.drawCircle(0, 0, 10);
-  checkpointRing.endFill();
+  checkpointRing.circle(0, 0, 10).stroke({ width: 2, color: 0x22c55e, alpha: 0.9 });
   checkpointMarker.addChild(checkpointRing);
   const checkpointPos = tileToWorld(map1, 5, 9);
   checkpointMarker.position.set(checkpointPos.x, checkpointPos.y);
@@ -452,9 +427,7 @@ const bootstrap = async (): Promise<void> => {
 
   const shopMarker = new PIXI.Container();
   const shopBox = new PIXI.Graphics();
-  shopBox.beginFill(0xf472b6, 0.9);
-  shopBox.drawRoundedRect(-10, -8, 20, 16, 4);
-  shopBox.endFill();
+  shopBox.roundRect(-10, -8, 20, 16, 4).fill({ color: 0xf472b6, alpha: 0.9 });
   shopMarker.addChild(shopBox);
   const shopPos = tileToWorld(map1, 14, 3);
   shopMarker.position.set(shopPos.x, shopPos.y);
@@ -462,9 +435,7 @@ const bootstrap = async (): Promise<void> => {
 
   const eventMarker = new PIXI.Container();
   const eventOrb = new PIXI.Graphics();
-  eventOrb.beginFill(0x60a5fa, 0.85);
-  eventOrb.drawCircle(0, 0, 8);
-  eventOrb.endFill();
+  eventOrb.circle(0, 0, 8).fill({ color: 0x60a5fa, alpha: 0.85 });
   eventMarker.addChild(eventOrb);
   const eventPos = tileToWorld(map2, 10, 2);
   eventMarker.position.set(eventPos.x, eventPos.y);
@@ -473,13 +444,7 @@ const bootstrap = async (): Promise<void> => {
 
   const finishMarker = new PIXI.Container();
   const finishStar = new PIXI.Graphics();
-  finishStar.beginFill(0xfacc15, 0.9);
-  finishStar.moveTo(0, -10);
-  finishStar.lineTo(6, 0);
-  finishStar.lineTo(0, 10);
-  finishStar.lineTo(-6, 0);
-  finishStar.lineTo(0, -10);
-  finishStar.endFill();
+  finishStar.poly([0, -10, 6, 0, 0, 10, -6, 0]).fill({ color: 0xfacc15, alpha: 0.9 });
   finishMarker.addChild(finishStar);
   const finishPos = tileToWorld(map2, 14, 8);
   finishMarker.position.set(finishPos.x, finishPos.y);
@@ -502,10 +467,8 @@ const bootstrap = async (): Promise<void> => {
     const alpha = t * t * 0.55;
     const ix = (i / vigSteps) * vigW * 0.2;
     const iy = (i / vigSteps) * vigH * 0.2;
-    vignette.lineStyle(3, 0x000000, alpha);
-    vignette.drawRect(ix, iy, vigW - ix * 2, vigH - iy * 2);
+    vignette.rect(ix, iy, vigW - ix * 2, vigH - iy * 2).stroke({ width: 3, color: 0x000000, alpha });
   }
-  vignette.lineStyle(0);
   uiLayer.addChild(vignette);
 
   const rhythmOverlay = new PIXI.Graphics();
@@ -521,10 +484,7 @@ const bootstrap = async (): Promise<void> => {
     offsetY: 16,
   });
   const hudBg = new PIXI.Graphics();
-  hudBg.beginFill(0x0f1720, 0.7);
-  hudBg.lineStyle(1, 0x2b3440, 1);
-  hudBg.drawRoundedRect(0, 0, hud.widthPx, hud.heightPx, 8);
-  hudBg.endFill();
+  hudBg.roundRect(0, 0, hud.widthPx, hud.heightPx, 8).fill({ color: 0x0f1720, alpha: 0.7 }).stroke({ width: 1, color: 0x2b3440, alpha: 1 });
   hud.addChild(hudBg);
 
   const hudText = new PIXI.Text({
@@ -601,10 +561,7 @@ const bootstrap = async (): Promise<void> => {
     offsetY: 16,
   });
   const topRightBg = new PIXI.Graphics();
-  topRightBg.beginFill(0x0f1720, 0.7);
-  topRightBg.lineStyle(1, 0x2b3440, 1);
-  topRightBg.drawRoundedRect(0, 0, topRight.widthPx, topRight.heightPx, 8);
-  topRightBg.endFill();
+  topRightBg.roundRect(0, 0, topRight.widthPx, topRight.heightPx, 8).fill({ color: 0x0f1720, alpha: 0.7 }).stroke({ width: 1, color: 0x2b3440, alpha: 1 });
   topRight.addChild(topRightBg);
 
   const hudLevelText = new PIXI.Text({
@@ -639,10 +596,7 @@ const bootstrap = async (): Promise<void> => {
     offsetY: -24,
   });
   const doorPromptBg = new PIXI.Graphics();
-  doorPromptBg.beginFill(0x0f1720, 0.85);
-  doorPromptBg.lineStyle(1, 0x2b3440, 1);
-  doorPromptBg.drawRoundedRect(0, 0, doorPrompt.widthPx, doorPrompt.heightPx, 6);
-  doorPromptBg.endFill();
+  doorPromptBg.roundRect(0, 0, doorPrompt.widthPx, doorPrompt.heightPx, 6).fill({ color: 0x0f1720, alpha: 0.85 }).stroke({ width: 1, color: 0x2b3440, alpha: 1 });
   doorPrompt.addChild(doorPromptBg);
 
   const doorPromptText = new PIXI.Text({
@@ -667,10 +621,7 @@ const bootstrap = async (): Promise<void> => {
     offsetY: -64,
   });
   const triggerPromptBg = new PIXI.Graphics();
-  triggerPromptBg.beginFill(0x0f1720, 0.85);
-  triggerPromptBg.lineStyle(1, 0x2b3440, 1);
-  triggerPromptBg.drawRoundedRect(0, 0, triggerPrompt.widthPx, triggerPrompt.heightPx, 6);
-  triggerPromptBg.endFill();
+  triggerPromptBg.roundRect(0, 0, triggerPrompt.widthPx, triggerPrompt.heightPx, 6).fill({ color: 0x0f1720, alpha: 0.85 }).stroke({ width: 1, color: 0x2b3440, alpha: 1 });
   triggerPrompt.addChild(triggerPromptBg);
 
   const triggerPromptText = new PIXI.Text({
@@ -699,10 +650,7 @@ const bootstrap = async (): Promise<void> => {
     offsetY: 84,
   });
   const minimapBg = new PIXI.Graphics();
-  minimapBg.beginFill(0x0b1220, 0.65);
-  minimapBg.lineStyle(1, 0x1f2937, 1);
-  minimapBg.drawRoundedRect(0, 0, minimap.widthPx, minimap.heightPx, 8);
-  minimapBg.endFill();
+  minimapBg.roundRect(0, 0, minimap.widthPx, minimap.heightPx, 8).fill({ color: 0x0b1220, alpha: 0.65 }).stroke({ width: 1, color: 0x1f2937, alpha: 1 });
   minimap.addChild(minimapBg);
   const minimapView = new PIXI.Graphics();
   minimapView.position.set(8, 8);
@@ -1061,9 +1009,7 @@ const bootstrap = async (): Promise<void> => {
       },
       onTrigger: () => {
         chestBox.clear();
-        chestBox.beginFill(0x92400e, 0.9);
-        chestBox.drawRoundedRect(-8, -6, 16, 12, 3);
-        chestBox.endFill();
+        chestBox.roundRect(-8, -6, 16, 12, 3).fill({ color: 0x92400e, alpha: 0.9 });
       },
     },
     {
