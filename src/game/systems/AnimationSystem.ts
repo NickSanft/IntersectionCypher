@@ -1,6 +1,26 @@
 import * as PIXI from "pixi.js";
-import type { GameState } from "../types";
-import type { AnimationState } from "../animation/AnimationConfig";
+import type { GameState, EnemyState } from "../types";
+import {
+  type AnimationState,
+  type AnimSet,
+  playerAnims,
+  chaserAnims,
+  turretAnims,
+  shieldAnims,
+} from "../animation/AnimationConfig";
+import type { AnimFrameSet, EntityType } from "../assets/SpriteLoader";
+
+const ENEMY_TYPE_TO_ENTITY: Record<EnemyState["type"], EntityType> = {
+  chaser: "chaser",
+  turret: "turret",
+  shield: "shield",
+};
+
+const ENEMY_ANIM_CONFIGS: Record<EnemyState["type"], AnimSet> = {
+  chaser: chaserAnims,
+  turret: turretAnims,
+  shield: shieldAnims,
+};
 
 export class AnimationSystem {
   public update(state: GameState, _dt: number): void {
@@ -15,7 +35,9 @@ export class AnimationSystem {
     const moving = Math.abs(vx) > 5 || Math.abs(vy) > 5;
 
     let next: AnimationState = "idle";
-    if (state.playerHitTimer > 0) {
+    if (state.dodgeRoll.active) {
+      next = "walk"; // roll uses walk frames (squish handled by PlayerSystem)
+    } else if (state.playerHitTimer > 0) {
       next = "hurt";
     } else if (moving) {
       next = "walk";
@@ -23,21 +45,31 @@ export class AnimationSystem {
 
     if (next !== state.playerAnimState) {
       state.playerAnimState = next;
-      this.applyAnim(p.sprite, next);
+      this.applyAnim(
+        p.sprite,
+        next,
+        state.spriteAtlas.entities.player,
+        playerAnims,
+      );
     }
 
-    // Flip sprite based on horizontal movement
+    // Flip sprite based on horizontal movement (preserve base scale magnitude)
     if (Math.abs(vx) > 5) {
-      p.sprite.scale.x = vx < 0 ? -Math.abs(p.sprite.scale.x) : Math.abs(p.sprite.scale.x);
+      const mag = Math.abs(p.sprite.scale.x);
+      p.sprite.scale.x = vx < 0 ? -mag : mag;
     }
   }
 
   private updateEnemyAnims(state: GameState): void {
     for (const enemy of state.enemies) {
+      const entityType = ENEMY_TYPE_TO_ENTITY[enemy.type];
+      const frameSet = state.spriteAtlas.entities[entityType];
+      const animConfig = ENEMY_ANIM_CONFIGS[enemy.type];
+
       if (enemy.dead) {
         if (enemy.animState !== "dead") {
           enemy.animState = "dead";
-          this.applyAnim(enemy.entity.sprite, "dead");
+          this.applyAnim(enemy.entity.sprite, "dead", frameSet, animConfig);
         }
         continue;
       }
@@ -58,22 +90,32 @@ export class AnimationSystem {
 
       if (next !== enemy.animState) {
         enemy.animState = next;
-        this.applyAnim(enemy.entity.sprite, next);
+        this.applyAnim(enemy.entity.sprite, next, frameSet, animConfig);
       }
 
       // Flip based on movement
       if (Math.abs(vx) > 5) {
-        enemy.entity.sprite.scale.x = vx < 0 ? -Math.abs(enemy.entity.sprite.scale.x) : Math.abs(enemy.entity.sprite.scale.x);
+        const mag = Math.abs(enemy.entity.sprite.scale.x);
+        enemy.entity.sprite.scale.x = vx < 0 ? -mag : mag;
       }
     }
   }
 
-  private applyAnim(sprite: PIXI.Sprite, state: AnimationState): void {
+  private applyAnim(
+    sprite: PIXI.Sprite,
+    animState: AnimationState,
+    frameSet: AnimFrameSet,
+    config: AnimSet,
+  ): void {
     if (!(sprite instanceof PIXI.AnimatedSprite)) return;
+
+    const frames = frameSet[animState];
+    if (!frames || frames.length === 0) return;
+
+    const clip = config[animState];
+    sprite.textures = frames;
+    sprite.animationSpeed = clip.speed;
+    sprite.loop = clip.loop;
     sprite.gotoAndPlay(0);
-    // Visibility: don't hide on state change
-    if (state === "dead") {
-      sprite.loop = false;
-    }
   }
 }

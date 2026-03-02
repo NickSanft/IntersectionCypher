@@ -9,7 +9,8 @@ export class PlayerSystem {
     const t = Math.max(0, Math.min(1, elapsed / roll.duration));
 
     state.player.pos.z = Math.sin(t * Math.PI) * 18;
-    state.player.sprite.scale.y = 1 - 0.25 * Math.sin(t * Math.PI);
+    const baseScaleY = Math.abs(state.player.sprite.scale.x);
+    state.player.sprite.scale.y = baseScaleY * (1 - 0.25 * Math.sin(t * Math.PI));
 
     const vel = { x: roll.dirX * roll.speed, y: roll.dirY * roll.speed, z: 0 };
     moveWithCollision(state.player.pos, vel, dt, state.playerRadius, state.map);
@@ -22,7 +23,7 @@ export class PlayerSystem {
     if (roll.timer <= 0) {
       roll.active = false;
       state.player.pos.z = 0;
-      state.player.sprite.scale.y = 1;
+      state.player.sprite.scale.y = Math.abs(state.player.sprite.scale.x);
       state.player.renderUpdate();
     }
   }

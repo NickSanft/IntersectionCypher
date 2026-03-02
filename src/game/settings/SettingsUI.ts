@@ -31,7 +31,7 @@ export class SettingsUI {
       style: {
         fill: 0xf8fafc,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 10,
+        fontSize: 16,
         fontWeight: "700",
       },
     });
@@ -43,7 +43,7 @@ export class SettingsUI {
       style: {
         fill: 0xe2e8f0,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
       },
     });
     this.metronomeLabel.position.set(16, 52);
@@ -63,7 +63,7 @@ export class SettingsUI {
       style: {
         fill: 0xe2e8f0,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
       },
     });
     this.volumeLabel.position.set(16, 98);
@@ -83,7 +83,7 @@ export class SettingsUI {
       style: {
         fill: 0x94a3b8,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
       },
     });
     this.hintText.position.set(16, height - 28);

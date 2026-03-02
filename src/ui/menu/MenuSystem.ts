@@ -47,7 +47,7 @@ export class MenuSystem extends PIXI.Container {
       style: {
         fill: 0xf8fafc,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 10,
+        fontSize: 16,
         fontWeight: "700",
       },
     });
@@ -240,7 +240,7 @@ export class MenuSystem extends PIXI.Container {
         style: {
           fill: 0x94a3b8,
           fontFamily: '"Press Start 2P", monospace',
-          fontSize: 10,
+          fontSize: 16,
         },
       });
       text.position.set(16, 16);

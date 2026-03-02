@@ -16,7 +16,7 @@ export class CameraSystem {
       shakeY = Math.cos(t * (shakeFreq * 1.2)) * shakeAmp * fade;
     }
 
-    world.position.set(targetX + shakeX, targetY + shakeY);
+    world.position.set(Math.round(targetX + shakeX), Math.round(targetY + shakeY));
   }
 
   public shake(state: GameState, duration: number, amplitude: number): void {

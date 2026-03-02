@@ -24,9 +24,8 @@ export class CombatFXSystem {
         const tp = pool.trailPositions[i];
         const alpha = (1 - i / pool.trailPositions.length) * 0.45;
         const ghostRadius = baseRadius * (1 - i / (pool.trailPositions.length + 1));
-        pool.trailGfx.beginFill(entry.isCharged ? 0xfff0d0 : 0xaaddff, alpha);
-        pool.trailGfx.drawCircle(tp.x, tp.y, ghostRadius);
-        pool.trailGfx.endFill();
+        const trailColor = entry.isCharged ? 0xfff0d0 : 0xaaddff;
+        pool.trailGfx.circle(tp.x, tp.y, ghostRadius).fill({ color: trailColor, alpha });
       }
       if (!state.world.children.includes(pool.trailGfx)) {
         state.world.addChild(pool.trailGfx);

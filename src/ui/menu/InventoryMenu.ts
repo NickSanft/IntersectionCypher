@@ -55,7 +55,7 @@ export class InventoryMenu extends PIXI.Container {
       style: {
         fill: 0xe2e8f0,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 10,
+        fontSize: 16,
         fontWeight: "700",
       },
     });
@@ -92,7 +92,7 @@ export class InventoryMenu extends PIXI.Container {
         style: {
           fill: 0xcbd5f5,
           fontFamily: '"Press Start 2P", monospace',
-          fontSize: 7,
+          fontSize: 16,
           wordWrap: true,
           wordWrapWidth: slotSize - 8,
         },
@@ -111,7 +111,7 @@ export class InventoryMenu extends PIXI.Container {
           style: {
             fill: 0xf8fafc,
             fontFamily: '"Press Start 2P", monospace',
-            fontSize: 7,
+            fontSize: 16,
             fontWeight: "700",
           },
         });
@@ -128,7 +128,7 @@ export class InventoryMenu extends PIXI.Container {
         style: {
           fill: 0xe2e8f0,
           fontFamily: '"Press Start 2P", monospace',
-          fontSize: 8,
+          fontSize: 16,
           fontWeight: "600",
         },
       });
@@ -146,7 +146,7 @@ export class InventoryMenu extends PIXI.Container {
         style: {
           fill: 0x94a3b8,
           fontFamily: '"Press Start 2P", monospace',
-          fontSize: 8,
+          fontSize: 16,
           lineHeight: 18,
         },
       });

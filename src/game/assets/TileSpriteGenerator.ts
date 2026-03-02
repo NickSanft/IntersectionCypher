@@ -22,18 +22,10 @@ function lighten(color: number, t: number): number {
   );
 }
 
-/** Blend color with black by t */
-function darken(color: number, t: number): number {
-  return (
-    (Math.round(r(color) * (1 - t)) << 16) |
-    (Math.round(g(color) * (1 - t)) << 8) |
-    Math.round(b(color) * (1 - t))
-  );
-}
 
 /**
- * Generates a 16×16 floor tile with SNES-style edge highlights.
- * Top/left edge: 1px brighter; bottom/right: 1px darker.
+ * Generates a 16×16 floor tile. Flat fill — edge effects are omitted to
+ * prevent visible seams when tiles are displayed at integer scales.
  */
 function makeFloorTile(
   renderer: PIXI.Renderer,
@@ -41,23 +33,10 @@ function makeFloorTile(
   alt = false,
 ): PIXI.Texture {
   const SIZE = 16;
-  const fill = alt ? lighten(base, 0.07) : base;
-  const hi = lighten(fill, 0.18);
-  const sh = darken(fill, 0.25);
+  const fill = alt ? lighten(base, 0.08) : base;
 
   const gfx = new PIXI.Graphics();
-
-  // Base fill
   gfx.rect(0, 0, SIZE, SIZE).fill(fill);
-
-  // Top edge highlight
-  gfx.rect(0, 0, SIZE, 1).fill(hi);
-  // Left edge highlight
-  gfx.rect(0, 0, 1, SIZE).fill(hi);
-  // Bottom shadow
-  gfx.rect(0, SIZE - 1, SIZE, 1).fill(sh);
-  // Right shadow
-  gfx.rect(SIZE - 1, 0, 1, SIZE).fill(sh);
 
   const tex = renderer.generateTexture({ target: gfx, textureSourceOptions: { scaleMode: "nearest" } });
   gfx.destroy();
@@ -65,16 +44,13 @@ function makeFloorTile(
 }
 
 /**
- * Generates a 16×16 wall top tile with flat pixel border.
+ * Generates a 16×16 wall top tile. Flat fill to avoid seams between
+ * adjacent wall tiles at integer scales.
  */
 function makeWallTopTile(renderer: PIXI.Renderer, wallTopColor: number): PIXI.Texture {
   const SIZE = 16;
-  const border = darken(wallTopColor, 0.3);
-  const inner = lighten(wallTopColor, 0.1);
-
   const gfx = new PIXI.Graphics();
-  gfx.rect(0, 0, SIZE, SIZE).fill(border);
-  gfx.rect(2, 2, SIZE - 4, SIZE - 4).fill(inner);
+  gfx.rect(0, 0, SIZE, SIZE).fill(wallTopColor);
 
   const tex = renderer.generateTexture({ target: gfx, textureSourceOptions: { scaleMode: "nearest" } });
   gfx.destroy();

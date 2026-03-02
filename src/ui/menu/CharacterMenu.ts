@@ -67,7 +67,7 @@ export class CharacterMenu extends PIXI.Container {
     const headerStyle: Partial<PIXI.TextStyle> = {
       fill: 0xe2e8f0,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 10,
+      fontSize: 16,
       fontWeight: "700",
     };
 
@@ -91,7 +91,7 @@ export class CharacterMenu extends PIXI.Container {
       style: {
         fill: 0xcbd5f5,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
         lineHeight: 20,
       },
     });
@@ -111,7 +111,7 @@ export class CharacterMenu extends PIXI.Container {
       style: {
         fill: 0xcbd5f5,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
         lineHeight: 20,
       },
     });
@@ -133,7 +133,7 @@ export class CharacterMenu extends PIXI.Container {
       style: {
         fill: 0x94a3b8,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
         lineHeight: 18,
       },
     });

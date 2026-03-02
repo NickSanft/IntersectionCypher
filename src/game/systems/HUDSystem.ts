@@ -1,10 +1,10 @@
 import * as PIXI from "pixi.js";
 import type { GameState } from "../types";
 
-const BORDER_DARK = 0x080c10;
-const BORDER_MID = 0x1e2d3d;
-const BORDER_HI = 0x4a6278;
-const PANEL_BG = 0x0d1b2a;
+const BORDER_DARK = 0x1a3a5c;
+const BORDER_MID = 0x2d5a8c;
+const BORDER_HI = 0x6ea8d0;
+const PANEL_BG = 0x091422;
 
 /** Draws an SNES-style bordered panel rectangle into a Graphics object. */
 function drawSnesPanel(gfx: PIXI.Graphics, w: number, h: number, alpha = 0.88): void {

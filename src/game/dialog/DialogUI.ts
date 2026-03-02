@@ -34,7 +34,7 @@ export class DialogUI {
       style: {
         fill: 0xf9fafb,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 10,
+        fontSize: 16,
         wordWrap: true,
         wordWrapWidth: width - 24,
       },
@@ -83,7 +83,7 @@ export class DialogUI {
         style: {
           fill: 0xe2e8f0,
           fontFamily: '"Press Start 2P", monospace',
-          fontSize: 8,
+          fontSize: 16,
         },
       });
       label.position.set(10, 4);

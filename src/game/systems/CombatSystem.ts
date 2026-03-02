@@ -21,7 +21,7 @@ export class CombatSystem {
       style: {
         fill: 0xf97316,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 10,
+        fontSize: 16,
         fontWeight: "700",
       },
     });

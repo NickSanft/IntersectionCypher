@@ -29,7 +29,7 @@ export class UIButton extends UIElement implements Focusable {
       style: {
         fill: 0xffffff,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
       },
     });
     this.text.anchor.set(0.5);

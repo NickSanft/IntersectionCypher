@@ -32,7 +32,7 @@ export class MenuTabButton extends PIXI.Container {
       style: {
         fill: 0xe2e8f0,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
         fontWeight: "600",
       },
     });

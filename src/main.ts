@@ -213,7 +213,7 @@ const bootstrap = async (): Promise<void> => {
       style: {
         fill: 0xf8fafc,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 8,
+        fontSize: 16,
         fontWeight: "700",
         stroke: { color: 0x0b1220, width: 3 },
       },
@@ -357,7 +357,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0x93c5fd,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
     },
   });
   doorLabel1.position.set(-6, -14);
@@ -379,7 +379,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0x93c5fd,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
     },
   });
   doorLabel2.position.set(-6, -14);
@@ -476,7 +476,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0xcbd5f5,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 8,
+      fontSize: 16,
     },
   });
   hudText.position.set(12, 28);
@@ -488,7 +488,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0xe2e8f0,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 8,
+      fontSize: 16,
       fontWeight: "700",
       letterSpacing: 2,
     },
@@ -504,7 +504,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0xf8fafc,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
     },
   });
   hudHpText.position.set(12, 60);
@@ -518,7 +518,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0x93c5fd,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
     },
   });
   chargeLabel.position.set(12, 116);
@@ -532,7 +532,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0x93c5fd,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
     },
   });
   hud.addChild(hudBeatLabel);
@@ -553,7 +553,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0xf8fafc,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 8,
+      fontSize: 16,
       fontWeight: "700",
     },
   });
@@ -565,7 +565,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0x93c5fd,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
     },
   });
   hudExpText.position.set(12, 30);
@@ -588,7 +588,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0xf8fafc,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
       fontWeight: "600",
     },
   });
@@ -613,7 +613,7 @@ const bootstrap = async (): Promise<void> => {
     style: {
       fill: 0xf8fafc,
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: 7,
+      fontSize: 16,
       fontWeight: "600",
     },
   });
@@ -673,7 +673,7 @@ const bootstrap = async (): Promise<void> => {
       style: {
         fill: 0xe2e8f0,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 7,
+        fontSize: 16,
         fontWeight: "600",
       },
     });
@@ -686,7 +686,7 @@ const bootstrap = async (): Promise<void> => {
       style: {
         fill: 0x93c5fd,
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: 9,
+        fontSize: 16,
         fontWeight: "700",
       },
     });
@@ -776,14 +776,14 @@ const bootstrap = async (): Promise<void> => {
 
   const elementHudIcon = new PIXI.Text({
     text: "Neutral",
-    style: { fill: 0xfbbf24, fontFamily: '"Press Start 2P", monospace', fontSize: 7, fontWeight: "700" },
+    style: { fill: 0xfbbf24, fontFamily: '"Press Start 2P", monospace', fontSize: 16, fontWeight: "700" },
   });
   elementHudIcon.anchor.set(0, 0.5);
   hud.addChild(elementHudIcon);
 
   const comboHudText = new PIXI.Text({
     text: "",
-    style: { fill: 0xffffff, fontFamily: '"Press Start 2P", monospace', fontSize: 8, fontWeight: "900" },
+    style: { fill: 0xffffff, fontFamily: '"Press Start 2P", monospace', fontSize: 16, fontWeight: "900" },
   });
   comboHudText.anchor.set(0, 0.5);
   comboHudText.visible = false;
