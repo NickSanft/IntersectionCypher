@@ -2,6 +2,12 @@ import type { GameState } from "../types";
 
 export class CombatFXSystem {
   public update(state: GameState, dt: number): void {
+    for (const entry of state.projectiles) {
+      if (!entry.isCharged) continue;
+      const pulse = 2.2 + 0.3 * Math.sin(state.rhythm.totalTime * 12);
+      entry.projectile.entity.sprite.scale.set(pulse);
+    }
+
     for (let i = state.impactParticles.length - 1; i >= 0; i -= 1) {
       const p = state.impactParticles[i];
       p.life -= dt;

@@ -12,6 +12,7 @@ export class Projectile {
   public readonly entity: ZEntity;
   public readonly radius: number;
   private readonly bounciness: number;
+  public bounced = false;
 
   constructor(options: ProjectileOptions) {
     this.entity = options.entity;
@@ -20,6 +21,7 @@ export class Projectile {
   }
 
   public update(dt: number, map: TileMap): void {
+    this.bounced = false;
     this.entity.update(dt);
 
     const hit = checkCollision(this.entity.pos, this.radius, map);
@@ -44,6 +46,7 @@ export class Projectile {
     const pushOut = this.radius + 0.5;
     this.entity.pos.x += n.x * pushOut;
     this.entity.pos.y += n.y * pushOut;
+    this.bounced = true;
   }
 
   public renderUpdate(): void {

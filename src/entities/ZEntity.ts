@@ -6,6 +6,9 @@ export interface ZEntityOptions {
   sprite: PIXI.Sprite;
   gravity?: number;
   mass?: number;
+  shadowRadiusX?: number;
+  shadowRadiusY?: number;
+  shadowOffsetY?: number;
 }
 
 export class ZEntity extends PIXI.Container {
@@ -14,12 +17,27 @@ export class ZEntity extends PIXI.Container {
   public readonly accel: Vec3 = { x: 0, y: 0, z: 0 };
 
   public readonly sprite: PIXI.Sprite;
+  private readonly shadow: PIXI.Graphics | null;
+  private readonly shadowRadiusX: number;
+  private readonly shadowRadiusY: number;
+  private readonly shadowOffsetY: number;
 
   private readonly gravity: number;
   private readonly mass: number;
 
   constructor(options: ZEntityOptions) {
     super();
+    this.shadowRadiusX = options.shadowRadiusX ?? 0;
+    this.shadowRadiusY = options.shadowRadiusY ?? 0;
+    this.shadowOffsetY = options.shadowOffsetY ?? 0;
+
+    if (this.shadowRadiusX > 0) {
+      this.shadow = new PIXI.Graphics();
+      this.addChild(this.shadow);
+    } else {
+      this.shadow = null;
+    }
+
     this.sprite = options.sprite;
     this.addChild(this.sprite);
 
@@ -48,5 +66,18 @@ export class ZEntity extends PIXI.Container {
   public renderUpdate(): void {
     this.position.set(this.pos.x, this.pos.y);
     this.sprite.position.y = -this.pos.z;
+
+    if (this.shadow) {
+      const scale = Math.max(0.3, 1 - this.pos.z / 80);
+      this.shadow.clear();
+      this.shadow.beginFill(0x000000, 0.32 * scale);
+      this.shadow.drawEllipse(
+        0,
+        this.shadowOffsetY,
+        this.shadowRadiusX * scale,
+        this.shadowRadiusY * scale
+      );
+      this.shadow.endFill();
+    }
   }
 }

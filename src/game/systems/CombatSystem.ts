@@ -56,13 +56,16 @@ export class CombatSystem {
     x: number,
     y: number,
     color: number,
-    markerColor: number
+    markerColor: number,
+    isCharged = false
   ): void {
-    for (let i = 0; i < 6; i += 1) {
+    const particleCount = isCharged ? 12 : 6;
+    const particleRadius = isCharged ? 4 : 2;
+    for (let i = 0; i < particleCount; i += 1) {
       const particle = this.acquireImpactParticle(state);
       particle.gfx.clear();
       particle.gfx.beginFill(color, 0.9);
-      particle.gfx.drawCircle(0, 0, 2);
+      particle.gfx.drawCircle(0, 0, particleRadius);
       particle.gfx.endFill();
       particle.gfx.position.set(x, y);
       particle.gfx.alpha = 1;
@@ -141,6 +144,9 @@ export class CombatSystem {
       entry.projectile.update(dt, state.map);
       entry.projectile.renderUpdate();
       entry.life -= dt;
+      if (entry.projectile.bounced) {
+        entry.bouncesRemaining -= 1;
+      }
 
       for (const enemy of state.enemies) {
         if (enemy.mapId !== state.currentMapId || enemy.dead) {
@@ -164,7 +170,7 @@ export class CombatSystem {
           const onBeat = entry.onBeat;
           const impactColor = onBeat ? 0xfacc15 : 0xfbbf24;
           const markerColor = onBeat ? 0xfde047 : 0xfef08a;
-          this.spawnImpactFx(state, enemy.entity.pos.x, enemy.entity.pos.y, impactColor, markerColor);
+          this.spawnImpactFx(state, enemy.entity.pos.x, enemy.entity.pos.y, impactColor, markerColor, entry.isCharged);
 
           const damagePoolEntry = this.acquireDamageText(state);
           damagePoolEntry.text.text = `-${entry.damage}`;
@@ -185,14 +191,16 @@ export class CombatSystem {
           entry.pool.inUse = false;
           entry.projectile.entity.visible = false;
           state.world.removeChild(entry.projectile.entity);
-          state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.12);
-          state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 6);
+          const shakeAmp = entry.isCharged ? 12 : 6;
+          const shakeTime = entry.isCharged ? 0.2 : 0.12;
+          state.camera.shakeTime = Math.max(state.camera.shakeTime, shakeTime);
+          state.camera.shakeAmp = Math.max(state.camera.shakeAmp, shakeAmp);
           state.projectiles.splice(i, 1);
           break;
         }
       }
 
-      if (entry.life <= 0) {
+      if (entry.bouncesRemaining <= 0 || entry.life <= 0) {
         entry.pool.inUse = false;
         entry.projectile.entity.visible = false;
         state.world.removeChild(entry.projectile.entity);

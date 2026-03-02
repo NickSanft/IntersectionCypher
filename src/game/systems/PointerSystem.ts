@@ -38,10 +38,12 @@ export const setupPointerSystem = (
     radius: number,
     speed: number,
     damage: number,
-    onBeat: boolean
+    onBeat: boolean,
+    isCharged: boolean
   ): void => {
     const { entry, entity, projectile } = acquireProjectile(radius);
     entity.sprite.scale.set(radius / 4);
+    entity.sprite.tint = isCharged ? 0xfff0d0 : 0xffffff;
     entity.pos.x = state.player.pos.x;
     entity.pos.y = state.player.pos.y;
     entity.pos.z = 0;
@@ -59,6 +61,8 @@ export const setupPointerSystem = (
       damage,
       onBeat,
       pool: entry,
+      bouncesRemaining: isCharged ? 3 : 2,
+      isCharged,
     });
   };
 
@@ -131,16 +135,9 @@ export const setupPointerSystem = (
       state.rhythm.shotsOnBeat += 1;
     }
     if (isCharged) {
-      spawnProjectile(
-        normX,
-        normY,
-        8,
-        baseSpeed * 0.9,
-        baseDamage * 3 * damageMult,
-        onBeat
-      );
+      spawnProjectile(normX, normY, 8, baseSpeed * 0.9, baseDamage * 3 * damageMult, onBeat, true);
     } else {
-      spawnProjectile(normX, normY, 4, baseSpeed, baseDamage * damageMult, onBeat);
+      spawnProjectile(normX, normY, 4, baseSpeed, baseDamage * damageMult, onBeat, false);
     }
     state.aim.chargeActive = false;
   });

@@ -132,6 +132,9 @@ const bootstrap = async (): Promise<void> => {
     sprite: new PIXI.Sprite(playerTexture),
     gravity: 0,
     mass: 1,
+    shadowRadiusX: 10,
+    shadowRadiusY: 5,
+    shadowOffsetY: 8,
   });
   player.zIndex = 2;
   player.sprite.anchor.set(0.5);
@@ -198,6 +201,9 @@ const bootstrap = async (): Promise<void> => {
       sprite: new PIXI.Sprite(texture),
       gravity: 0,
       mass: 1,
+      shadowRadiusX: data.radius,
+      shadowRadiusY: Math.round(data.radius * 0.45),
+      shadowOffsetY: Math.round(data.radius * 0.7),
     });
     entity.zIndex = 2;
     entity.sprite.anchor.set(0.5);
@@ -453,6 +459,23 @@ const bootstrap = async (): Promise<void> => {
   uiLayer.sortableChildren = true;
   uiLayer.zIndex = 10;
   app.stage.addChild(uiLayer);
+
+  const vignette = new PIXI.Graphics();
+  vignette.zIndex = 50;
+  vignette.eventMode = "none";
+  const vigW = app.renderer.width;
+  const vigH = app.renderer.height;
+  const vigSteps = 14;
+  for (let i = 0; i < vigSteps; i += 1) {
+    const t = 1 - i / vigSteps;
+    const alpha = t * t * 0.55;
+    const ix = (i / vigSteps) * vigW * 0.2;
+    const iy = (i / vigSteps) * vigH * 0.2;
+    vignette.lineStyle(3, 0x000000, alpha);
+    vignette.drawRect(ix, iy, vigW - ix * 2, vigH - iy * 2);
+  }
+  vignette.lineStyle(0);
+  uiLayer.addChild(vignette);
 
   const rhythmOverlay = new PIXI.Graphics();
   rhythmOverlay.zIndex = -1;

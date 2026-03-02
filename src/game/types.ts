@@ -22,6 +22,8 @@ export interface ProjectileEntry {
   damage: number;
   onBeat: boolean;
   pool: ProjectilePoolEntry;
+  bouncesRemaining: number;
+  isCharged: boolean;
 }
 
 export interface EnemyProjectilePoolEntry {

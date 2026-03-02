@@ -27,6 +27,7 @@ export class AimSystem {
 
         const isCharged = aim.chargeRatio >= 1;
         const radius = isCharged ? 8 : 4;
+        const maxBounces = isCharged ? 3 : 2;
         const baseSpeed = state.playerData.stats.projectileSpeed;
         const speed = isCharged ? baseSpeed * 0.9 : baseSpeed;
         const bounciness = 1;
@@ -35,6 +36,7 @@ export class AimSystem {
         let velY = (dy / len) * speed;
         let posX = player.pos.x;
         let posY = player.pos.y;
+        let bouncesLeft = maxBounces;
 
         const points: Array<{ x: number; y: number }> = [{ x: posX, y: posY }];
         const steps = Math.ceil(lifeSeconds / stepDt);
@@ -53,6 +55,11 @@ export class AimSystem {
               velY *= bounciness;
               posX += hit.normal.x * (radius + 0.5);
               posY += hit.normal.y * (radius + 0.5);
+              bouncesLeft -= 1;
+              if (bouncesLeft <= 0) {
+                points.push({ x: posX, y: posY });
+                break;
+              }
             }
           }
 

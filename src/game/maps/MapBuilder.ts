@@ -40,24 +40,56 @@ export const buildTileMap = (layout: TileLayout): TileMap => {
 export const drawMap = (map: TileMap): PIXI.Container => {
   const container = new PIXI.Container();
   const gfx = new PIXI.Graphics();
+  const frontFaceH = Math.round(map.tileSize * 0.35);
 
-  gfx.beginFill(0x15202b);
+  // Floor fill
+  gfx.beginFill(0x0d1f2d);
   gfx.drawRect(0, 0, map.width * map.tileSize, map.height * map.tileSize);
   gfx.endFill();
 
-  gfx.beginFill(0x2c3e50);
+  // Checker floor variation — every other open tile is slightly lighter
+  gfx.beginFill(0x112233, 0.45);
   for (let y = 0; y < map.height; y += 1) {
     for (let x = 0; x < map.width; x += 1) {
+      if ((x + y) % 2 !== 0) continue;
       const def = map.defs[map.tiles[tileIndex(x, y, map.width)]];
-      if (def.solid !== "Solid") {
-        continue;
-      }
+      if (def.solid === "Solid") continue;
       gfx.drawRect(x * map.tileSize, y * map.tileSize, map.tileSize, map.tileSize);
     }
   }
   gfx.endFill();
 
-  gfx.lineStyle(1, 0x0f141a, 0.6);
+  // Wall top faces
+  gfx.beginFill(0x1e3d52);
+  for (let y = 0; y < map.height; y += 1) {
+    for (let x = 0; x < map.width; x += 1) {
+      const def = map.defs[map.tiles[tileIndex(x, y, map.width)]];
+      if (def.solid !== "Solid") continue;
+      gfx.drawRect(x * map.tileSize, y * map.tileSize, map.tileSize, map.tileSize);
+    }
+  }
+  gfx.endFill();
+
+  // Wall front faces — drawn below south-exposed walls to create depth
+  gfx.beginFill(0x08121a);
+  for (let y = 0; y < map.height; y += 1) {
+    for (let x = 0; x < map.width; x += 1) {
+      const def = map.defs[map.tiles[tileIndex(x, y, map.width)]];
+      if (def.solid !== "Solid") continue;
+      const belowIdx = y + 1 < map.height ? map.tiles[tileIndex(x, y + 1, map.width)] : 0;
+      if (map.defs[belowIdx]?.solid === "Solid") continue;
+      gfx.drawRect(
+        x * map.tileSize,
+        (y + 1) * map.tileSize,
+        map.tileSize,
+        frontFaceH
+      );
+    }
+  }
+  gfx.endFill();
+
+  // Grid lines
+  gfx.lineStyle(1, 0x0f2336, 0.4);
   for (let y = 0; y <= map.height; y += 1) {
     gfx.moveTo(0, y * map.tileSize);
     gfx.lineTo(map.width * map.tileSize, y * map.tileSize);
