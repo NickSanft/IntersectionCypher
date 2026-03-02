@@ -67,6 +67,7 @@ export class MapSystem {
     state.rhythm.beatInterval = 60 / next.rhythm.bpm;
     state.rhythm.windowSeconds = next.rhythm.windowSeconds;
     state.rhythm.onBeatDamageMult = next.rhythm.onBeatDamageMult;
+    state.world.tint = next.rhythm.palette.ambientTint;
     state.rhythm.time = 0;
     state.rhythm.lastBeat = -1;
     state.rhythm.pulse = 0;

@@ -10,6 +10,8 @@ import type { PlayerData } from "./data/PlayerData";
 import type { DialogEngine, DialogData } from "./dialog/DialogEngine";
 import type { DialogUI } from "./dialog/DialogUI";
 
+export type Element = "Neutral" | "Heat" | "Wave";
+
 export interface ProjectilePoolEntry {
   entity: ZEntity;
   projectile: Projectile;
@@ -26,6 +28,7 @@ export interface ProjectileEntry {
   pool: ProjectilePoolEntry;
   bouncesRemaining: number;
   isCharged: boolean;
+  element: Element;
 }
 
 export interface EnemyProjectilePoolEntry {
@@ -139,6 +142,7 @@ export interface EnemyState {
   patrolAngle: number;
   homeX: number;
   homeY: number;
+  element: Element;
   hpBar: PIXI.Graphics;
   label: PIXI.Text;
 }
@@ -164,6 +168,23 @@ export interface AimState {
   chargeRatio: number;
   chargeThresholdMs: number;
   chargeRing: PIXI.Graphics;
+  lockedEnemyIndex: number | null;
+  lockRange: number;
+  lockConeHalfAngle: number;
+  lockIndicator: PIXI.Graphics;
+}
+
+export interface ElementState {
+  current: Element;
+  hudIcon: PIXI.Text;
+}
+
+export interface ComboState {
+  count: number;
+  multiplier: number;
+  resetTimer: number;
+  hudText: PIXI.Text;
+  hudPulse: number;
 }
 
 export interface CameraState {
@@ -336,6 +357,8 @@ export interface GameState {
   transitionTargetSpawn: { x: number; y: number } | null;
   runSummary: RunSummaryState;
   settings: SettingsState;
+  element: ElementState;
+  combo: ComboState;
 }
 
 export interface UpgradeHistoryEntry {
@@ -376,10 +399,19 @@ export interface SettingsState {
 }
 
 
+export interface ZonePalette {
+  floorFill: number;
+  floorGrid: number;
+  wallTop: number;
+  wallFront: number;
+  ambientTint: number;
+}
+
 export interface ZoneRhythmConfig {
   bpm: number;
   windowSeconds: number;
   onBeatDamageMult: number;
+  palette: ZonePalette;
 }
 
 export interface LevelUpOption {

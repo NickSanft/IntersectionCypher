@@ -1,8 +1,14 @@
 import * as PIXI from "pixi.js";
 import { Projectile } from "../../projectiles/Projectile";
 import { ZEntity } from "../../entities/ZEntity";
-import type { GameState } from "../types";
+import type { Element, GameState } from "../types";
 import { isOnBeat } from "./RhythmSystem";
+
+const ELEMENT_TINTS: Record<Element, number> = {
+  Neutral: 0xfbbf24,
+  Heat: 0xf97316,
+  Wave: 0x38bdf8,
+};
 
 export const setupPointerSystem = (
   state: GameState,
@@ -44,7 +50,7 @@ export const setupPointerSystem = (
   ): void => {
     const { entry, entity, projectile } = acquireProjectile(radius);
     entity.sprite.scale.set(radius / 4);
-    entity.sprite.tint = isCharged ? 0xfff0d0 : 0xffffff;
+    entity.sprite.tint = isCharged ? 0xfff0d0 : ELEMENT_TINTS[state.element.current];
     entity.pos.x = state.player.pos.x;
     entity.pos.y = state.player.pos.y;
     entity.pos.z = 0;
@@ -64,6 +70,7 @@ export const setupPointerSystem = (
       pool: entry,
       bouncesRemaining: isCharged ? 3 : 2,
       isCharged,
+      element: state.element.current,
     });
   };
 

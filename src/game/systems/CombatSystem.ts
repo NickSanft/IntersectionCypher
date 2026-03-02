@@ -1,5 +1,11 @@
 import * as PIXI from "pixi.js";
-import type { GameState, ImpactParticlePoolEntry, HitMarkerPoolEntry, ImpactRingPoolEntry } from "../types";
+import type { Element, GameState, ImpactParticlePoolEntry, HitMarkerPoolEntry, ImpactRingPoolEntry } from "../types";
+
+const ELEMENT_COLORS: Record<Element, number> = {
+  Neutral: 0xfbbf24,
+  Heat: 0xf97316,
+  Wave: 0x38bdf8,
+};
 
 export class CombatSystem {
   private acquireDamageText(state: GameState): GameState["damageTextPool"][number] {
@@ -135,6 +141,19 @@ export class CombatSystem {
     if (state.levelUp.active) {
       return;
     }
+
+    // Combo decay
+    if (state.combo.resetTimer > 0) {
+      state.combo.resetTimer -= dt;
+      if (state.combo.resetTimer <= 0) {
+        state.combo.count = 0;
+        state.combo.multiplier = 1;
+      }
+    }
+    if (state.combo.hudPulse > 0) {
+      state.combo.hudPulse = Math.max(0, state.combo.hudPulse - dt * 5);
+    }
+
     if (state.playerHitTimer > 0) {
       state.playerHitTimer -= dt;
       if (state.playerHitTimer <= 0) {
@@ -185,9 +204,13 @@ export class CombatSystem {
         const dy = entry.projectile.entity.pos.y - enemy.entity.pos.y;
         const dist = Math.hypot(dx, dy);
         if (dist <= enemy.radius + entry.projectile.radius) {
+          const elementMatch = entry.element !== "Neutral" && entry.element === enemy.element;
+          const elementBonus = elementMatch ? 1.5 : 1;
+          const comboBonus = state.combo.multiplier;
+          const finalDamage = Math.max(1, Math.round(entry.damage * elementBonus * comboBonus));
           enemy.entity.sprite.tint = 0xffc2c2;
           enemy.hitTimer = enemy.hitFlashSeconds;
-          enemy.hp = Math.max(0, enemy.hp - entry.damage);
+          enemy.hp = Math.max(0, enemy.hp - finalDamage);
           if (enemy.hp === 0 && !enemy.expGranted) {
             enemy.dead = true;
             enemy.entity.visible = false;
@@ -196,14 +219,27 @@ export class CombatSystem {
             state.levelUpSystem.addExperience(state, 5);
           }
           this.drawEnemyHp(enemy);
+
+          // Combo
+          state.combo.count += 1;
+          state.combo.resetTimer = 4;
+          state.combo.multiplier = state.combo.count >= 8 ? 2 : state.combo.count >= 4 ? 1.5 : 1;
+          state.combo.hudPulse = 1;
+
           const onBeat = entry.onBeat;
-          const impactColor = onBeat ? 0xfacc15 : 0xfbbf24;
-          const markerColor = onBeat ? 0xfde047 : 0xfef08a;
+          const impactColor = elementMatch
+            ? ELEMENT_COLORS[entry.element]
+            : onBeat ? 0xfacc15 : 0xfbbf24;
+          const markerColor = elementMatch
+            ? ELEMENT_COLORS[entry.element]
+            : onBeat ? 0xfde047 : 0xfef08a;
           this.spawnImpactFx(state, enemy.entity.pos.x, enemy.entity.pos.y, impactColor, markerColor, entry.isCharged);
 
           const damagePoolEntry = this.acquireDamageText(state);
-          damagePoolEntry.text.text = `-${entry.damage}`;
-          damagePoolEntry.text.style.fill = onBeat ? 0xfacc15 : 0xf97316;
+          damagePoolEntry.text.text = `-${finalDamage}`;
+          damagePoolEntry.text.style.fill = elementMatch
+            ? ELEMENT_COLORS[entry.element]
+            : onBeat ? 0xfacc15 : 0xf97316;
           damagePoolEntry.text.position.set(enemy.entity.pos.x, enemy.entity.pos.y - 36);
           damagePoolEntry.text.alpha = 1;
           damagePoolEntry.text.visible = true;
@@ -263,6 +299,10 @@ export class CombatSystem {
         state.playerHitTimer = 0.2;
         const damage = Math.max(0, entry.damage * state.playerDamageMult);
         state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - damage);
+        state.combo.count = 0;
+        state.combo.multiplier = 1;
+        state.combo.resetTimer = 0;
+        state.combo.hudPulse = 0;
         state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.12);
         state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 5);
         const nx = dist === 0 ? 0 : dx / dist;
@@ -341,6 +381,19 @@ export class CombatSystem {
       barHeight - 2,
       2
     );
+    enemy.hpBar.endFill();
+
+    // Element badge (G8)
+    const badgeColor = ELEMENT_COLORS[enemy.element];
+    const badgeX = x + barWidth + 5;
+    const badgeY = y + barHeight / 2;
+    enemy.hpBar.beginFill(badgeColor, 0.9);
+    enemy.hpBar.drawPolygon([
+      badgeX, badgeY - 4,
+      badgeX + 4, badgeY,
+      badgeX, badgeY + 4,
+      badgeX - 4, badgeY,
+    ]);
     enemy.hpBar.endFill();
   }
 }

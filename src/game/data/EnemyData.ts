@@ -1,3 +1,5 @@
+import type { Element } from "../types";
+
 export interface EnemyData {
   name: string;
   maxHp: number;
@@ -18,6 +20,7 @@ export interface EnemyData {
   projectileDamage: number;
   projectileRadius: number;
   projectileLifetime: number;
+  element: Element;
 }
 
 export const defaultEnemyData: EnemyData = {
@@ -40,6 +43,7 @@ export const defaultEnemyData: EnemyData = {
   projectileDamage: 1,
   projectileRadius: 5,
   projectileLifetime: 1.2,
+  element: "Heat",
 };
 
 export const turretEnemyData: EnemyData = {
@@ -62,4 +66,5 @@ export const turretEnemyData: EnemyData = {
   projectileDamage: 1,
   projectileRadius: 5,
   projectileLifetime: 1.2,
+  element: "Wave",
 };

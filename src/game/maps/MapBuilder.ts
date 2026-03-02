@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import type { TileDef, TileMap } from "../../core/world/TileMap";
 import { tileIndex } from "../../core/world/TileMap";
+import type { ZonePalette } from "../types";
 
 export interface TileLayout {
   tileSize: number;
@@ -37,18 +38,26 @@ export const buildTileMap = (layout: TileLayout): TileMap => {
   return { width, height, tileSize: layout.tileSize, tiles, defs };
 };
 
-export const drawMap = (map: TileMap): PIXI.Container => {
+const DEFAULT_PALETTE: ZonePalette = {
+  floorFill: 0x0d1f2d,
+  floorGrid: 0x0f2336,
+  wallTop: 0x1e3d52,
+  wallFront: 0x08121a,
+  ambientTint: 0xffffff,
+};
+
+export const drawMap = (map: TileMap, palette: ZonePalette = DEFAULT_PALETTE): PIXI.Container => {
   const container = new PIXI.Container();
   const gfx = new PIXI.Graphics();
   const frontFaceH = Math.round(map.tileSize * 0.35);
 
   // Floor fill
-  gfx.beginFill(0x0d1f2d);
+  gfx.beginFill(palette.floorFill);
   gfx.drawRect(0, 0, map.width * map.tileSize, map.height * map.tileSize);
   gfx.endFill();
 
   // Checker floor variation — every other open tile is slightly lighter
-  gfx.beginFill(0x112233, 0.45);
+  gfx.beginFill(palette.floorFill + 0x050810, 0.45);
   for (let y = 0; y < map.height; y += 1) {
     for (let x = 0; x < map.width; x += 1) {
       if ((x + y) % 2 !== 0) continue;
@@ -60,7 +69,7 @@ export const drawMap = (map: TileMap): PIXI.Container => {
   gfx.endFill();
 
   // Wall top faces
-  gfx.beginFill(0x1e3d52);
+  gfx.beginFill(palette.wallTop);
   for (let y = 0; y < map.height; y += 1) {
     for (let x = 0; x < map.width; x += 1) {
       const def = map.defs[map.tiles[tileIndex(x, y, map.width)]];
@@ -71,7 +80,7 @@ export const drawMap = (map: TileMap): PIXI.Container => {
   gfx.endFill();
 
   // Wall front faces — drawn below south-exposed walls to create depth
-  gfx.beginFill(0x08121a);
+  gfx.beginFill(palette.wallFront);
   for (let y = 0; y < map.height; y += 1) {
     for (let x = 0; x < map.width; x += 1) {
       const def = map.defs[map.tiles[tileIndex(x, y, map.width)]];
@@ -89,7 +98,7 @@ export const drawMap = (map: TileMap): PIXI.Container => {
   gfx.endFill();
 
   // Grid lines
-  gfx.lineStyle(1, 0x0f2336, 0.4);
+  gfx.lineStyle(1, palette.floorGrid, 0.4);
   for (let y = 0; y <= map.height; y += 1) {
     gfx.moveTo(0, y * map.tileSize);
     gfx.lineTo(map.width * map.tileSize, y * map.tileSize);

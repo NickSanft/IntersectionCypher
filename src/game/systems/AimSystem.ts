@@ -1,8 +1,63 @@
 import { checkCollision } from "../../core/physics/Collision";
-import type { GameState } from "../types";
+import type { Element, GameState } from "../types";
+
+const ELEMENT_COLORS: Record<Element, number> = {
+  Neutral: 0xfbbf24,
+  Heat: 0xf97316,
+  Wave: 0x38bdf8,
+};
 
 export class AimSystem {
+  private updateLockOn(state: GameState): void {
+    const aim = state.aim;
+    if (!aim.active || !aim.chargeActive) {
+      aim.lockedEnemyIndex = null;
+      aim.lockIndicator.clear();
+      return;
+    }
+
+    const cursorDx = aim.x - state.player.pos.x;
+    const cursorDy = aim.y - state.player.pos.y;
+    const cursorLen = Math.hypot(cursorDx, cursorDy);
+    if (cursorLen === 0) {
+      aim.lockedEnemyIndex = null;
+      aim.lockIndicator.clear();
+      return;
+    }
+
+    let bestIndex: number | null = null;
+    let bestDist = Infinity;
+
+    for (let i = 0; i < state.enemies.length; i += 1) {
+      const enemy = state.enemies[i];
+      if (enemy.dead || enemy.mapId !== state.currentMapId) continue;
+      const dx = enemy.entity.pos.x - state.player.pos.x;
+      const dy = enemy.entity.pos.y - state.player.pos.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > aim.lockRange || dist === 0) continue;
+      const cosAngle = (dx * cursorDx + dy * cursorDy) / (dist * cursorLen);
+      const angle = Math.acos(Math.max(-1, Math.min(1, cosAngle)));
+      if (angle > aim.lockConeHalfAngle) continue;
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIndex = i;
+      }
+    }
+
+    aim.lockedEnemyIndex = bestIndex;
+    aim.lockIndicator.clear();
+    if (bestIndex !== null) {
+      const enemy = state.enemies[bestIndex];
+      aim.x = enemy.entity.pos.x;
+      aim.y = enemy.entity.pos.y;
+      const lockColor = ELEMENT_COLORS[enemy.element];
+      aim.lockIndicator.lineStyle(2, lockColor, 0.85);
+      aim.lockIndicator.drawCircle(enemy.entity.pos.x, enemy.entity.pos.y, enemy.radius + 6);
+    }
+  }
+
   public update(state: GameState): void {
+    this.updateLockOn(state);
     const aim = state.aim;
     const player = state.player;
     const menuOpen = state.menu.isOpen;
@@ -66,7 +121,8 @@ export class AimSystem {
           points.push({ x: posX, y: posY });
         }
 
-        aim.line.lineStyle(3, isCharged ? 0xf97316 : 0xffffff, isCharged ? 0.95 : 0.9);
+        const lineColor = ELEMENT_COLORS[state.element.current];
+        aim.line.lineStyle(3, lineColor, isCharged ? 0.95 : 0.8);
         const cycle = dash + gap;
         let cyclePos = 0;
 
@@ -102,7 +158,7 @@ export class AimSystem {
           }
         }
 
-        aim.line.beginFill(isCharged ? 0xf97316 : 0xffffff, 0.95);
+        aim.line.beginFill(lineColor, 0.95);
         aim.line.drawCircle(aim.x, aim.y, 3);
         aim.line.endFill();
       }

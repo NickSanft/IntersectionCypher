@@ -12,6 +12,13 @@ export const zoneConfigs: Record<string, ZoneConfig> = {
       bpm: 120,
       windowSeconds: 0.12,
       onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x0d1f2d,
+        floorGrid: 0x0f2336,
+        wallTop: 0x1e3d52,
+        wallFront: 0x08121a,
+        ambientTint: 0xffffff,
+      },
     },
   },
   map2: {
@@ -20,6 +27,13 @@ export const zoneConfigs: Record<string, ZoneConfig> = {
       bpm: 96,
       windowSeconds: 0.12,
       onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x1f0e07,
+        floorGrid: 0x2a1208,
+        wallTop: 0x4a2010,
+        wallFront: 0x120704,
+        ambientTint: 0xffe8d0,
+      },
     },
   },
 };

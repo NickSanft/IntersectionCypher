@@ -10,7 +10,8 @@ export type KeyAction =
   | "settings"
   | "ability1"
   | "ability2"
-  | "ability3";
+  | "ability3"
+  | "cycleElement";
 
 const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
   up: ["KeyW", "ArrowUp"],
@@ -25,6 +26,7 @@ const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
   ability1: ["KeyQ", "Digit1"],
   ability2: ["KeyE", "Digit2"],
   ability3: ["KeyF", "Digit3"],
+  cycleElement: ["Tab", "KeyX"],
 };
 
 export class Input {

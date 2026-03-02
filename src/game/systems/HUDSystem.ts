@@ -6,6 +6,7 @@ export class HUDSystem {
     this.updatePlayerHp(state, dt);
     this.updateChargeBar(state);
     this.updateRhythmIndicator(state);
+    this.updateCombo(state, dt);
     this.updateEnemyLabels(state);
     this.updateTopRight(state);
   }
@@ -27,6 +28,12 @@ export class HUDSystem {
     state.hudBeatLabel.position.set(padding + 22, beatY - 2);
     state.hudBeatRing.position.set(padding + 8, beatY + 6);
 
+    const elementY = beatY + state.hudBeatLabel.height + 10;
+    state.element.hudIcon.position.set(padding + 4, elementY);
+
+    const comboY = elementY + state.element.hudIcon.height + 6;
+    state.combo.hudText.position.set(padding + 4, comboY);
+
     const contentWidth = Math.max(
       state.hudTitle.width,
       state.hudText.width,
@@ -36,7 +43,7 @@ export class HUDSystem {
     );
     const hudWidth = Math.max(200, contentWidth + padding * 2);
     const hudHeight =
-      state.hudBeatLabel.position.y + state.hudBeatLabel.height + padding;
+      state.combo.hudText.position.y + state.combo.hudText.height + padding;
     state.hud.setSize(hudWidth, hudHeight);
 
     state.hudBg.clear();
@@ -174,6 +181,23 @@ export class HUDSystem {
   private updateTopRight(state: GameState): void {
     state.hudLevelText.text = `LV ${state.playerData.stats.level}`;
     state.hudExpText.text = `EXP ${state.playerData.stats.exp}/${state.playerData.stats.expToNext}`;
+  }
+
+  private updateCombo(state: GameState, dt: number): void {
+    void dt;
+    const combo = state.combo;
+    if (combo.count <= 1) {
+      combo.hudText.visible = false;
+      return;
+    }
+    combo.hudText.visible = true;
+    const multStr = combo.multiplier > 1 ? ` ×${combo.multiplier}` : "";
+    combo.hudText.text = `${combo.count} hits${multStr}`;
+    const scale = 1 + combo.hudPulse * 0.3;
+    combo.hudText.scale.set(scale);
+    combo.hudText.alpha = 0.6 + combo.hudPulse * 0.4;
+    const tiers = combo.count >= 8 ? 0xfacc15 : combo.count >= 4 ? 0xfb923c : 0xf0f9ff;
+    combo.hudText.tint = tiers;
   }
 
   private updateEnemyLabels(state: GameState): void {

@@ -21,6 +21,7 @@ import { MinimapSystem } from "./game/systems/MinimapSystem";
 import { AbilitySystem } from "./game/systems/AbilitySystem";
 import { TriggerSystem } from "./game/systems/TriggerSystem";
 import { RhythmSystem } from "./game/systems/RhythmSystem";
+import { ElementSystem } from "./game/systems/ElementSystem";
 import { RunSummarySystem } from "./game/systems/RunSummarySystem";
 import { SettingsSystem } from "./game/systems/SettingsSystem";
 import type { GameState } from "./game/types";
@@ -109,8 +110,8 @@ const bootstrap = async (): Promise<void> => {
 
   const map1 = buildTileMap(zoneMaps.map1.layout);
   const map2 = buildTileMap(zoneMaps.map2.layout);
-  const mapView1 = drawMap(map1);
-  const mapView2 = drawMap(map2);
+  const mapView1 = drawMap(map1, zoneConfigs.map1.rhythm.palette);
+  const mapView2 = drawMap(map2, zoneConfigs.map2.rhythm.palette);
   mapView1.zIndex = 0;
   mapView2.zIndex = 0;
   world.addChild(mapView1);
@@ -240,6 +241,7 @@ const bootstrap = async (): Promise<void> => {
       entity,
       name: data.name,
       type,
+      element: data.element,
       radius: data.radius,
       maxHp: data.maxHp,
       hp: data.maxHp,
@@ -802,10 +804,29 @@ const bootstrap = async (): Promise<void> => {
   aimLine.zIndex = 4;
   world.addChild(aimLine);
 
+  const lockIndicator = new PIXI.Graphics();
+  lockIndicator.zIndex = 5;
+  world.addChild(lockIndicator);
+
   const chargeRing = new PIXI.Graphics();
   chargeRing.zIndex = 6;
   chargeRing.blendMode = "add";
   world.addChild(chargeRing);
+
+  const elementHudIcon = new PIXI.Text({
+    text: "Neutral",
+    style: { fill: 0xfbbf24, fontFamily: "Arial", fontSize: 11, fontWeight: "700" },
+  });
+  elementHudIcon.anchor.set(0, 0.5);
+  hud.addChild(elementHudIcon);
+
+  const comboHudText = new PIXI.Text({
+    text: "",
+    style: { fill: 0xffffff, fontFamily: "Arial", fontSize: 13, fontWeight: "900" },
+  });
+  comboHudText.anchor.set(0, 0.5);
+  comboHudText.visible = false;
+  hud.addChild(comboHudText);
 
   const transitionOverlay = new PIXI.Graphics();
   transitionOverlay.zIndex = 999;
@@ -892,6 +913,10 @@ const bootstrap = async (): Promise<void> => {
       chargeRatio: 0,
       chargeThresholdMs: 2000,
       chargeRing,
+      lockedEnemyIndex: null,
+      lockRange: 200,
+      lockConeHalfAngle: Math.PI / 6,
+      lockIndicator,
     },
     rhythm: {
       bpm: zoneConfigs.map1.rhythm.bpm,
@@ -970,6 +995,17 @@ const bootstrap = async (): Promise<void> => {
     settings: {
       open: false,
       ui: settingsUI,
+    },
+    element: {
+      current: "Neutral",
+      hudIcon: elementHudIcon,
+    },
+    combo: {
+      count: 0,
+      multiplier: 1,
+      resetTimer: 0,
+      hudText: comboHudText,
+      hudPulse: 0,
     },
   };
 
@@ -1082,6 +1118,7 @@ const bootstrap = async (): Promise<void> => {
   const abilitySystem = new AbilitySystem();
   const rhythmSystem = new RhythmSystem();
   const runSummarySystem = new RunSummarySystem();
+  const elementSystem = new ElementSystem();
   const aimSystem = new AimSystem();
   const combatSystem = new CombatSystem();
   const combatFXSystem = new CombatFXSystem();
@@ -1109,6 +1146,7 @@ const bootstrap = async (): Promise<void> => {
     settingsSystem.update(state);
     mapSystem.update(state, simDt);
     enemyAISystem.update(state, simDt);
+    elementSystem.update(state);
     aimSystem.update(state);
     combatSystem.update(state, simDt);
     combatFXSystem.update(state, simDt);
