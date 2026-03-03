@@ -121,6 +121,16 @@ const bootstrap = async (): Promise<void> => {
   world.zIndex = 0;
   app.stage.addChild(world);
 
+  // World-space background — a large sprite behind the map tiles so the renderer
+  // clear color never shows around the map edges on any screen size.
+  const worldBg = new PIXI.Sprite(PIXI.Texture.WHITE);
+  worldBg.tint = zoneConfigs.map1.rhythm.palette.floorFill;
+  worldBg.position.set(-3000, -2000);
+  worldBg.width = 6000;
+  worldBg.height = 4000;
+  worldBg.zIndex = -1;
+  world.addChild(worldBg);
+
   const map1 = buildTileMap(zoneMaps.map1.layout);
   const map2 = buildTileMap(zoneMaps.map2.layout);
 
@@ -808,6 +818,7 @@ const bootstrap = async (): Promise<void> => {
   state = {
     app,
     world,
+    worldBg,
     map: mapStates.map1.map,
     mapView: mapStates.map1.view,
     maps: mapStates,

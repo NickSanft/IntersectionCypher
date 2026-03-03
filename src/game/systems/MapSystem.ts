@@ -68,6 +68,7 @@ export class MapSystem {
     state.rhythm.windowSeconds = next.rhythm.windowSeconds;
     state.rhythm.onBeatDamageMult = next.rhythm.onBeatDamageMult;
     state.world.tint = next.rhythm.palette.ambientTint;
+    state.worldBg.tint = next.rhythm.palette.floorFill;
     (state.app.renderer as import("pixi.js").Renderer).background.color = next.rhythm.palette.floorFill;
     state.rhythm.time = 0;
     state.rhythm.lastBeat = -1;

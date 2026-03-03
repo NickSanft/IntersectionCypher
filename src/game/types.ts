@@ -284,6 +284,7 @@ export interface TriggerState {
 export interface GameState {
   app: PIXI.Application;
   world: PIXI.Container;
+  worldBg: PIXI.Sprite;
   map: TileMap;
   mapView: PIXI.Container;
   maps: Record<string, MapState>;
