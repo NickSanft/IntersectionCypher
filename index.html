@@ -10,7 +10,7 @@
       body {
         margin: 0;
         height: 100%;
-        background: #0b0f14;
+        background: #0d1f2d;
         overflow: hidden;
       }
       #app {
@@ -18,7 +18,15 @@
         height: 100%;
       }
       canvas {
-        display: block;
+        /* Pin the canvas to cover the full viewport at all times.
+           This is a CSS-level guarantee independent of Pixi's resize logic. */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw !important;
+        height: 100vh !important;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
       }
     </style>
   </head>

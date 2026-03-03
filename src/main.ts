@@ -93,8 +93,9 @@ const bootstrap = async (): Promise<void> => {
   PIXI.AbstractRenderer.defaultOptions.roundPixels = true;
   const app = new PIXI.Application();
   await app.init({
-    background: "#0b0f14",
-    resizeTo: window,
+    background: zoneConfigs.map1.rhythm.palette.floorFill,
+    width: window.innerWidth,
+    height: window.innerHeight,
     antialias: false,
   });
 
@@ -103,6 +104,14 @@ const bootstrap = async (): Promise<void> => {
     throw new Error("Missing #app host element");
   }
   host.appendChild(app.canvas);
+
+  // ResizeObserver is more reliable than resizeTo:window for keeping the
+  // renderer pixel dimensions in sync with the actual viewport size.
+  const resizeObserver = new ResizeObserver(() => {
+    app.renderer.resize(window.innerWidth, window.innerHeight);
+  });
+  resizeObserver.observe(document.documentElement);
+
   app.stage.sortableChildren = true;
   app.stage.eventMode = "static";
   app.stage.hitArea = app.screen;
