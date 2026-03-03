@@ -459,20 +459,6 @@ const bootstrap = async (): Promise<void> => {
   uiLayer.zIndex = 10;
   app.stage.addChild(uiLayer);
 
-  const vignette = new PIXI.Graphics();
-  vignette.zIndex = 50;
-  vignette.eventMode = "none";
-  const vigW = app.renderer.width;
-  const vigH = app.renderer.height;
-  const vigSteps = 14;
-  for (let i = 0; i < vigSteps; i += 1) {
-    const t = 1 - i / vigSteps;
-    const alpha = t * t * 0.55;
-    const ix = (i / vigSteps) * vigW * 0.2;
-    const iy = (i / vigSteps) * vigH * 0.2;
-    vignette.rect(ix, iy, vigW - ix * 2, vigH - iy * 2).stroke({ width: 3, color: 0x000000, alpha });
-  }
-  uiLayer.addChild(vignette);
 
   const rhythmOverlay = new PIXI.Graphics();
   rhythmOverlay.zIndex = -1;
