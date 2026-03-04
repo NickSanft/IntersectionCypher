@@ -131,11 +131,12 @@ export class HUDSystem {
     const topPadding = 10;
     state.hudLevelText.position.set(12, topPadding);
     state.hudExpText.position.set(12, topPadding + state.hudLevelText.height + 6);
+    state.hudAccuracyText.position.set(12, state.hudExpText.position.y + state.hudExpText.height + 6);
     const topHeight =
-      state.hudExpText.position.y + state.hudExpText.height + topPadding;
+      state.hudAccuracyText.position.y + state.hudAccuracyText.height + topPadding;
     const topWidth = Math.max(
       160,
-      Math.max(state.hudLevelText.width, state.hudExpText.width) + topPadding * 2,
+      Math.max(state.hudLevelText.width, state.hudExpText.width, state.hudAccuracyText.width) + topPadding * 2,
     );
     state.hudTopRight.setSize(topWidth, topHeight);
     drawSnesPanel(state.hudTopRightBg, state.hudTopRight.widthPx, state.hudTopRight.heightPx);
@@ -216,6 +217,26 @@ export class HUDSystem {
   private updateTopRight(state: GameState): void {
     state.hudLevelText.text = `LV ${state.playerData.stats.level}`;
     state.hudExpText.text = `EXP ${state.playerData.stats.exp}/${state.playerData.stats.expToNext}`;
+
+    const total = state.rhythm.shotsTotal;
+    const onBeat = state.rhythm.shotsOnBeat;
+    const ratio = total === 0 ? -1 : onBeat / total;
+    let grade: string;
+    if (ratio < 0) grade = "-";
+    else if (ratio >= 0.9) grade = "S";
+    else if (ratio >= 0.75) grade = "A";
+    else if (ratio >= 0.6) grade = "B";
+    else if (ratio >= 0.4) grade = "C";
+    else grade = "D";
+    state.hudAccuracyText.text = `Acc:${grade}`;
+
+    const gradeColor =
+      grade === "S" ? 0xfacc15 :
+      grade === "A" ? 0x4ade80 :
+      grade === "B" ? 0x38bdf8 :
+      grade === "C" ? 0xfb923c :
+      grade === "D" ? 0xef4444 : 0x9ca3af;
+    state.hudAccuracyText.tint = gradeColor;
   }
 
   private updateCombo(state: GameState, dt: number): void {
@@ -246,7 +267,13 @@ export class HUDSystem {
         Math.round(enemy.entity.pos.x),
         Math.round(enemy.entity.pos.y) - enemy.labelOffsetY,
       );
-      enemy.label.text = `${enemy.name} ${enemy.hp}/${enemy.maxHp}`;
+      const elemPrefix =
+        enemy.element === "Heat" ? "[H] " :
+        enemy.element === "Wave" ? "[W] " : "";
+      enemy.label.text = `${elemPrefix}${enemy.name} ${enemy.hp}/${enemy.maxHp}`;
+      enemy.label.tint =
+        enemy.element === "Heat" ? 0xfb923c :
+        enemy.element === "Wave" ? 0x38bdf8 : 0xfbbf24;
     }
   }
 }

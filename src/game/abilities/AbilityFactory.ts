@@ -51,6 +51,7 @@ export const createAbilityStates = (state: GameState): AbilityState[] => {
       },
       cooldownRemaining: 0,
       castRemaining: 0,
+      readyFlash: 0,
     },
     {
       def: {
@@ -77,6 +78,7 @@ export const createAbilityStates = (state: GameState): AbilityState[] => {
       },
       cooldownRemaining: 0,
       castRemaining: 0,
+      readyFlash: 0,
     },
     {
       def: {
@@ -94,6 +96,7 @@ export const createAbilityStates = (state: GameState): AbilityState[] => {
       },
       cooldownRemaining: 0,
       castRemaining: 0,
+      readyFlash: 0,
     },
   ];
 };

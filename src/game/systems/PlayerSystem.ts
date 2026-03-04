@@ -18,12 +18,17 @@ export class PlayerSystem {
 
     if (elapsed >= roll.invincStart && elapsed <= roll.invincEnd) {
       state.playerHitTimer = Math.max(state.playerHitTimer, dt + 0.01);
+      // Flicker cyan to signal invincibility frames
+      state.player.sprite.tint = Math.floor(elapsed * 16) % 2 === 0 ? 0x88eeff : 0xffffff;
+    } else {
+      state.player.sprite.tint = 0xffffff;
     }
 
     if (roll.timer <= 0) {
       roll.active = false;
       state.player.pos.z = 0;
       state.player.sprite.scale.y = Math.abs(state.player.sprite.scale.x);
+      state.player.sprite.tint = 0xffffff;
       state.player.renderUpdate();
     }
   }

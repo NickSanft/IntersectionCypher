@@ -26,8 +26,16 @@ export class AbilitySystem {
       const ability = abilities[i];
       const def = ability.def;
 
+      if (ability.readyFlash > 0) {
+        ability.readyFlash = Math.max(0, ability.readyFlash - dt);
+      }
+
       if (ability.cooldownRemaining > 0) {
+        const prev = ability.cooldownRemaining;
         ability.cooldownRemaining = Math.max(0, ability.cooldownRemaining - dt);
+        if (ability.cooldownRemaining === 0 && prev > 0 && !paused) {
+          ability.readyFlash = 0.6;
+        }
       }
 
       if (ability.castRemaining > 0) {
@@ -85,6 +93,12 @@ export class AbilitySystem {
       bg.lineStyle(1, 0x1f2937, 1);
       bg.drawRoundedRect(0, 0, slotSize, slotSize, 6);
       bg.endFill();
+      if (ability.readyFlash > 0) {
+        const flashAlpha = ability.readyFlash / 0.6;
+        bg.lineStyle(2, 0x38bdf8, flashAlpha);
+        bg.drawRoundedRect(-1, -1, slotSize + 2, slotSize + 2, 7);
+        bg.lineStyle(0);
+      }
       bg.position.set(x, y);
 
       const label = bar.slotLabels[i];

@@ -221,6 +221,7 @@ export interface AbilityState {
   def: AbilityDefinition;
   cooldownRemaining: number;
   castRemaining: number;
+  readyFlash: number;
 }
 
 export interface AbilityBarState {
@@ -322,6 +323,7 @@ export interface GameState {
   hudHpText: PIXI.Text;
   hudLevelText: PIXI.Text;
   hudExpText: PIXI.Text;
+  hudAccuracyText: PIXI.Text;
   chargeBar: PIXI.Graphics;
   chargeLabel: PIXI.Text;
   hudBeatRing: PIXI.Graphics;

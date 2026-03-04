@@ -300,7 +300,27 @@ const bootstrap = async (): Promise<void> => {
   const chaserSpawn = tileToWorld(map2, 12, 5);
   const turretSpawn = tileToWorld(map2, 5, 7);
   const shieldSpawn = tileToWorld(map2, 14, 7);
+  const map1Chaser1Spawn = tileToWorld(map1, 15, 2);
+  const map1Chaser2Spawn = tileToWorld(map1, 5, 10);
   const enemies = [
+    createEnemyState(
+      defaultEnemyData,
+      spriteAtlas.entities.chaser.idle,
+      map1,
+      "map1",
+      "chaser",
+      map1Chaser1Spawn.x,
+      map1Chaser1Spawn.y
+    ),
+    createEnemyState(
+      defaultEnemyData,
+      spriteAtlas.entities.chaser.idle,
+      map1,
+      "map1",
+      "chaser",
+      map1Chaser2Spawn.x,
+      map1Chaser2Spawn.y
+    ),
     createEnemyState(
       defaultEnemyData,
       spriteAtlas.entities.chaser.idle,
@@ -565,6 +585,17 @@ const bootstrap = async (): Promise<void> => {
   });
   hudLevelText.position.set(12, 10);
   topRight.addChild(hudLevelText);
+
+  const hudAccuracyText = new PIXI.Text({
+    text: "Acc: -",
+    style: {
+      fill: 0x6ee7b7,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 16,
+    },
+  });
+  hudAccuracyText.position.set(12, 50);
+  topRight.addChild(hudAccuracyText);
 
   const hudExpText = new PIXI.Text({
     text: "EXP 0/10",
@@ -848,6 +879,7 @@ const bootstrap = async (): Promise<void> => {
     hudHpText,
     hudLevelText,
     hudExpText,
+    hudAccuracyText,
     chargeBar,
     chargeLabel,
     hudBeatRing,
