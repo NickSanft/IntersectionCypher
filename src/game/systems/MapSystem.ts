@@ -1,5 +1,6 @@
 import type { GameState, MapState } from "../types";
 import { findNearestOpen } from "../../core/world/MapUtils";
+import { SoundSystem } from "../audio/SoundSystem";
 
 export class MapSystem {
   public update(state: GameState, dt: number): void {
@@ -44,6 +45,7 @@ export class MapSystem {
       state.transitionTime = 0;
       state.transitionTargetMapId = door.to;
       state.transitionTargetSpawn = { x: door.spawnX, y: door.spawnY };
+      SoundSystem.playDoorTransition(state);
     }
   }
 

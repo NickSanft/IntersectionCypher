@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 import type { Element, GameState, ImpactParticlePoolEntry, HitMarkerPoolEntry, ImpactRingPoolEntry } from "../types";
+import { SoundSystem } from "../audio/SoundSystem";
 
 const ELEMENT_COLORS: Record<Element, number> = {
   Neutral: 0xfbbf24,
@@ -277,11 +278,18 @@ export class CombatSystem {
             }
             enemy.respawnTimer = enemy.respawnSeconds;
             enemy.expGranted = true;
-            state.levelUpSystem.addExperience(state, 5);
+            SoundSystem.playEnemyDeath(state, entry.onBeat);
             // On-beat kill: bright screen flash
             if (entry.onBeat) {
               state.rhythm.overlayAlpha = Math.max(state.rhythm.overlayAlpha, 0.5);
             }
+            const wasLevelUp = state.levelUp.active;
+            state.levelUpSystem.addExperience(state, 5);
+            if (state.levelUp.active && !wasLevelUp) {
+              SoundSystem.playLevelUp(state);
+            }
+          } else {
+            SoundSystem.playHit(state, entry.onBeat, entry.isCharged);
           }
           this.drawEnemyHp(enemy);
 
@@ -294,6 +302,7 @@ export class CombatSystem {
           // World-space combo pop at milestone hits
           const n = state.combo.count;
           if (n === 3 || n === 5 || n === 8 || (n > 8 && n % 5 === 0)) {
+            SoundSystem.playComboMilestone(state, n);
             const popColor = n >= 8 ? 0xfde047 : n >= 5 ? 0xf97316 : 0xfbbf24;
             const popText = new PIXI.Text({
               text: `x${n}`,
@@ -382,6 +391,7 @@ export class CombatSystem {
       if (dist <= state.playerRadius + entry.projectile.radius) {
         state.player.sprite.tint = 0xfca5a5;
         state.playerHitTimer = 0.2;
+        SoundSystem.playPlayerHurt(state);
         const damage = Math.max(0, entry.damage * state.playerDamageMult);
         state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - damage);
         state.combo.count = 0;

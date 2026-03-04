@@ -1,4 +1,5 @@
 import type { GameState } from "../types";
+import { SoundSystem } from "../audio/SoundSystem";
 
 export class AbilitySystem {
   private readonly lastPressed: boolean[] = [];
@@ -36,6 +37,7 @@ export class AbilitySystem {
             const ok = def.onCast(state);
             if (ok) {
               ability.cooldownRemaining = def.cooldown;
+              SoundSystem.playAbility(state);
             }
           }
         }
@@ -54,6 +56,7 @@ export class AbilitySystem {
         const ok = def.onCast(state);
         if (ok) {
           ability.cooldownRemaining = def.cooldown;
+          SoundSystem.playAbility(state);
         }
       } else {
         ability.castRemaining = def.castTime;

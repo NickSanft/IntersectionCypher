@@ -3,6 +3,7 @@ import { Projectile } from "../../projectiles/Projectile";
 import { ZEntity } from "../../entities/ZEntity";
 import type { Element, GameState } from "../types";
 import { isOnBeat } from "./RhythmSystem";
+import { SoundSystem } from "../audio/SoundSystem";
 
 const ELEMENT_TINTS: Record<Element, number> = {
   Neutral: 0xfbbf24,
@@ -152,6 +153,7 @@ export const setupPointerSystem = (
     } else {
       spawnProjectile(normX, normY, 4, baseSpeed, baseDamage * damageMult, onBeat, false);
     }
+    SoundSystem.playShoot(state, isCharged);
     state.aim.chargeActive = false;
   });
 
