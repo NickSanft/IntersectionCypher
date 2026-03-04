@@ -159,4 +159,71 @@ export class SoundSystem {
     const freq = Math.min(400 + count * 28, 1100);
     osc(c, "triangle", freq, freq * 1.5, 0.09, 0.07);
   }
+
+  /** Deflected an enemy projectile (parry) */
+  static playParry(state: GameState): void {
+    const c = getCtx(state);
+    if (!c) return;
+    osc(c, "sine",   440, 880, 0.18, 0.08);
+    osc(c, "square", 880, 440, 0.10, 0.06, 0.04);
+    noise(c, "highpass", 4000, 6000, 0.08, 0.05);
+  }
+
+  /** All enemies on the current map are dead */
+  static playRoomClear(state: GameState): void {
+    const c = getCtx(state);
+    if (!c) return;
+    ([523, 659, 784, 1047] as const).forEach((freq, i) => {
+      osc(c, "triangle", freq, freq, 0.10, 0.08, i * 0.07);
+    });
+  }
+
+  /** Enemy enters aggro range */
+  static playAggroBlip(state: GameState): void {
+    const c = getCtx(state);
+    if (!c) return;
+    osc(c, "square", 880, 880, 0.06, 0.04);
+  }
+
+  /** Start a looping background beat synced to BPM */
+  static startBackgroundTrack(state: GameState): void {
+    if (state.rhythm.bgLoopStarted) return;
+    const c = getCtx(state);
+    if (!c) return;
+    state.rhythm.bgLoopStarted = true;
+
+    const scheduleBeat = (beatTime: number, beatIndex: number): void => {
+      if (!state.rhythm.audioUnlocked || !state.rhythm.audioContext) return;
+      const interval = state.rhythm.beatInterval;
+      const delay = beatTime - c.currentTime;
+      if (delay < 0) return;
+
+      const beat4 = beatIndex % 4;
+      if (beat4 === 0) {
+        // Kick
+        osc(c, "sine", 90, 35, 0.22, 0.28, delay);
+        noise(c, "lowpass", 180, 60, 0.10, 0.15, delay);
+      }
+      if (beat4 === 2) {
+        // Lighter kick
+        osc(c, "sine", 75, 30, 0.16, 0.22, delay);
+      }
+      if (beat4 === 1 || beat4 === 3) {
+        // Hi-hat
+        noise(c, "highpass", 5000, 8000, 0.04, 0.04, delay);
+      }
+      if (beatIndex % 8 === 0) {
+        // Bass note on every 2 bars
+        osc(c, "triangle", 110, 100, 0.08, 0.35, delay);
+      }
+
+      const nextBeat = beatTime + interval;
+      const msToNext = (nextBeat - c.currentTime) * 1000 - 50;
+      setTimeout(() => {
+        scheduleBeat(nextBeat, (beatIndex + 1) % 16);
+      }, Math.max(0, msToNext));
+    };
+
+    scheduleBeat(c.currentTime + 0.1, 0);
+  }
 }

@@ -44,6 +44,7 @@ export interface EnemyProjectileEntry {
   life: number;
   damage: number;
   pool: EnemyProjectilePoolEntry;
+  reflected: boolean;
 }
 
 export interface DamageTextPoolEntry {
@@ -57,6 +58,7 @@ export interface DamageTextEntry {
   velY: number;
   pool: DamageTextPoolEntry;
   scaleTimer: number;
+  onBeat: boolean;
 }
 
 export interface ImpactRingPoolEntry {
@@ -79,6 +81,7 @@ export interface DodgeRollState {
   duration: number;
   invincStart: number;
   invincEnd: number;
+  invincActive: boolean;
   dirX: number;
   dirY: number;
   speed: number;
@@ -158,6 +161,11 @@ export interface EnemyState {
   shieldGfx?: PIXI.Graphics;
   hpBar: PIXI.Graphics;
   label: PIXI.Text;
+  aggroTimer: number;
+  wasAggro: boolean;
+  aggroText: PIXI.Text;
+  telegraphGfx: PIXI.Graphics;
+  respawnFadeTimer: number;
 }
 
 export interface DialogState {
@@ -376,6 +384,9 @@ export interface GameState {
   settings: SettingsState;
   element: ElementState;
   combo: ComboState;
+  footstepTimer: number;
+  killCount: number;
+  hudKillText: PIXI.Text;
 }
 
 export interface UpgradeHistoryEntry {
@@ -403,6 +414,7 @@ export interface RhythmState {
   tickVolume: number;
   shotsOnBeat: number;
   shotsTotal: number;
+  bgLoopStarted: boolean;
 }
 
 export interface RunSummaryState {

@@ -3,6 +3,7 @@ import { moveWithCollision } from "../../core/physics/Move";
 import { Projectile } from "../../projectiles/Projectile";
 import { ZEntity } from "../../entities/ZEntity";
 import type { GameState } from "../types";
+import { SoundSystem } from "../audio/SoundSystem";
 
 export class EnemyAISystem {
   private acquireEnemyProjectile(
@@ -73,6 +74,7 @@ export class EnemyAISystem {
       life: enemy.projectileLifetime,
       damage: enemy.projectileDamage,
       pool: entry,
+      reflected: false,
     });
   }
 
@@ -87,6 +89,8 @@ export class EnemyAISystem {
       if (enemy.dead) {
         enemy.entity.vel.x = 0;
         enemy.entity.vel.y = 0;
+        enemy.aggroText.visible = false;
+        enemy.telegraphGfx.visible = false;
         continue;
       }
       if (paused) {
@@ -118,6 +122,26 @@ export class EnemyAISystem {
       const dx = state.player.pos.x - enemy.entity.pos.x;
       const dy = state.player.pos.y - enemy.entity.pos.y;
       const dist = Math.hypot(dx, dy);
+
+      const nowAggro = dist <= enemy.aggroRange;
+      if (nowAggro && !enemy.wasAggro) {
+        enemy.aggroTimer = 0.7;
+        SoundSystem.playAggroBlip(state);
+      }
+      enemy.wasAggro = nowAggro;
+      if (enemy.aggroTimer > 0) {
+        enemy.aggroTimer = Math.max(0, enemy.aggroTimer - dt);
+        enemy.aggroText.visible = enemy.mapId === state.currentMapId;
+        enemy.aggroText.position.set(
+          Math.round(enemy.entity.pos.x),
+          Math.round(enemy.entity.pos.y) - enemy.labelOffsetY - 20,
+        );
+        const bounce = 1 + Math.sin(enemy.aggroTimer * 20) * 0.2;
+        enemy.aggroText.scale.set(bounce);
+        enemy.aggroText.alpha = Math.min(1, enemy.aggroTimer / 0.3);
+      } else {
+        enemy.aggroText.visible = false;
+      }
 
       if (enemy.type === "shield") {
         // Rotate shield to always face the player
@@ -157,6 +181,8 @@ export class EnemyAISystem {
         }
         moveWithCollision(enemy.entity.pos, enemy.entity.vel, dt, enemy.radius, state.map);
         enemy.entity.renderUpdate();
+        enemy.telegraphGfx.clear();
+        enemy.telegraphGfx.visible = false;
         continue;
       }
 
@@ -166,6 +192,41 @@ export class EnemyAISystem {
         if (dist <= enemy.attackRange && enemy.attackTimer <= 0 && enemy.attackCooldown <= 0) {
           enemy.attackTimer = enemy.attackWindupSeconds;
           enemy.attackCooldown = enemy.attackCooldownSeconds;
+        }
+        // Telegraph danger line during windup
+        if (enemy.attackTimer > 0) {
+          const windupRatio = enemy.attackTimer / enemy.attackWindupSeconds;
+          enemy.telegraphGfx.visible = enemy.mapId === state.currentMapId;
+          enemy.telegraphGfx.clear();
+          const tlen = Math.hypot(dx, dy);
+          if (tlen > 0) {
+            const nx2 = dx / tlen;
+            const ny2 = dy / tlen;
+            const dashLen = 8;
+            const gapLen = 6;
+            const totalLen = Math.min(tlen, 200);
+            let pos = 0;
+            let dash = true;
+            while (pos < totalLen) {
+              const segLen = Math.min(dash ? dashLen : gapLen, totalLen - pos);
+              if (dash) {
+                const sx = enemy.entity.pos.x + nx2 * pos;
+                const sy = enemy.entity.pos.y + ny2 * pos;
+                const ex = enemy.entity.pos.x + nx2 * (pos + segLen);
+                const ey = enemy.entity.pos.y + ny2 * (pos + segLen);
+                const midX = (sx + ex) / 2;
+                const midY = (sy + ey) / 2;
+                enemy.telegraphGfx
+                  .rect(midX - 1, midY - 1, 2, 2)
+                  .fill({ color: 0xfbbf24, alpha: 0.5 * windupRatio });
+              }
+              pos += dash ? dashLen : gapLen;
+              dash = !dash;
+            }
+          }
+        } else {
+          enemy.telegraphGfx.clear();
+          enemy.telegraphGfx.visible = false;
         }
         enemy.entity.renderUpdate();
         continue;
@@ -184,6 +245,36 @@ export class EnemyAISystem {
         if (enemy.attackTimer > 0) {
           enemy.entity.vel.x = 0;
           enemy.entity.vel.y = 0;
+          // Telegraph danger line during windup
+          const windupRatio = enemy.attackTimer / enemy.attackWindupSeconds;
+          enemy.telegraphGfx.visible = enemy.mapId === state.currentMapId;
+          enemy.telegraphGfx.clear();
+          const tlen = Math.hypot(dx, dy);
+          if (tlen > 0) {
+            const nx2 = dx / tlen;
+            const ny2 = dy / tlen;
+            const dashLen = 8;
+            const gapLen = 6;
+            const totalLen = Math.min(tlen, 200);
+            let cpos = 0;
+            let cdash = true;
+            while (cpos < totalLen) {
+              const segLen = Math.min(cdash ? dashLen : gapLen, totalLen - cpos);
+              if (cdash) {
+                const sx = enemy.entity.pos.x + nx2 * cpos;
+                const sy = enemy.entity.pos.y + ny2 * cpos;
+                const ex = enemy.entity.pos.x + nx2 * (cpos + segLen);
+                const ey = enemy.entity.pos.y + ny2 * (cpos + segLen);
+                const midX = (sx + ex) / 2;
+                const midY = (sy + ey) / 2;
+                enemy.telegraphGfx
+                  .rect(midX - 1, midY - 1, 2, 2)
+                  .fill({ color: 0xfbbf24, alpha: 0.5 * windupRatio });
+              }
+              cpos += cdash ? dashLen : gapLen;
+              cdash = !cdash;
+            }
+          }
         } else if (dist <= enemy.attackRange) {
           const px = -ny * enemy.strafeDir;
           const py = nx * enemy.strafeDir;
@@ -219,6 +310,10 @@ export class EnemyAISystem {
         }
       }
 
+      if (enemy.attackTimer <= 0) {
+        enemy.telegraphGfx.clear();
+        enemy.telegraphGfx.visible = false;
+      }
       moveWithCollision(enemy.entity.pos, enemy.entity.vel, dt, enemy.radius, state.map);
       enemy.entity.renderUpdate();
     }

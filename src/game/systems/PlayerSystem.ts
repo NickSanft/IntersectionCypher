@@ -1,3 +1,4 @@
+import * as PIXI from "pixi.js";
 import { moveWithCollision } from "../../core/physics/Move";
 import type { GameState } from "../types";
 
@@ -16,7 +17,9 @@ export class PlayerSystem {
     moveWithCollision(state.player.pos, vel, dt, state.playerRadius, state.map);
     state.player.renderUpdate();
 
-    if (elapsed >= roll.invincStart && elapsed <= roll.invincEnd) {
+    const inInvincWindow = elapsed >= roll.invincStart && elapsed <= roll.invincEnd;
+    state.dodgeRoll.invincActive = inInvincWindow;
+    if (inInvincWindow) {
       state.playerHitTimer = Math.max(state.playerHitTimer, dt + 0.01);
       // Flicker cyan to signal invincibility frames
       state.player.sprite.tint = Math.floor(elapsed * 16) % 2 === 0 ? 0x88eeff : 0xffffff;
@@ -26,6 +29,7 @@ export class PlayerSystem {
 
     if (roll.timer <= 0) {
       roll.active = false;
+      roll.invincActive = false;
       state.player.pos.z = 0;
       state.player.sprite.scale.y = Math.abs(state.player.sprite.scale.x);
       state.player.sprite.tint = 0xffffff;
@@ -69,6 +73,30 @@ export class PlayerSystem {
         state.player.pos.x += dx * push;
         state.player.pos.y += dy * push;
         state.player.renderUpdate();
+      }
+    }
+
+    // Footstep dust particles
+    const speed = Math.hypot(state.player.vel.x, state.player.vel.y);
+    if (speed > 10) {
+      state.footstepTimer -= dt;
+      if (state.footstepTimer <= 0) {
+        state.footstepTimer = 0.09;
+        const px = state.player.pos.x + (Math.random() - 0.5) * 8;
+        const py = state.player.pos.y + (Math.random() - 0.5) * 8;
+        const dustGfx = new PIXI.Graphics();
+        dustGfx.rect(-2, -2, 4, 4).fill({ color: 0xa8a29e, alpha: 0.6 });
+        dustGfx.position.set(Math.round(px), Math.round(py));
+        state.world.addChild(dustGfx);
+        const poolEntry = { gfx: dustGfx, inUse: true };
+        state.impactParticlePool.push(poolEntry);
+        state.impactParticles.push({
+          gfx: dustGfx,
+          life: 0.35,
+          velX: (Math.random() - 0.5) * 20,
+          velY: (Math.random() - 0.5) * 20,
+          pool: poolEntry,
+        });
       }
     }
   }

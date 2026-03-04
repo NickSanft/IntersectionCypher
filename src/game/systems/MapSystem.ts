@@ -1,6 +1,7 @@
 import type { GameState, MapState } from "../types";
 import { findNearestOpen } from "../../core/world/MapUtils";
 import { SoundSystem } from "../audio/SoundSystem";
+import { writeSave } from "../SaveSystem";
 
 export class MapSystem {
   public update(state: GameState, dt: number): void {
@@ -128,6 +129,8 @@ export class MapSystem {
     for (const trigger of state.triggers) {
       trigger.view.visible = trigger.mapId === state.currentMapId && !trigger.triggered;
     }
+
+    writeSave(state);
   }
 
   private updateTransition(state: GameState, dt: number): void {

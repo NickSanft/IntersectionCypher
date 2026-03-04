@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import type { Element, GameState, ImpactParticlePoolEntry, HitMarkerPoolEntry, ImpactRingPoolEntry } from "../types";
 import { SoundSystem } from "../audio/SoundSystem";
+import { writeSave } from "../SaveSystem";
 
 const ELEMENT_COLORS: Record<Element, number> = {
   Neutral: 0xfbbf24,
@@ -143,6 +144,30 @@ export class CombatSystem {
     state.hitStopTimer = state.hitStopDuration;
   }
 
+  private spawnWallSparks(state: GameState, x: number, y: number, element: Element): void {
+    const color = ELEMENT_COLORS[element];
+    for (let i = 0; i < 4; i++) {
+      const particle = this.acquireImpactParticle(state);
+      particle.gfx.clear();
+      particle.gfx.rect(-1, -1, 2, 2).fill({ color, alpha: 0.8 });
+      particle.gfx.position.set(Math.round(x), Math.round(y));
+      particle.gfx.alpha = 1;
+      particle.gfx.visible = true;
+      if (!state.world.children.includes(particle.gfx)) {
+        state.world.addChild(particle.gfx);
+      }
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 30 + Math.random() * 50;
+      state.impactParticles.push({
+        gfx: particle.gfx,
+        life: 0.2,
+        velX: Math.cos(angle) * speed,
+        velY: Math.sin(angle) * speed,
+        pool: particle,
+      });
+    }
+  }
+
   public update(state: GameState, dt: number): void {
     if (state.levelUp.active) {
       return;
@@ -180,6 +205,10 @@ export class CombatSystem {
           enemy.entity.sprite.tint = 0xffffff;
         }
       }
+      if (enemy.respawnFadeTimer > 0 && !enemy.dead) {
+        enemy.respawnFadeTimer = Math.max(0, enemy.respawnFadeTimer - dt);
+        enemy.entity.sprite.alpha = 1 - enemy.respawnFadeTimer / 0.4;
+      }
       if (enemy.dead) {
         // Drive shrink-and-fade death animation
         if (enemy.deathTimer > 0) {
@@ -207,6 +236,10 @@ export class CombatSystem {
             enemy.shieldGfx.visible = visible;
           }
           enemy.entity.sprite.tint = 0xffffff;
+          if (visible) {
+            enemy.entity.sprite.alpha = 0;
+            enemy.respawnFadeTimer = 0.4;
+          }
           this.drawEnemyHp(enemy);
         }
       }
@@ -219,6 +252,7 @@ export class CombatSystem {
       entry.life -= dt;
       if (entry.projectile.bounced) {
         entry.bouncesRemaining -= 1;
+        this.spawnWallSparks(state, entry.projectile.entity.pos.x, entry.projectile.entity.pos.y, entry.element);
       }
 
       for (const enemy of state.enemies) {
@@ -262,8 +296,12 @@ export class CombatSystem {
             }
           }
 
-          const elementMatch = entry.element !== "Neutral" && entry.element === enemy.element;
-          const elementBonus = elementMatch ? 1.5 : 1;
+          // Weakness triangle: Heat > Wave > Neutral > Heat
+          const ELEMENT_WEAKNESS: Record<import("../types").Element, import("../types").Element> = {
+            Heat: "Wave", Wave: "Neutral", Neutral: "Heat",
+          };
+          const isWeakness = ELEMENT_WEAKNESS[entry.element] === enemy.element;
+          const elementBonus = isWeakness ? 1.5 : 1;
           const comboBonus = state.combo.multiplier;
           const finalDamage = Math.max(1, Math.round(entry.damage * elementBonus * comboBonus));
           enemy.entity.sprite.tint = 0xffc2c2;
@@ -278,6 +316,8 @@ export class CombatSystem {
             }
             enemy.respawnTimer = enemy.respawnSeconds;
             enemy.expGranted = true;
+            state.killCount += 1;
+            writeSave(state);
             SoundSystem.playEnemyDeath(state, entry.onBeat);
             // On-beat kill: bright screen flash
             if (entry.onBeat) {
@@ -287,6 +327,14 @@ export class CombatSystem {
             state.levelUpSystem.addExperience(state, 5);
             if (state.levelUp.active && !wasLevelUp) {
               SoundSystem.playLevelUp(state);
+            }
+            // Room clear check
+            const livingOnMap = state.enemies.filter(
+              e => e.mapId === state.currentMapId && !e.dead
+            ).length;
+            if (livingOnMap === 0) {
+              SoundSystem.playRoomClear(state);
+              state.rhythm.overlayAlpha = Math.max(state.rhythm.overlayAlpha, 0.45);
             }
           } else {
             SoundSystem.playHit(state, entry.onBeat, entry.isCharged);
@@ -321,17 +369,17 @@ export class CombatSystem {
           }
 
           const onBeat = entry.onBeat;
-          const impactColor = elementMatch
+          const impactColor = isWeakness
             ? ELEMENT_COLORS[entry.element]
             : onBeat ? 0xfacc15 : 0xfbbf24;
-          const markerColor = elementMatch
+          const markerColor = isWeakness
             ? ELEMENT_COLORS[entry.element]
             : onBeat ? 0xfde047 : 0xfef08a;
           this.spawnImpactFx(state, enemy.entity.pos.x, enemy.entity.pos.y, impactColor, markerColor, entry.isCharged);
 
           const damagePoolEntry = this.acquireDamageText(state);
           damagePoolEntry.text.text = `-${finalDamage}`;
-          damagePoolEntry.text.style.fill = elementMatch
+          damagePoolEntry.text.style.fill = isWeakness
             ? ELEMENT_COLORS[entry.element]
             : onBeat ? 0xfacc15 : 0xf97316;
           damagePoolEntry.text.position.set(enemy.entity.pos.x, enemy.entity.pos.y - 36);
@@ -340,13 +388,15 @@ export class CombatSystem {
           if (!state.world.children.includes(damagePoolEntry.text)) {
             state.world.addChild(damagePoolEntry.text);
           }
-          damagePoolEntry.text.scale.set(1.4);
+          const initScale = onBeat ? 2.0 : 1.4;
+          damagePoolEntry.text.scale.set(initScale);
           state.damageTexts.push({
             text: damagePoolEntry.text,
             life: 0.6,
-            velY: -20,
+            velY: onBeat ? -28 : -20,
             pool: damagePoolEntry,
-            scaleTimer: 0.12,
+            scaleTimer: onBeat ? 0.18 : 0.12,
+            onBeat,
           });
 
           entry.pool.inUse = false;
@@ -389,6 +439,22 @@ export class CombatSystem {
       const dy = state.player.pos.y - entry.projectile.entity.pos.y;
       const dist = Math.hypot(dx, dy);
       if (dist <= state.playerRadius + entry.projectile.radius) {
+        // Parry during dodge roll invincibility window
+        if (state.dodgeRoll.invincActive && !entry.reflected) {
+          entry.projectile.entity.vel.x *= -1.3;
+          entry.projectile.entity.vel.y *= -1.3;
+          entry.reflected = true;
+          entry.life = 1.5;
+          SoundSystem.playParry(state);
+          state.rhythm.overlayAlpha = Math.max(state.rhythm.overlayAlpha, 0.35);
+          state.camera.shakeTime = Math.max(state.camera.shakeTime, 0.1);
+          state.camera.shakeAmp = Math.max(state.camera.shakeAmp, 6);
+          continue;
+        }
+        if (entry.reflected) {
+          // Already reflected — ignore player collision
+          continue;
+        }
         state.player.sprite.tint = 0xfca5a5;
         state.playerHitTimer = 0.2;
         SoundSystem.playPlayerHurt(state);
@@ -423,6 +489,41 @@ export class CombatSystem {
       }
     }
 
+    // Reflected projectile hits
+    for (let i = state.enemyProjectiles.length - 1; i >= 0; i -= 1) {
+      const entry = state.enemyProjectiles[i];
+      if (!entry.reflected) continue;
+      for (const enemy of state.enemies) {
+        if (enemy.mapId !== state.currentMapId || enemy.dead) continue;
+        const rdx = entry.projectile.entity.pos.x - enemy.entity.pos.x;
+        const rdy = entry.projectile.entity.pos.y - enemy.entity.pos.y;
+        if (Math.hypot(rdx, rdy) <= enemy.radius + entry.projectile.radius) {
+          const parryDamage = Math.max(1, Math.round(entry.damage * 2));
+          enemy.hp = Math.max(0, enemy.hp - parryDamage);
+          enemy.entity.sprite.tint = 0xffc2c2;
+          enemy.hitTimer = enemy.hitFlashSeconds;
+          if (enemy.hp === 0 && !enemy.expGranted) {
+            enemy.dead = true;
+            enemy.deathTimer = 0.25;
+            enemy.respawnTimer = enemy.respawnSeconds;
+            enemy.expGranted = true;
+            state.killCount += 1;
+            SoundSystem.playEnemyDeath(state, true);
+            state.levelUpSystem.addExperience(state, 5);
+          } else {
+            SoundSystem.playHit(state, true, false);
+          }
+          this.drawEnemyHp(enemy);
+          this.spawnImpactFx(state, enemy.entity.pos.x, enemy.entity.pos.y, 0x38bdf8, 0x93c5fd, false);
+          entry.pool.inUse = false;
+          entry.projectile.entity.visible = false;
+          state.world.removeChild(entry.projectile.entity);
+          state.enemyProjectiles.splice(i, 1);
+          break;
+        }
+      }
+    }
+
     for (let i = state.damageTexts.length - 1; i >= 0; i -= 1) {
       const entry = state.damageTexts[i];
       entry.life -= dt;
@@ -430,7 +531,8 @@ export class CombatSystem {
       entry.text.position.y += entry.velY * dt;
       if (entry.scaleTimer > 0) {
         entry.scaleTimer -= dt;
-        const s = 1 + 0.4 * Math.max(0, entry.scaleTimer / 0.12);
+        const maxScale = entry.onBeat ? 2.0 : 1.4;
+        const s = 1 + (maxScale - 1) * Math.max(0, entry.scaleTimer / (entry.onBeat ? 0.18 : 0.12));
         entry.text.scale.set(s);
       } else {
         entry.text.scale.set(1);

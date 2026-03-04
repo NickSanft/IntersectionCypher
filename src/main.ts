@@ -48,6 +48,8 @@ import { addItemById } from "./game/data/InventoryUtils";
 import { itemDefs } from "./game/data/Items";
 import { ItemSystem } from "./game/systems/ItemSystem";
 import { loadSprites } from "./game/assets/SpriteLoader";
+import { loadSave } from "./game/SaveSystem";
+import { SoundSystem } from "./game/audio/SoundSystem";
 
 const buildMapState = (
   config: (typeof zoneMaps)[keyof typeof zoneMaps],
@@ -250,6 +252,26 @@ const bootstrap = async (): Promise<void> => {
       world.addChild(shieldGfx);
     }
 
+    const aggroText = new PIXI.Text({
+      text: "!",
+      style: {
+        fill: 0xfbbf24,
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: 16,
+        fontWeight: "700",
+        stroke: { color: 0x000000, width: 3 },
+      },
+    });
+    aggroText.anchor.set(0.5);
+    aggroText.zIndex = 4;
+    aggroText.visible = false;
+    world.addChild(aggroText);
+
+    const telegraphGfx = new PIXI.Graphics();
+    telegraphGfx.zIndex = 1;
+    telegraphGfx.visible = false;
+    world.addChild(telegraphGfx);
+
     return {
       entity,
       name: data.name,
@@ -294,6 +316,11 @@ const bootstrap = async (): Promise<void> => {
       homeY: spawn.y,
       hpBar,
       label,
+      aggroTimer: 0,
+      wasAggro: false,
+      aggroText,
+      telegraphGfx,
+      respawnFadeTimer: 0,
     };
   };
 
@@ -597,6 +624,17 @@ const bootstrap = async (): Promise<void> => {
   hudAccuracyText.position.set(12, 50);
   topRight.addChild(hudAccuracyText);
 
+  const hudKillText = new PIXI.Text({
+    text: "KL: 0",
+    style: {
+      fill: 0xfca5a5,
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: 16,
+    },
+  });
+  hudKillText.position.set(12, 70);
+  topRight.addChild(hudKillText);
+
   const hudExpText = new PIXI.Text({
     text: "EXP 0/10",
     style: {
@@ -859,6 +897,7 @@ const bootstrap = async (): Promise<void> => {
       duration: 0.35,
       invincStart: 0.075,
       invincEnd: 0.275,
+      invincActive: false,
       dirX: 0,
       dirY: 0,
       speed: 560,
@@ -880,6 +919,9 @@ const bootstrap = async (): Promise<void> => {
     hudLevelText,
     hudExpText,
     hudAccuracyText,
+    hudKillText,
+    footstepTimer: 0,
+    killCount: 0,
     chargeBar,
     chargeLabel,
     hudBeatRing,
@@ -939,6 +981,7 @@ const bootstrap = async (): Promise<void> => {
       tickVolume: 0.12,
       shotsOnBeat: 0,
       shotsTotal: 0,
+      bgLoopStarted: false,
     },
     camera: {
       world,
@@ -1131,12 +1174,25 @@ const bootstrap = async (): Promise<void> => {
   const mapSystem = new MapSystem();
   const minimapSystem = new MinimapSystem();
 
+  // Apply saved progress
+  const saved = loadSave();
+  if (saved) {
+    state.playerData.stats.level = saved.level;
+    state.playerData.stats.exp = saved.exp;
+    state.killCount = saved.killCount;
+  }
+
   app.ticker.add((ticker) => {
     const dt = ticker.deltaMS / 1000;
     if (state.hitStopTimer > 0) {
       state.hitStopTimer = Math.max(0, state.hitStopTimer - dt);
     }
     const simDt = state.hitStopTimer > 0 ? 0 : dt;
+
+    // Start background music once audio is unlocked
+    if (state.rhythm.audioUnlocked && !state.rhythm.bgLoopStarted) {
+      SoundSystem.startBackgroundTrack(state);
+    }
     menuToggleSystem.update(state);
     triggerSystem.update(state);
     dialogSystem.update(state, simDt);

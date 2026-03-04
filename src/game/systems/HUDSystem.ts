@@ -132,11 +132,12 @@ export class HUDSystem {
     state.hudLevelText.position.set(12, topPadding);
     state.hudExpText.position.set(12, topPadding + state.hudLevelText.height + 6);
     state.hudAccuracyText.position.set(12, state.hudExpText.position.y + state.hudExpText.height + 6);
+    state.hudKillText.position.set(12, state.hudAccuracyText.position.y + state.hudAccuracyText.height + 6);
     const topHeight =
-      state.hudAccuracyText.position.y + state.hudAccuracyText.height + topPadding;
+      state.hudKillText.position.y + state.hudKillText.height + topPadding;
     const topWidth = Math.max(
       160,
-      Math.max(state.hudLevelText.width, state.hudExpText.width, state.hudAccuracyText.width) + topPadding * 2,
+      Math.max(state.hudLevelText.width, state.hudExpText.width, state.hudAccuracyText.width, state.hudKillText.width) + topPadding * 2,
     );
     state.hudTopRight.setSize(topWidth, topHeight);
     drawSnesPanel(state.hudTopRightBg, state.hudTopRight.widthPx, state.hudTopRight.heightPx);
@@ -217,6 +218,7 @@ export class HUDSystem {
   private updateTopRight(state: GameState): void {
     state.hudLevelText.text = `LV ${state.playerData.stats.level}`;
     state.hudExpText.text = `EXP ${state.playerData.stats.exp}/${state.playerData.stats.expToNext}`;
+    state.hudKillText.text = `KL:${state.killCount}`;
 
     const total = state.rhythm.shotsTotal;
     const onBeat = state.rhythm.shotsOnBeat;
