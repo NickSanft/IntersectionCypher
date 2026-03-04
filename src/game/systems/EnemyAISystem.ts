@@ -25,6 +25,7 @@ export class EnemyAISystem {
       : [state.enemyProjectileTexture];
     const enemyProjSprite = new PIXI.AnimatedSprite(enemyProjFrames);
     enemyProjSprite.animationSpeed = 0.15;
+    enemyProjSprite.blendMode = "add";
     enemyProjSprite.play();
     const entity = new ZEntity({
       sprite: enemyProjSprite,

@@ -146,11 +146,18 @@ export const drawMapSprites = (
           frontSprite.scale.set(scale, frontFaceH / 16);
           frontSprite.position.set(wx, (y + 1) * map.tileSize);
           container.addChild(frontSprite);
+
+          // Cast shadow on floor below the front face
+          const shadowSprite = new PIXI.Sprite(tiles.shadowStrip);
+          shadowSprite.scale.set(scale, scale);
+          shadowSprite.position.set(wx, (y + 1) * map.tileSize + frontFaceH);
+          container.addChild(shadowSprite);
         }
       } else {
-        // Floor tile — checkerboard alternation
+        // Floor tile — deterministic variant by position for subtle texture variety
+        const variantIdx = (x * 3 + y * 7) % 4;
         const isAlt = (x + y) % 2 === 0;
-        const floorSprite = new PIXI.Sprite(isAlt ? tiles.floorAlt : tiles.floor);
+        const floorSprite = new PIXI.Sprite(isAlt ? tiles.floorAlt[variantIdx] : tiles.floor[variantIdx]);
         floorSprite.scale.set(scale);
         floorSprite.position.set(wx, wy);
         container.addChild(floorSprite);

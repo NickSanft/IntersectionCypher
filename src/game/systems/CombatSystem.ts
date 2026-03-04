@@ -163,6 +163,9 @@ export class CombatSystem {
       state.playerHitTimer -= dt;
       if (state.playerHitTimer <= 0) {
         state.player.sprite.tint = 0xffffff;
+      } else {
+        // Flicker between reddish and white at ~10 Hz
+        state.player.sprite.tint = Math.floor(state.playerHitTimer * 10) % 2 === 0 ? 0xff6666 : 0xffffff;
       }
     }
 
@@ -177,9 +180,22 @@ export class CombatSystem {
         }
       }
       if (enemy.dead) {
+        // Drive shrink-and-fade death animation
+        if (enemy.deathTimer > 0) {
+          enemy.deathTimer -= dt;
+          const t = 1 - enemy.deathTimer / 0.25;
+          enemy.entity.sprite.scale.set(3 * (1 - t * 0.75));
+          enemy.entity.sprite.alpha = Math.max(0, 1 - t * 1.8);
+          if (enemy.deathTimer <= 0) {
+            enemy.entity.visible = false;
+            enemy.entity.sprite.scale.set(3);
+            enemy.entity.sprite.alpha = 1;
+          }
+        }
         enemy.respawnTimer -= dt;
         if (enemy.respawnTimer <= 0) {
           enemy.dead = false;
+          enemy.deathTimer = 0;
           enemy.expGranted = false;
           enemy.hp = enemy.maxHp;
           const visible = enemy.mapId === state.currentMapId;
@@ -254,7 +270,7 @@ export class CombatSystem {
           enemy.hp = Math.max(0, enemy.hp - finalDamage);
           if (enemy.hp === 0 && !enemy.expGranted) {
             enemy.dead = true;
-            enemy.entity.visible = false;
+            enemy.deathTimer = 0.25;
             if (enemy.shieldGfx) {
               enemy.shieldGfx.clear();
               enemy.shieldGfx.visible = false;
@@ -262,6 +278,10 @@ export class CombatSystem {
             enemy.respawnTimer = enemy.respawnSeconds;
             enemy.expGranted = true;
             state.levelUpSystem.addExperience(state, 5);
+            // On-beat kill: bright screen flash
+            if (entry.onBeat) {
+              state.rhythm.overlayAlpha = Math.max(state.rhythm.overlayAlpha, 0.5);
+            }
           }
           this.drawEnemyHp(enemy);
 
@@ -270,6 +290,26 @@ export class CombatSystem {
           state.combo.resetTimer = 4;
           state.combo.multiplier = state.combo.count >= 8 ? 2 : state.combo.count >= 4 ? 1.5 : 1;
           state.combo.hudPulse = 1;
+
+          // World-space combo pop at milestone hits
+          const n = state.combo.count;
+          if (n === 3 || n === 5 || n === 8 || (n > 8 && n % 5 === 0)) {
+            const popColor = n >= 8 ? 0xfde047 : n >= 5 ? 0xf97316 : 0xfbbf24;
+            const popText = new PIXI.Text({
+              text: `x${n}`,
+              style: {
+                fill: popColor,
+                fontFamily: '"Press Start 2P", monospace',
+                fontSize: 24,
+                fontWeight: "700",
+              },
+            });
+            popText.anchor.set(0.5);
+            popText.position.set(state.player.pos.x, state.player.pos.y - 52);
+            popText.scale.set(1.4);
+            state.world.addChild(popText);
+            state.comboPops.push({ text: popText, life: 0.75, velY: -38 });
+          }
 
           const onBeat = entry.onBeat;
           const impactColor = elementMatch

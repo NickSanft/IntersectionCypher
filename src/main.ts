@@ -264,6 +264,7 @@ const bootstrap = async (): Promise<void> => {
       hp: data.maxHp,
       hitTimer: 0,
       dead: false,
+      deathTimer: 0,
       expGranted: false,
       respawnTimer: 0,
       respawnSeconds: data.respawnSeconds,
@@ -935,6 +936,7 @@ const bootstrap = async (): Promise<void> => {
     hitMarkerPool: [],
     impactRings: [],
     impactRingPool: [],
+    comboPops: [],
     playerData,
     doorMarkers: [
       { mapId: "map1", view: doorMarker1 },
@@ -954,7 +956,7 @@ const bootstrap = async (): Promise<void> => {
     transitionOverlay,
     transitionPhase: "idle",
     transitionTime: 0,
-    transitionDuration: 0.25,
+    transitionDuration: 0.4,
     transitionTargetMapId: null,
     transitionTargetSpawn: null,
     runSummary: {

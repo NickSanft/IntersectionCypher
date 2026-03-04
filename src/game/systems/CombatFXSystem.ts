@@ -60,6 +60,20 @@ export class CombatFXSystem {
       }
     }
 
+    // Combo pops — floating world-space milestone text
+    for (let i = state.comboPops.length - 1; i >= 0; i -= 1) {
+      const pop = state.comboPops[i];
+      pop.life -= dt;
+      pop.text.position.y += pop.velY * dt;
+      pop.text.alpha = Math.max(0, pop.life / 0.75);
+      pop.text.scale.set(1.4 * (0.75 + 0.25 * (pop.life / 0.75)));
+      if (pop.life <= 0) {
+        state.world.removeChild(pop.text);
+        pop.text.destroy();
+        state.comboPops.splice(i, 1);
+      }
+    }
+
     // Impact rings (pixel-art square ring)
     for (let i = state.impactRings.length - 1; i >= 0; i -= 1) {
       const ring = state.impactRings[i];

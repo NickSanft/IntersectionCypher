@@ -135,34 +135,48 @@ export class MapSystem {
     }
 
     state.doorPrompt.visible = false;
-
-    const width = state.app.renderer.width;
-    const height = state.app.renderer.height;
-    state.transitionOverlay.clear();
-    state.transitionOverlay.beginFill(0x020617, 1);
-    state.transitionOverlay.drawRect(0, 0, width, height);
-    state.transitionOverlay.endFill();
-    state.transitionOverlay.visible = true;
-
     state.transitionTime += dt;
     const t = Math.min(1, state.transitionTime / state.transitionDuration);
 
-    if (state.transitionPhase === "fadeOut") {
-      state.transitionOverlay.alpha = t;
-      if (t >= 1) {
-        const targetId = state.transitionTargetMapId;
-        const spawn = state.transitionTargetSpawn;
-        if (targetId) {
-          this.switchMap(state, targetId, spawn?.x, spawn?.y);
-        }
-        state.transitionPhase = "fadeIn";
-        state.transitionTime = 0;
+    const width = state.app.renderer.width;
+    const height = state.app.renderer.height;
+    // SNES-style horizontal scanline wipe: 12 bands staggered top-to-bottom
+    const BANDS = 12;
+    const bandH = Math.ceil(height / BANDS);
+    const staggerRange = 0.3;
+
+    state.transitionOverlay.clear();
+    state.transitionOverlay.visible = true;
+    state.transitionOverlay.alpha = 1;
+
+    for (let i = 0; i < BANDS; i += 1) {
+      const stagger = (i / BANDS) * staggerRange;
+      let progress: number;
+      if (state.transitionPhase === "fadeOut") {
+        progress = Math.min(1, Math.max(0, (t - stagger) / (1 - staggerRange)));
+      } else {
+        progress = 1 - Math.min(1, Math.max(0, (t - stagger) / (1 - staggerRange)));
       }
+      const bandW = Math.round(progress * width);
+      if (bandW > 0) {
+        state.transitionOverlay
+          .rect(0, i * bandH, bandW, bandH)
+          .fill({ color: 0x020617, alpha: 1 });
+      }
+    }
+
+    if (state.transitionPhase === "fadeOut" && t >= 1) {
+      const targetId = state.transitionTargetMapId;
+      const spawn = state.transitionTargetSpawn;
+      if (targetId) {
+        this.switchMap(state, targetId, spawn?.x, spawn?.y);
+      }
+      state.transitionPhase = "fadeIn";
+      state.transitionTime = 0;
       return;
     }
 
-    state.transitionOverlay.alpha = 1 - t;
-    if (t >= 1) {
+    if (state.transitionPhase === "fadeIn" && t >= 1) {
       state.transitionPhase = "idle";
       state.transitionTime = 0;
       state.transitionTargetMapId = null;

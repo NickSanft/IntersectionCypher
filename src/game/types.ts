@@ -97,6 +97,12 @@ export interface ImpactParticleEntry {
   pool: ImpactParticlePoolEntry;
 }
 
+export interface ComboPopEntry {
+  text: PIXI.Text;
+  life: number;
+  velY: number;
+}
+
 export interface HitMarkerPoolEntry {
   gfx: PIXI.Graphics;
   inUse: boolean;
@@ -118,6 +124,7 @@ export interface EnemyState {
   hp: number;
   hitTimer: number;
   dead: boolean;
+  deathTimer: number;
   expGranted: boolean;
   respawnTimer: number;
   respawnSeconds: number;
@@ -344,6 +351,7 @@ export interface GameState {
   hitMarkerPool: HitMarkerPoolEntry[];
   impactRings: ImpactRingEntry[];
   impactRingPool: ImpactRingPoolEntry[];
+  comboPops: ComboPopEntry[];
   doorMarkers: DoorMarker[];
   doorPrompt: UIElement;
   doorPromptBg: PIXI.Graphics;

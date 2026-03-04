@@ -69,10 +69,18 @@ export class ZEntity extends PIXI.Container {
 
     if (this.shadow) {
       const scale = Math.max(0.3, 1 - this.pos.z / 80);
+      // Directional offset: light source from top-left, shadow falls slightly SE
+      const ox = 1;
+      const oy = this.shadowOffsetY + 2;
       this.shadow.clear();
+      // Outer soft penumbra
       this.shadow
-        .ellipse(0, this.shadowOffsetY, this.shadowRadiusX * scale, this.shadowRadiusY * scale)
-        .fill({ color: 0x000000, alpha: 0.32 * scale });
+        .ellipse(ox, oy, this.shadowRadiusX * scale * 1.35, this.shadowRadiusY * scale * 1.2)
+        .fill({ color: 0x000000, alpha: 0.18 * scale });
+      // Inner core shadow
+      this.shadow
+        .ellipse(ox, oy, this.shadowRadiusX * scale, this.shadowRadiusY * scale)
+        .fill({ color: 0x000000, alpha: 0.48 * scale });
     }
   }
 }

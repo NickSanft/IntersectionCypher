@@ -114,8 +114,6 @@ export class RhythmSystem {
     overlay.clear();
     const width = state.app.renderer.width;
     const height = state.app.renderer.height;
-    overlay.beginFill(0xfbbf24, alpha);
-    overlay.drawRect(0, 0, width, height);
-    overlay.endFill();
+    overlay.rect(0, 0, width, height).fill({ color: 0xfbbf24, alpha });
   }
 }

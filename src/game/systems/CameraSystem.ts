@@ -16,7 +16,13 @@ export class CameraSystem {
       shakeY = Math.cos(t * (shakeFreq * 1.2)) * shakeAmp * fade;
     }
 
-    world.position.set(Math.round(targetX + shakeX), Math.round(targetY + shakeY));
+    // Subtle beat scale pulse centred on the player
+    const beatScale = 1 + state.rhythm.pulse * 0.004;
+    world.scale.set(beatScale);
+    world.position.set(
+      Math.round(state.app.renderer.width * 0.5 - state.player.pos.x * beatScale + shakeX),
+      Math.round(state.app.renderer.height * 0.5 - state.player.pos.y * beatScale + shakeY),
+    );
   }
 
   public shake(state: GameState, duration: number, amplitude: number): void {

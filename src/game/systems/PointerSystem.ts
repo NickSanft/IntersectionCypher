@@ -29,6 +29,7 @@ export const setupPointerSystem = (
     const frames = projectileFrames.length > 0 ? projectileFrames : [PIXI.Texture.WHITE];
     const projSprite = new PIXI.AnimatedSprite(frames);
     projSprite.animationSpeed = 0.2;
+    projSprite.blendMode = "add";
     projSprite.play();
     const entity = new ZEntity({
       sprite: projSprite,
