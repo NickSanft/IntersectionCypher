@@ -982,6 +982,8 @@ const bootstrap = async (): Promise<void> => {
       shotsOnBeat: 0,
       shotsTotal: 0,
       bgLoopStarted: false,
+      audioBeatOrigin: null,
+      bgLoopGeneration: 0,
     },
     camera: {
       world,

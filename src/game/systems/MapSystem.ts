@@ -79,6 +79,16 @@ export class MapSystem {
     state.rhythm.onBeat = false;
     state.rhythm.startTimeMs = performance.now();
 
+    // Invalidate the old background loop and schedule a restart on the new map.
+    // bgLoopGeneration being incremented causes the old setTimeout chain to
+    // self-terminate on its next callback.  bgLoopStarted = false lets the
+    // main.ts ticker call startBackgroundTrack() again on the very next frame.
+    // audioBeatOrigin is reset to the current audio time so that beat 0 of the
+    // new map aligns perfectly with startTimeMs above.
+    state.rhythm.bgLoopStarted = false;
+    state.rhythm.bgLoopGeneration += 1;
+    state.rhythm.audioBeatOrigin = state.rhythm.audioContext?.currentTime ?? null;
+
     const desiredX = spawnX ?? next.spawnX;
     const desiredY = spawnY ?? next.spawnY;
     const safe = findNearestOpen(next.map, desiredX, desiredY);

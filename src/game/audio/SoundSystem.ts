@@ -185,45 +185,78 @@ export class SoundSystem {
     osc(c, "square", 880, 880, 0.06, 0.04);
   }
 
-  /** Start a looping background beat synced to BPM */
+  /** Start a looping background beat synced to BPM.
+   *
+   * Alignment strategy
+   * ------------------
+   * Both this loop and the RhythmSystem metronome tick share the single
+   * `state.rhythm.audioBeatOrigin` anchor — the AudioContext timestamp of
+   * beat 0.  Every beat N plays at:
+   *   audioBeatOrigin + N * beatInterval  (absolute audio time)
+   *
+   * Using absolute times means setTimeout drift never accumulates: even if a
+   * callback fires 50 ms late, the *next* beat is still computed as an
+   * absolute value and lands exactly on the grid.
+   *
+   * The loop generation counter lets map-switch restarts invalidate in-flight
+   * setTimeout callbacks without needing to cancel them explicitly.
+   */
   static startBackgroundTrack(state: GameState): void {
     if (state.rhythm.bgLoopStarted) return;
     const c = getCtx(state);
     if (!c) return;
+
+    // audioBeatOrigin must be ready (set by RhythmSystem.ensureAudioUnlocked)
+    if (state.rhythm.audioBeatOrigin === null) return;
+
     state.rhythm.bgLoopStarted = true;
+    const generation = state.rhythm.bgLoopGeneration;
+    // Look-ahead: schedule this many ms before each beat fires
+    const LOOKAHEAD_MS = 120;
 
-    const scheduleBeat = (beatTime: number, beatIndex: number): void => {
+    const scheduleFrom = (beatIndex: number): void => {
+      // Stop if the loop was superseded by a map switch
+      if (state.rhythm.bgLoopGeneration !== generation) return;
       if (!state.rhythm.audioUnlocked || !state.rhythm.audioContext) return;
+
+      const origin = state.rhythm.audioBeatOrigin!;
       const interval = state.rhythm.beatInterval;
+
+      // Absolute audio time of this beat
+      const beatTime = origin + beatIndex * interval;
       const delay = beatTime - c.currentTime;
-      if (delay < 0) return;
 
-      const beat4 = beatIndex % 4;
-      if (beat4 === 0) {
-        // Kick
-        osc(c, "sine", 90, 35, 0.22, 0.28, delay);
-        noise(c, "lowpass", 180, 60, 0.10, 0.15, delay);
-      }
-      if (beat4 === 2) {
-        // Lighter kick
-        osc(c, "sine", 75, 30, 0.16, 0.22, delay);
-      }
-      if (beat4 === 1 || beat4 === 3) {
-        // Hi-hat
-        noise(c, "highpass", 5000, 8000, 0.04, 0.04, delay);
-      }
-      if (beatIndex % 8 === 0) {
-        // Bass note on every 2 bars
-        osc(c, "triangle", 110, 100, 0.08, 0.35, delay);
+      // Only schedule if the beat hasn't already passed (allow 200 ms grace)
+      if (delay > -0.2) {
+        const d = Math.max(0, delay);
+        const beat4 = beatIndex % 4;
+        if (beat4 === 0) {
+          osc(c, "sine", 90, 35, 0.22, 0.28, d);
+          noise(c, "lowpass", 180, 60, 0.10, 0.15, d);
+        }
+        if (beat4 === 2) {
+          osc(c, "sine", 75, 30, 0.16, 0.22, d);
+        }
+        if (beat4 === 1 || beat4 === 3) {
+          noise(c, "highpass", 5000, 8000, 0.04, 0.04, d);
+        }
+        if (beatIndex % 8 === 0) {
+          osc(c, "triangle", 110, 100, 0.08, 0.35, d);
+        }
       }
 
-      const nextBeat = beatTime + interval;
-      const msToNext = (nextBeat - c.currentTime) * 1000 - 50;
-      setTimeout(() => {
-        scheduleBeat(nextBeat, (beatIndex + 1) % 16);
-      }, Math.max(0, msToNext));
+      // Schedule the callback for the next beat (fire LOOKAHEAD_MS early)
+      const nextBeatTime = origin + (beatIndex + 1) * interval;
+      const msToNext = (nextBeatTime - c.currentTime) * 1000 - LOOKAHEAD_MS;
+      setTimeout(() => scheduleFrom(beatIndex + 1), Math.max(0, msToNext));
     };
 
-    scheduleBeat(c.currentTime + 0.1, 0);
+    // Start on the next bar boundary (multiple of 4 beats) so the kick
+    // always lands on beat 1 of a bar — aligned with the rhythm grid.
+    const origin = state.rhythm.audioBeatOrigin;
+    const interval = state.rhythm.beatInterval;
+    const beatsElapsed = (c.currentTime - origin) / interval;
+    const firstBeat = Math.ceil(beatsElapsed / 4) * 4; // next bar start
+    scheduleFrom(firstBeat);
   }
 }

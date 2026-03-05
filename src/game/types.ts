@@ -415,6 +415,10 @@ export interface RhythmState {
   shotsOnBeat: number;
   shotsTotal: number;
   bgLoopStarted: boolean;
+  /** AudioContext.currentTime value that corresponds to beat 0. Set once when audio starts. */
+  audioBeatOrigin: number | null;
+  /** Incremented on map switch to invalidate old background loop timeouts. */
+  bgLoopGeneration: number;
 }
 
 export interface RunSummaryState {

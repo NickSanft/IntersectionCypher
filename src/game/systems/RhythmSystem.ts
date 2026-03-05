@@ -45,7 +45,16 @@ export class RhythmSystem {
       state.rhythm.lastBeat = beatIndex;
       state.rhythm.pulse = 1;
       state.rhythm.overlayAlpha = 0.18;
-      this.playTick(state, beatIndex % 4 === 0);
+
+      // Schedule the tick at the exact audio-clock beat time so it stays
+      // in phase with the background loop (both share audioBeatOrigin).
+      let tickDelay = 0;
+      const ctx = state.rhythm.audioContext;
+      if (ctx && state.rhythm.audioBeatOrigin !== null) {
+        const beatAudioTime = state.rhythm.audioBeatOrigin + beatIndex * interval;
+        tickDelay = beatAudioTime - ctx.currentTime; // typically 0–16 ms behind
+      }
+      this.playTick(state, beatIndex % 4 === 0, tickDelay);
     }
 
     state.rhythm.onBeat = isOnBeat(state, nowMs);
@@ -73,12 +82,19 @@ export class RhythmSystem {
     if (!state.rhythm.audioContext) {
       state.rhythm.audioContext = new AudioContext();
     }
-    if (state.rhythm.audioContext.state === "suspended") {
-      void state.rhythm.audioContext.resume();
+    const ctx = state.rhythm.audioContext;
+    if (ctx.state === "suspended") {
+      void ctx.resume();
+    }
+    // Compute the shared beat-grid anchor once: the audio time that maps to beat 0
+    // (i.e. the audio time that corresponds to startTimeMs in performance time).
+    if (state.rhythm.audioBeatOrigin === null && state.rhythm.startTimeMs !== null) {
+      const perfElapsed = (performance.now() - state.rhythm.startTimeMs) / 1000;
+      state.rhythm.audioBeatOrigin = ctx.currentTime - perfElapsed;
     }
   }
 
-  private playTick(state: GameState, accent: boolean): void {
+  private playTick(state: GameState, accent: boolean, delaySeconds = 0): void {
     if (!state.rhythm.audioEnabled || !state.rhythm.audioUnlocked) {
       return;
     }
@@ -92,15 +108,15 @@ export class RhythmSystem {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     const freq = accent ? 880 : 660;
-    const now = ctx.currentTime;
-    gain.gain.value = state.rhythm.tickVolume;
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    const at = ctx.currentTime + Math.max(0, delaySeconds);
+    gain.gain.setValueAtTime(state.rhythm.tickVolume, at);
+    gain.gain.exponentialRampToValueAtTime(0.001, at + 0.06);
     osc.frequency.value = freq;
     osc.type = "square";
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.06);
+    osc.start(at);
+    osc.stop(at + 0.07);
   }
 
   private updateOverlay(state: GameState): void {
