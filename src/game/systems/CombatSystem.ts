@@ -322,6 +322,11 @@ export class CombatSystem {
             // On-beat kill: bright screen flash
             if (entry.onBeat) {
               state.rhythm.overlayAlpha = Math.max(state.rhythm.overlayAlpha, 0.5);
+              state.screenFlash.alpha = Math.max(state.screenFlash.alpha, 0.35);
+              state.screenFlash.color = 0xffffff;
+            } else {
+              state.screenFlash.alpha = Math.max(state.screenFlash.alpha, 0.18);
+              state.screenFlash.color = 0xffe0aa;
             }
             const wasLevelUp = state.levelUp.active;
             state.levelUpSystem.addExperience(state, 5);
@@ -335,6 +340,8 @@ export class CombatSystem {
             if (livingOnMap === 0) {
               SoundSystem.playRoomClear(state);
               state.rhythm.overlayAlpha = Math.max(state.rhythm.overlayAlpha, 0.45);
+              state.screenFlash.alpha = Math.max(state.screenFlash.alpha, 0.5);
+              state.screenFlash.color = 0xffffff;
             }
           } else {
             SoundSystem.playHit(state, entry.onBeat, entry.isCharged);
@@ -457,6 +464,8 @@ export class CombatSystem {
         }
         state.player.sprite.tint = 0xfca5a5;
         state.playerHitTimer = 0.2;
+        state.screenFlash.alpha = 0.45;
+        state.screenFlash.color = 0xff2222;
         SoundSystem.playPlayerHurt(state);
         const damage = Math.max(0, entry.damage * state.playerDamageMult);
         state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - damage);

@@ -387,6 +387,7 @@ export interface GameState {
   footstepTimer: number;
   killCount: number;
   hudKillText: PIXI.Text;
+  screenFlash: { gfx: PIXI.Graphics; alpha: number; color: number };
 }
 
 export interface UpgradeHistoryEntry {

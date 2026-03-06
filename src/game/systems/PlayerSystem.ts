@@ -21,9 +21,11 @@ export class PlayerSystem {
     state.dodgeRoll.invincActive = inInvincWindow;
     if (inInvincWindow) {
       state.playerHitTimer = Math.max(state.playerHitTimer, dt + 0.01);
-      // Flicker cyan to signal invincibility frames
-      state.player.sprite.tint = Math.floor(elapsed * 16) % 2 === 0 ? 0x88eeff : 0xffffff;
+      // SNES-style binary flicker during i-frames: toggle visibility every ~3 frames
+      state.player.sprite.visible = Math.floor(elapsed * 18) % 2 === 0;
+      state.player.sprite.tint = 0xffffff;
     } else {
+      state.player.sprite.visible = true;
       state.player.sprite.tint = 0xffffff;
     }
 
@@ -32,6 +34,7 @@ export class PlayerSystem {
       roll.invincActive = false;
       state.player.pos.z = 0;
       state.player.sprite.scale.y = Math.abs(state.player.sprite.scale.x);
+      state.player.sprite.visible = true;
       state.player.sprite.tint = 0xffffff;
       state.player.renderUpdate();
     }

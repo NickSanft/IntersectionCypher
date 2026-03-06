@@ -109,8 +109,13 @@ const bootstrap = async (): Promise<void> => {
 
   // ResizeObserver is more reliable than resizeTo:window for keeping the
   // renderer pixel dimensions in sync with the actual viewport size.
+  const overlayRef = { scanline: null as PIXI.TilingSprite | null };
   const resizeObserver = new ResizeObserver(() => {
     app.renderer.resize(window.innerWidth, window.innerHeight);
+    if (overlayRef.scanline) {
+      overlayRef.scanline.width = window.innerWidth;
+      overlayRef.scanline.height = window.innerHeight;
+    }
   });
   resizeObserver.observe(document.documentElement);
 
@@ -383,6 +388,9 @@ const bootstrap = async (): Promise<void> => {
     sprite: npcSprite,
     gravity: 0,
     mass: 1,
+    shadowRadiusX: 10,
+    shadowRadiusY: 5,
+    shadowOffsetY: 8,
   });
   npc.sprite.anchor.set(0.5);
   const npc1Pos = tileToWorld(map1, 12, 6);
@@ -398,6 +406,9 @@ const bootstrap = async (): Promise<void> => {
     sprite: npc2Sprite,
     gravity: 0,
     mass: 1,
+    shadowRadiusX: 10,
+    shadowRadiusY: 5,
+    shadowOffsetY: 8,
   });
   npc2.sprite.anchor.set(0.5);
   const npc2Pos = tileToWorld(map2, 6, 6);
@@ -869,6 +880,28 @@ const bootstrap = async (): Promise<void> => {
   transitionOverlay.visible = false;
   uiLayer.addChild(transitionOverlay);
 
+  // Screen flash: full-stage rect above UI, triggered by hits/deaths
+  const screenFlashGfx = new PIXI.Graphics();
+  screenFlashGfx.zIndex = 20;
+  app.stage.addChild(screenFlashGfx);
+
+  // Scanline CRT overlay: tile a 2-row texture (transparent + dark line)
+  const scanlinePatternGfx = new PIXI.Graphics();
+  scanlinePatternGfx.rect(0, 0, 4, 1).fill({ color: 0x000000, alpha: 0.001 }); // bounds setter
+  scanlinePatternGfx.rect(0, 1, 4, 1).fill({ color: 0x000000, alpha: 1 });
+  const scanlineTex = (app.renderer as PIXI.Renderer).generateTexture({
+    target: scanlinePatternGfx,
+    textureSourceOptions: { scaleMode: "nearest" },
+  });
+  overlayRef.scanline = new PIXI.TilingSprite({
+    texture: scanlineTex,
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+  overlayRef.scanline.alpha = 0.18;
+  overlayRef.scanline.zIndex = 30;
+  app.stage.addChild(overlayRef.scanline);
+
   const levelUpSystem = new LevelUpSystem();
 
   state = {
@@ -1055,6 +1088,7 @@ const bootstrap = async (): Promise<void> => {
       hudText: comboHudText,
       hudPulse: 0,
     },
+    screenFlash: { gfx: screenFlashGfx, alpha: 0, color: 0xffffff },
   };
 
   state.abilities = createAbilityStates(state);
@@ -1216,6 +1250,18 @@ const bootstrap = async (): Promise<void> => {
     uiSystem.update(state, dt);
     minimapSystem.update(state);
     hudSystem.update(state, dt);
+
+    // Screen flash decay
+    const sf = state.screenFlash;
+    if (sf.alpha > 0) {
+      sf.alpha = Math.max(0, sf.alpha - dt * 5);
+      sf.gfx.clear();
+      sf.gfx
+        .rect(0, 0, app.renderer.width, app.renderer.height)
+        .fill({ color: sf.color, alpha: sf.alpha });
+    } else if (sf.gfx.alpha !== 0) {
+      sf.gfx.clear();
+    }
   });
 };
 
