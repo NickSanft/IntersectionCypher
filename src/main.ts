@@ -242,6 +242,7 @@ const bootstrap = async (): Promise<void> => {
         fontSize: 16,
         fontWeight: "700",
         stroke: { color: 0x0b1220, width: 3 },
+        dropShadow: { alpha: 0.8, angle: Math.PI / 4, blur: 0, color: 0x000000, distance: 1 },
       },
     });
     label.anchor.set(0.5);
@@ -265,6 +266,7 @@ const bootstrap = async (): Promise<void> => {
         fontSize: 16,
         fontWeight: "700",
         stroke: { color: 0x000000, width: 3 },
+        dropShadow: { alpha: 0.8, angle: Math.PI / 4, blur: 0, color: 0x000000, distance: 1 },
       },
     });
     aggroText.anchor.set(0.5);
@@ -885,12 +887,14 @@ const bootstrap = async (): Promise<void> => {
   screenFlashGfx.zIndex = 20;
   app.stage.addChild(screenFlashGfx);
 
-  // Scanline CRT overlay: tile a 2-row texture (transparent + dark line)
+  // Scanline CRT overlay: tile a 2-row texture (transparent row + dark line row).
+  // frame is specified explicitly so generateTexture captures the full 2px height
+  // even though row 0 is empty (transparent).
   const scanlinePatternGfx = new PIXI.Graphics();
-  scanlinePatternGfx.rect(0, 0, 4, 1).fill({ color: 0x000000, alpha: 0.001 }); // bounds setter
-  scanlinePatternGfx.rect(0, 1, 4, 1).fill({ color: 0x000000, alpha: 1 });
+  scanlinePatternGfx.rect(0, 1, 2, 1).fill({ color: 0x000000, alpha: 1 });
   const scanlineTex = (app.renderer as PIXI.Renderer).generateTexture({
     target: scanlinePatternGfx,
+    frame: new PIXI.Rectangle(0, 0, 2, 2),
     textureSourceOptions: { scaleMode: "nearest" },
   });
   overlayRef.scanline = new PIXI.TilingSprite({

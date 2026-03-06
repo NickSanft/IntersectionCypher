@@ -25,6 +25,7 @@ export class CombatSystem {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: 16,
         fontWeight: "700",
+        dropShadow: { alpha: 0.9, angle: Math.PI / 4, blur: 0, color: 0x000000, distance: 1 },
       },
     });
     text.anchor.set(0.5);
@@ -366,6 +367,7 @@ export class CombatSystem {
                 fontFamily: '"Press Start 2P", monospace',
                 fontSize: 24,
                 fontWeight: "700",
+                dropShadow: { alpha: 0.9, angle: Math.PI / 4, blur: 0, color: 0x000000, distance: 1 },
               },
             });
             popText.anchor.set(0.5);
@@ -537,7 +539,7 @@ export class CombatSystem {
       const entry = state.damageTexts[i];
       entry.life -= dt;
       entry.text.alpha = Math.max(0, entry.life / 0.6);
-      entry.text.position.y += entry.velY * dt;
+      entry.text.position.y = Math.round(entry.text.position.y + entry.velY * dt);
       if (entry.scaleTimer > 0) {
         entry.scaleTimer -= dt;
         const maxScale = entry.onBeat ? 2.0 : 1.4;

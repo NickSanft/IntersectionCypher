@@ -157,10 +157,21 @@ export const drawMapSprites = (
         // Floor tile — deterministic variant by position for subtle texture variety
         const variantIdx = (x * 3 + y * 7) % 4;
         const isAlt = (x + y) % 2 === 0;
-        const floorSprite = new PIXI.Sprite(isAlt ? tiles.floorAlt[variantIdx] : tiles.floor[variantIdx]);
-        floorSprite.scale.set(scale);
-        floorSprite.position.set(wx, wy);
-        container.addChild(floorSprite);
+
+        // ~12% of floor tiles get a slow animated shimmer (AnimatedSprite, 4-frame cycle)
+        if (isAlt && variantIdx === 0) {
+          const shimmer = new PIXI.AnimatedSprite(tiles.floorShimmer[variantIdx]);
+          shimmer.animationSpeed = 0.012; // ≈ one cycle per 5 seconds at 60fps
+          shimmer.play();
+          shimmer.scale.set(scale);
+          shimmer.position.set(wx, wy);
+          container.addChild(shimmer);
+        } else {
+          const floorSprite = new PIXI.Sprite(isAlt ? tiles.floorAlt[variantIdx] : tiles.floor[variantIdx]);
+          floorSprite.scale.set(scale);
+          floorSprite.position.set(wx, wy);
+          container.addChild(floorSprite);
+        }
       }
     }
   }

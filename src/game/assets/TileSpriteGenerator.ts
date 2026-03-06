@@ -4,6 +4,7 @@ import type { ZonePalette } from "../types";
 export interface TileTextureSet {
   floor: PIXI.Texture[];
   floorAlt: PIXI.Texture[];
+  floorShimmer: PIXI.Texture[][]; // 4 variants × 4 animation frames
   wallTop: PIXI.Texture;
   wallFront: PIXI.Texture;
   shadowStrip: PIXI.Texture;
@@ -103,6 +104,24 @@ function makeWallFrontTile(renderer: PIXI.Renderer, wallFrontColor: number): PIX
 }
 
 /**
+ * Generates 4 animation frames for a shimmering floor tile.
+ * Frames cycle through subtle brightness variations (base → lighter → base → darker)
+ * to produce a slow, organic shimmer on select tiles.
+ */
+function makeFloorShimmerFrames(
+  renderer: PIXI.Renderer,
+  base: number,
+  seed = 0,
+): PIXI.Texture[] {
+  return [
+    makeFloorTile(renderer, base, false, seed),
+    makeFloorTile(renderer, lighten(base, 0.07), false, seed),
+    makeFloorTile(renderer, lighten(base, 0.13), false, seed),
+    makeFloorTile(renderer, lighten(base, 0.07), false, seed),
+  ];
+}
+
+/**
  * Generates an 16×8 shadow strip — darker at the top, fading toward the
  * bottom — cast on the floor immediately below a wall's front face.
  */
@@ -127,10 +146,11 @@ export function generateTileTextures(
   // Generate 4 floor variants per tile type for visual variety
   const VARIANTS = 4;
   return {
-    floor:     Array.from({ length: VARIANTS }, (_, i) => makeFloorTile(renderer, palette.floorFill, false, i * 17 + 3)),
-    floorAlt:  Array.from({ length: VARIANTS }, (_, i) => makeFloorTile(renderer, palette.floorFill, true,  i * 31 + 11)),
-    wallTop:   makeWallTopTile(renderer, palette.wallTop),
-    wallFront: makeWallFrontTile(renderer, palette.wallFront),
-    shadowStrip: makeShadowStripTile(renderer),
+    floor:        Array.from({ length: VARIANTS }, (_, i) => makeFloorTile(renderer, palette.floorFill, false, i * 17 + 3)),
+    floorAlt:     Array.from({ length: VARIANTS }, (_, i) => makeFloorTile(renderer, palette.floorFill, true,  i * 31 + 11)),
+    floorShimmer: Array.from({ length: VARIANTS }, (_, i) => makeFloorShimmerFrames(renderer, palette.floorFill, i * 23 + 7)),
+    wallTop:      makeWallTopTile(renderer, palette.wallTop),
+    wallFront:    makeWallFrontTile(renderer, palette.wallFront),
+    shadowStrip:  makeShadowStripTile(renderer),
   };
 }
