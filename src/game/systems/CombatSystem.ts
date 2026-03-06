@@ -345,7 +345,7 @@ export class CombatSystem {
               state.screenFlash.color = 0xffffff;
             }
           } else {
-            SoundSystem.playHit(state, entry.onBeat, entry.isCharged);
+            SoundSystem.playHit(state, entry.onBeat, entry.isCharged, entry.element);
           }
           this.drawEnemyHp(enemy);
 

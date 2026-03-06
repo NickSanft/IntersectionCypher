@@ -918,6 +918,12 @@ const bootstrap = async (): Promise<void> => {
   screenFlashGfx.zIndex = 20;
   app.stage.addChild(screenFlashGfx);
 
+  // Low-HP danger pulse: red edge vignette drawn by HUDSystem when HP < 30%
+  const lowHpPulseGfx = new PIXI.Graphics();
+  lowHpPulseGfx.zIndex = 18;
+  lowHpPulseGfx.visible = false;
+  app.stage.addChild(lowHpPulseGfx);
+
   // Scanline CRT overlay: tile a 2-row texture (transparent row + dark line row).
   // frame is specified explicitly so generateTexture captures the full 2px height
   // even though row 0 is empty (transparent).
@@ -995,7 +1001,9 @@ const bootstrap = async (): Promise<void> => {
     hudAccuracyText,
     hudKillText,
     footstepTimer: 0,
+    footstepLastBeat: -1,
     killCount: 0,
+    lowHpPulseGfx,
     chargeBar,
     chargeLabel,
     hudBeatRing,

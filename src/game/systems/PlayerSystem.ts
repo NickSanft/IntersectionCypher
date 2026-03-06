@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import { moveWithCollision } from "../../core/physics/Move";
 import type { GameState } from "../types";
+import { SoundSystem } from "../audio/SoundSystem";
 
 export class PlayerSystem {
   private updateDodgeRoll(state: GameState, dt: number): void {
@@ -112,6 +113,26 @@ export class PlayerSystem {
           velY: (Math.random() - 0.5) * 20,
           pool: poolEntry,
         });
+      }
+
+      // Beat-locked footstep sound: one thump per beat when moving
+      if (state.rhythm.lastBeat !== state.footstepLastBeat) {
+        state.footstepLastBeat = state.rhythm.lastBeat;
+        SoundSystem.playFootstep(state);
+      }
+    }
+
+    // Charge shot tint: fade from white to orange as chargeRatio builds
+    if (state.playerHitTimer <= 0 && !state.dodgeRoll.active) {
+      const cr = state.aim.chargeRatio;
+      if (cr > 0) {
+        // Lerp white → orange (0xff6600) based on charge ratio
+        const r = 0xff;
+        const g = Math.round(0xff * (1 - cr) + 0x66 * cr);
+        const b = Math.round(0xff * (1 - cr));
+        state.player.sprite.tint = (r << 16) | (g << 8) | b;
+      } else {
+        state.player.sprite.tint = 0xffffff;
       }
     }
   }

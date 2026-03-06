@@ -89,6 +89,7 @@ export class HUDSystem {
     this.updateCombo(state, dt);
     this.updateEnemyLabels(state);
     this.updateTopRight(state);
+    this.updateLowHpPulse(state, dt);
   }
 
   private layoutHud(state: GameState): void {
@@ -253,9 +254,47 @@ export class HUDSystem {
     combo.hudText.text = `${combo.count} hits${multStr}`;
     const scale = 1 + combo.hudPulse * 0.25;
     combo.hudText.scale.set(scale);
-    combo.hudText.alpha = 0.6 + combo.hudPulse * 0.4;
+
+    // Expiry warning: flash at 8 Hz when less than 1 second left on combo timer
+    const expiring = combo.resetTimer > 0 && combo.resetTimer < 1.0;
+    if (expiring) {
+      combo.hudText.alpha = Math.floor(combo.resetTimer * 8) % 2 === 0 ? 1.0 : 0.2;
+    } else {
+      combo.hudText.alpha = 0.6 + combo.hudPulse * 0.4;
+    }
+
     const tiers = combo.count >= 8 ? 0xfacc15 : combo.count >= 4 ? 0xfb923c : 0xf0f9ff;
-    combo.hudText.tint = tiers;
+    combo.hudText.tint = expiring ? 0xff4444 : tiers;
+  }
+
+  private updateLowHpPulse(state: GameState, dt: number): void {
+    void dt;
+    const hp = state.playerData.stats.hp;
+    const maxHp = state.playerData.stats.maxHp;
+    const ratio = maxHp === 0 ? 0 : hp / maxHp;
+    const pulse = state.lowHpPulseGfx;
+
+    if (ratio > 0.3 || maxHp === 0) {
+      pulse.visible = false;
+      return;
+    }
+
+    pulse.visible = true;
+    // Pulse at ~1.5 Hz, amplitude increases as HP drops
+    const danger = 1 - ratio / 0.3; // 0 at 30% HP, 1 at 0 HP
+    const pulseSin = (Math.sin(state.rhythm.totalTime * Math.PI * 3) + 1) / 2;
+    const alpha = 0.08 + pulseSin * 0.18 * danger;
+    const w = state.app.screen.width;
+    const h = state.app.screen.height;
+    const edgeW = Math.floor(w * 0.06);
+    const edgeH = Math.floor(h * 0.06);
+
+    pulse.clear();
+    // Four edge bars — red danger vignette
+    pulse.rect(0, 0, w, edgeH).fill({ color: 0xff0000, alpha });
+    pulse.rect(0, h - edgeH, w, edgeH).fill({ color: 0xff0000, alpha });
+    pulse.rect(0, edgeH, edgeW, h - edgeH * 2).fill({ color: 0xff0000, alpha });
+    pulse.rect(w - edgeW, edgeH, edgeW, h - edgeH * 2).fill({ color: 0xff0000, alpha });
   }
 
   private updateEnemyLabels(state: GameState): void {

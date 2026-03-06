@@ -1,4 +1,4 @@
-import type { GameState } from "../types";
+import type { Element, GameState } from "../types";
 
 /** Returns the AudioContext if audio is ready to use, null otherwise */
 function getCtx(state: GameState): AudioContext | null {
@@ -91,18 +91,35 @@ export class SoundSystem {
   }
 
   /** Projectile hit an enemy */
-  static playHit(state: GameState, onBeat: boolean, charged: boolean): void {
+  static playHit(state: GameState, onBeat: boolean, charged: boolean, element: Element = "Neutral"): void {
     const c = getCtx(state);
     if (!c) return;
     const base = charged ? 1.5 : 1.0;
     const beatMult = onBeat ? 1.65 : 1.0;
     const v = 0.18 * base * beatMult;
-    noise(c, "lowpass", 1500, 200, v,        0.12);
-    osc(c,   "sine",    110,   40, v * 1.1,  0.12);
-    if (onBeat) {
-      // Extra crack on the beat
-      osc(c, "square", 2000, 800, 0.10, 0.04);
+    if (element === "Heat") {
+      // Sizzle: highpass noise burst + sharp attack oscillator
+      noise(c, "highpass", 3000, 6000, v * 0.9, 0.08);
+      osc(c, "sawtooth", 800, 200, v * 0.7, 0.10);
+      if (onBeat) osc(c, "square", 2400, 900, 0.10, 0.04);
+    } else if (element === "Wave") {
+      // Whoosh: bandpass sweep + low sine
+      noise(c, "bandpass", 600, 1800, v * 0.85, 0.14);
+      osc(c, "sine", 220, 80, v * 0.9, 0.14);
+      if (onBeat) osc(c, "triangle", 1800, 600, 0.08, 0.06);
+    } else {
+      // Neutral: original behavior
+      noise(c, "lowpass", 1500, 200, v,       0.12);
+      osc(c,   "sine",    110,   40, v * 1.1, 0.12);
+      if (onBeat) osc(c, "square", 2000, 800, 0.10, 0.04);
     }
+  }
+
+  /** Player footstep (one per beat when moving) */
+  static playFootstep(state: GameState): void {
+    const c = getCtx(state);
+    if (!c) return;
+    noise(c, "lowpass", 120, 60, 0.025, 0.05);
   }
 
   /** Enemy killed */

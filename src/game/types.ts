@@ -388,8 +388,10 @@ export interface GameState {
   element: ElementState;
   combo: ComboState;
   footstepTimer: number;
+  footstepLastBeat: number;
   killCount: number;
   hudKillText: PIXI.Text;
+  lowHpPulseGfx: PIXI.Graphics;
   screenFlash: { gfx: PIXI.Graphics; alpha: number; color: number };
 }
 
