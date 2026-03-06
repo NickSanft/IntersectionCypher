@@ -166,6 +166,9 @@ export interface EnemyState {
   aggroText: PIXI.Text;
   telegraphGfx: PIXI.Graphics;
   respawnFadeTimer: number;
+  burnTimer: number;
+  burnTickTimer: number;
+  slowTimer: number;
 }
 
 export interface DialogState {

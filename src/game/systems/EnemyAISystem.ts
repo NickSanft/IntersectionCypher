@@ -99,6 +99,32 @@ export class EnemyAISystem {
         continue;
       }
 
+      // Burn DOT: 2 damage every 0.5 s for 1.5 s
+      if (enemy.burnTimer > 0) {
+        enemy.burnTimer = Math.max(0, enemy.burnTimer - dt);
+        enemy.burnTickTimer -= dt;
+        if (enemy.burnTickTimer <= 0) {
+          enemy.burnTickTimer = 0.5;
+          enemy.hp = Math.max(0, enemy.hp - 2);
+          enemy.entity.sprite.tint = 0xff6600;
+          enemy.hitTimer = Math.max(enemy.hitTimer, 0.12);
+          if (enemy.hp === 0 && !enemy.expGranted) {
+            enemy.dead = true;
+            enemy.deathTimer = 0.25;
+            enemy.respawnTimer = enemy.respawnSeconds;
+            enemy.expGranted = true;
+            state.killCount += 1;
+            SoundSystem.playEnemyDeath(state, false);
+            state.levelUpSystem.addExperience(state, 5);
+            continue;
+          }
+        }
+      }
+      if (enemy.slowTimer > 0) {
+        enemy.slowTimer = Math.max(0, enemy.slowTimer - dt);
+      }
+      const effectiveSpeed = enemy.slowTimer > 0 ? enemy.speed * 0.6 : enemy.speed;
+
       if (enemy.attackCooldown > 0) {
         enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
       }
@@ -115,6 +141,18 @@ export class EnemyAISystem {
       if (enemy.attackFlashTimer > 0) {
         enemy.attackFlashTimer = Math.max(0, enemy.attackFlashTimer - dt);
         if (enemy.attackFlashTimer === 0 && enemy.hitTimer <= 0) {
+          enemy.entity.sprite.tint = 0xffffff;
+        }
+      }
+
+      // Status effect tints — only applied when no hit/attack flash is overriding
+      if (enemy.hitTimer <= 0 && enemy.attackFlashTimer <= 0) {
+        if (enemy.slowTimer > 0) {
+          enemy.entity.sprite.tint = 0x8899ff;
+        } else if (enemy.burnTimer > 0) {
+          // Flicker orange to indicate active burn
+          enemy.entity.sprite.tint = Math.floor(enemy.burnTimer * 6) % 2 === 0 ? 0xff8844 : 0xffffff;
+        } else {
           enemy.entity.sprite.tint = 0xffffff;
         }
       }
@@ -176,10 +214,11 @@ export class EnemyAISystem {
         enemy.entity.vel.x = 0;
         enemy.entity.vel.y = 0;
         if (dist <= enemy.aggroRange && dist > enemy.stopRange && dist > 0) {
-          enemy.entity.vel.x = (dx / dist) * enemy.speed;
-          enemy.entity.vel.y = (dy / dist) * enemy.speed;
+          enemy.entity.vel.x = (dx / dist) * effectiveSpeed;
+          enemy.entity.vel.y = (dy / dist) * effectiveSpeed;
         }
         moveWithCollision(enemy.entity.pos, enemy.entity.vel, dt, enemy.radius, state.map);
+        { const eBase = Math.abs(enemy.entity.sprite.scale.x); enemy.entity.sprite.scale.x = dx < 0 ? -eBase : eBase; }
         enemy.entity.renderUpdate();
         enemy.telegraphGfx.clear();
         enemy.telegraphGfx.visible = false;
@@ -228,6 +267,7 @@ export class EnemyAISystem {
           enemy.telegraphGfx.clear();
           enemy.telegraphGfx.visible = false;
         }
+        { const eBase = Math.abs(enemy.entity.sprite.scale.x); enemy.entity.sprite.scale.x = dx < 0 ? -eBase : eBase; }
         enemy.entity.renderUpdate();
         continue;
       }
@@ -280,16 +320,16 @@ export class EnemyAISystem {
           const py = nx * enemy.strafeDir;
           const desired = enemy.attackRange * 0.75;
           const radial = (dist - desired) / desired;
-          enemy.entity.vel.x = px * enemy.strafeSpeed - nx * radial * enemy.speed * 0.5;
-          enemy.entity.vel.y = py * enemy.strafeSpeed - ny * radial * enemy.speed * 0.5;
+          enemy.entity.vel.x = px * enemy.strafeSpeed - nx * radial * effectiveSpeed * 0.5;
+          enemy.entity.vel.y = py * enemy.strafeSpeed - ny * radial * effectiveSpeed * 0.5;
 
           if (enemy.attackCooldown <= 0) {
             enemy.attackTimer = enemy.attackWindupSeconds;
             enemy.attackCooldown = enemy.attackCooldownSeconds;
           }
         } else if (dist > enemy.stopRange) {
-          enemy.entity.vel.x = nx * enemy.speed;
-          enemy.entity.vel.y = ny * enemy.speed;
+          enemy.entity.vel.x = nx * effectiveSpeed;
+          enemy.entity.vel.y = ny * effectiveSpeed;
         } else {
           enemy.entity.vel.x = 0;
           enemy.entity.vel.y = 0;
@@ -302,8 +342,8 @@ export class EnemyAISystem {
         const pdy = targetY - enemy.entity.pos.y;
         const pDist = Math.hypot(pdx, pdy);
         if (pDist > 2) {
-          enemy.entity.vel.x = (pdx / pDist) * enemy.speed * 0.5;
-          enemy.entity.vel.y = (pdy / pDist) * enemy.speed * 0.5;
+          enemy.entity.vel.x = (pdx / pDist) * effectiveSpeed * 0.5;
+          enemy.entity.vel.y = (pdy / pDist) * effectiveSpeed * 0.5;
         } else {
           enemy.entity.vel.x = 0;
           enemy.entity.vel.y = 0;
@@ -315,6 +355,10 @@ export class EnemyAISystem {
         enemy.telegraphGfx.visible = false;
       }
       moveWithCollision(enemy.entity.pos, enemy.entity.vel, dt, enemy.radius, state.map);
+      if (Math.abs(enemy.entity.vel.x) > 2) {
+        const eBase = Math.abs(enemy.entity.sprite.scale.x);
+        enemy.entity.sprite.scale.x = enemy.entity.vel.x < 0 ? -eBase : eBase;
+      }
       enemy.entity.renderUpdate();
     }
   }

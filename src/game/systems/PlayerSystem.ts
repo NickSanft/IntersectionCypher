@@ -9,6 +9,12 @@ export class PlayerSystem {
     const elapsed = roll.duration - roll.timer;
     const t = Math.max(0, Math.min(1, elapsed / roll.duration));
 
+    // Face roll direction
+    if (Math.abs(roll.dirX) > 0.01) {
+      const base = Math.abs(state.player.sprite.scale.x);
+      state.player.sprite.scale.x = roll.dirX < 0 ? -base : base;
+    }
+
     state.player.pos.z = Math.sin(t * Math.PI) * 18;
     const baseScaleY = Math.abs(state.player.sprite.scale.x);
     state.player.sprite.scale.y = baseScaleY * (1 - 0.25 * Math.sin(t * Math.PI));
@@ -62,6 +68,12 @@ export class PlayerSystem {
     }
 
     state.playerController.update(dt, state.map);
+
+    // Flip sprite to face horizontal movement direction
+    if (Math.abs(state.player.vel.x) > 5) {
+      const base = Math.abs(state.player.sprite.scale.x);
+      state.player.sprite.scale.x = state.player.vel.x < 0 ? -base : base;
+    }
 
     for (const npc of state.npcs) {
       if (npc.mapId !== state.currentMapId) {

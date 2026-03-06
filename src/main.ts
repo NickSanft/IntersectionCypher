@@ -51,6 +51,26 @@ import { loadSprites } from "./game/assets/SpriteLoader";
 import { loadSave } from "./game/SaveSystem";
 import { SoundSystem } from "./game/audio/SoundSystem";
 
+function drawVignetteOverlay(gfx: PIXI.Graphics, w: number, h: number): void {
+  gfx.clear();
+  // Layer overlapping bands from each edge inward. Outer pixels receive more
+  // overlapping bands and accumulate greater alpha (source-over blending).
+  const BANDS = 6;
+  const vigH = Math.floor(h * 0.20);
+  const vigW = Math.floor(w * 0.15);
+  const bandH = Math.max(1, Math.floor(vigH / BANDS));
+  const bandW = Math.max(1, Math.floor(vigW / BANDS));
+  const alpha = 0.055;
+  for (let i = 0; i < BANDS; i += 1) {
+    const bH = (BANDS - i) * bandH;
+    const bW = (BANDS - i) * bandW;
+    gfx.rect(0, 0, w, bH).fill({ color: 0x000000, alpha });
+    gfx.rect(0, h - bH, w, bH).fill({ color: 0x000000, alpha });
+    gfx.rect(0, 0, bW, h).fill({ color: 0x000000, alpha });
+    gfx.rect(w - bW, 0, bW, h).fill({ color: 0x000000, alpha });
+  }
+}
+
 const buildMapState = (
   config: (typeof zoneMaps)[keyof typeof zoneMaps],
   map: TileMap,
@@ -109,12 +129,20 @@ const bootstrap = async (): Promise<void> => {
 
   // ResizeObserver is more reliable than resizeTo:window for keeping the
   // renderer pixel dimensions in sync with the actual viewport size.
-  const overlayRef = { scanline: null as PIXI.TilingSprite | null };
+  const overlayRef = {
+    scanline: null as PIXI.TilingSprite | null,
+    vignette: null as PIXI.Graphics | null,
+  };
   const resizeObserver = new ResizeObserver(() => {
-    app.renderer.resize(window.innerWidth, window.innerHeight);
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    app.renderer.resize(W, H);
     if (overlayRef.scanline) {
-      overlayRef.scanline.width = window.innerWidth;
-      overlayRef.scanline.height = window.innerHeight;
+      overlayRef.scanline.width = W;
+      overlayRef.scanline.height = H;
+    }
+    if (overlayRef.vignette) {
+      drawVignetteOverlay(overlayRef.vignette, W, H);
     }
   });
   resizeObserver.observe(document.documentElement);
@@ -328,6 +356,9 @@ const bootstrap = async (): Promise<void> => {
       aggroText,
       telegraphGfx,
       respawnFadeTimer: 0,
+      burnTimer: 0,
+      burnTickTimer: 0,
+      slowTimer: 0,
     };
   };
 
@@ -905,6 +936,12 @@ const bootstrap = async (): Promise<void> => {
   overlayRef.scanline.alpha = 0.18;
   overlayRef.scanline.zIndex = 30;
   app.stage.addChild(overlayRef.scanline);
+
+  const vignetteGfx = new PIXI.Graphics();
+  drawVignetteOverlay(vignetteGfx, window.innerWidth, window.innerHeight);
+  vignetteGfx.zIndex = 5;
+  app.stage.addChild(vignetteGfx);
+  overlayRef.vignette = vignetteGfx;
 
   const levelUpSystem = new LevelUpSystem();
 

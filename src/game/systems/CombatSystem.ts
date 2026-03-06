@@ -349,6 +349,16 @@ export class CombatSystem {
           }
           this.drawEnemyHp(enemy);
 
+          // Apply element status effects to surviving enemies
+          if (!enemy.dead) {
+            if (entry.element === "Heat") {
+              enemy.burnTimer = 1.5;
+              enemy.burnTickTimer = 0.5;
+            } else if (entry.element === "Wave") {
+              enemy.slowTimer = 1.5;
+            }
+          }
+
           // Combo
           state.combo.count += 1;
           state.combo.resetTimer = 4;
