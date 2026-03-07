@@ -81,4 +81,49 @@ export const zoneConfigs: Record<string, ZoneConfig> = {
       },
     },
   },
+  map2b: {
+    id: "map2b",
+    rhythm: {
+      bpm: 104,
+      windowSeconds: 0.12,
+      onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x1a0c05,
+        floorGrid: 0x251007,
+        wallTop: 0x4a1e0e,
+        wallFront: 0x0f0703,
+        ambientTint: 0xffd8b0,
+      },
+    },
+  },
+  map2c: {
+    id: "map2c",
+    rhythm: {
+      bpm: 112,
+      windowSeconds: 0.12,
+      onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x1e0806,
+        floorGrid: 0x280b07,
+        wallTop: 0x521808,
+        wallFront: 0x120403,
+        ambientTint: 0xffc090,
+      },
+    },
+  },
+  map2_boss: {
+    id: "map2_boss",
+    rhythm: {
+      bpm: 116,
+      windowSeconds: 0.11,
+      onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x1a0408,
+        floorGrid: 0x22050a,
+        wallTop: 0x4a0a14,
+        wallFront: 0x0f0204,
+        ambientTint: 0xffb0b0,
+      },
+    },
+  },
 };

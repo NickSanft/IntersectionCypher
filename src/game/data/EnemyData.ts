@@ -69,6 +69,52 @@ export const turretEnemyData: EnemyData = {
   element: "Wave",
 };
 
+export const heatTurretEnemyData: EnemyData = {
+  name: "Forge Turret",
+  maxHp: 8,
+  radius: 12,
+  respawnSeconds: 999,
+  hitFlashSeconds: 0.15,
+  labelOffsetY: 44,
+  speed: 0,
+  aggroRange: 280,
+  stopRange: 0,
+  patrolRadius: 0,
+  attackRange: 240,
+  attackWindupSeconds: 0.4,
+  attackCooldownSeconds: 1.2,
+  strafeSpeed: 0,
+  strafeSwitchSeconds: 1,
+  projectileSpeed: 340,
+  projectileDamage: 1,
+  projectileRadius: 5,
+  projectileLifetime: 1.4,
+  element: "Heat",
+};
+
+export const heatBossData: EnemyData = {
+  name: "Reactor Core",
+  maxHp: 40,
+  radius: 18,
+  respawnSeconds: 999,
+  hitFlashSeconds: 0.15,
+  labelOffsetY: 62,
+  speed: 0,
+  aggroRange: 700,
+  stopRange: 0,
+  patrolRadius: 0,
+  attackRange: 650,
+  attackWindupSeconds: 0.55,
+  attackCooldownSeconds: 0.65,
+  strafeSpeed: 0,
+  strafeSwitchSeconds: 1,
+  projectileSpeed: 390,
+  projectileDamage: 2,
+  projectileRadius: 8,
+  projectileLifetime: 2.2,
+  element: "Heat",
+};
+
 export const heavyTurretEnemyData: EnemyData = {
   name: "Core Node",
   maxHp: 30,

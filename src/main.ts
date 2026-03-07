@@ -27,7 +27,7 @@ import { SettingsSystem } from "./game/systems/SettingsSystem";
 import { AnimationSystem } from "./game/systems/AnimationSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
-import { defaultEnemyData, turretEnemyData, shieldEnemyData, heavyTurretEnemyData, type EnemyData } from "./game/data/EnemyData";
+import { defaultEnemyData, turretEnemyData, shieldEnemyData, heavyTurretEnemyData, heatTurretEnemyData, heatBossData, type EnemyData } from "./game/data/EnemyData";
 import { createAbilityStates } from "./game/abilities/AbilityFactory";
 import { findNearestOpen } from "./core/world/MapUtils";
 import npcDialog from "./game/dialogs/npc.json";
@@ -171,6 +171,9 @@ const bootstrap = async (): Promise<void> => {
   const map1c = buildTileMap(zoneMaps.map1c.layout);
   const map1boss = buildTileMap(zoneMaps.map1_boss.layout);
   const map2 = buildTileMap(zoneMaps.map2.layout);
+  const map2b = buildTileMap(zoneMaps.map2b.layout);
+  const map2c = buildTileMap(zoneMaps.map2c.layout);
+  const map2boss = buildTileMap(zoneMaps.map2_boss.layout);
 
   // Load sprite atlas (falls back to placeholders if real assets are absent)
   const spriteAtlas = await loadSprites(app.renderer as PIXI.Renderer);
@@ -181,24 +184,36 @@ const bootstrap = async (): Promise<void> => {
   const map1cTiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map1c.rhythm.palette);
   const map1bossTiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map1_boss.rhythm.palette);
   const map2Tiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map2.rhythm.palette);
+  const map2bTiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map2b.rhythm.palette);
+  const map2cTiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map2c.rhythm.palette);
+  const map2bossTiles = generateTileTextures(app.renderer as PIXI.Renderer, zoneConfigs.map2_boss.rhythm.palette);
   const mapView1 = drawMapSprites(map1, map1Tiles);
   const mapView1b = drawMapSprites(map1b, map1bTiles);
   const mapView1c = drawMapSprites(map1c, map1cTiles);
   const mapView1boss = drawMapSprites(map1boss, map1bossTiles);
   const mapView2 = drawMapSprites(map2, map2Tiles);
+  const mapView2b = drawMapSprites(map2b, map2bTiles);
+  const mapView2c = drawMapSprites(map2c, map2cTiles);
+  const mapView2boss = drawMapSprites(map2boss, map2bossTiles);
   mapView1.zIndex = 0;
   mapView1b.zIndex = 0;
   mapView1c.zIndex = 0;
   mapView1boss.zIndex = 0;
   mapView2.zIndex = 0;
+  mapView2b.zIndex = 0;
+  mapView2c.zIndex = 0;
+  mapView2boss.zIndex = 0;
   world.addChild(mapView1);
-  const mapCatalog = { map1, map1b, map1c, map1_boss: map1boss, map2 };
+  const mapCatalog = { map1, map1b, map1c, map1_boss: map1boss, map2, map2b, map2c, map2_boss: map2boss };
   const mapStates = {
     map1: buildMapState(zoneMaps.map1, map1, mapView1, mapCatalog),
     map1b: buildMapState(zoneMaps.map1b, map1b, mapView1b, mapCatalog),
     map1c: buildMapState(zoneMaps.map1c, map1c, mapView1c, mapCatalog),
     map1_boss: buildMapState(zoneMaps.map1_boss, map1boss, mapView1boss, mapCatalog),
     map2: buildMapState(zoneMaps.map2, map2, mapView2, mapCatalog),
+    map2b: buildMapState(zoneMaps.map2b, map2b, mapView2b, mapCatalog),
+    map2c: buildMapState(zoneMaps.map2c, map2c, mapView2c, mapCatalog),
+    map2_boss: buildMapState(zoneMaps.map2_boss, map2boss, mapView2boss, mapCatalog),
   };
 
   function makeAnim(frames: PIXI.Texture[], speed = 0.1, autoPlay = true): PIXI.AnimatedSprite {
@@ -391,10 +406,17 @@ const bootstrap = async (): Promise<void> => {
   const map1cTurret2Spawn = tileToWorld(map1c, 20, 3);
   // map1_boss — single heavy turret boss in center
   const map1BossSpawn = tileToWorld(map1boss, 11, 7);
-  // map2 enemies
-  const chaserSpawn = tileToWorld(map2, 12, 5);
-  const turretSpawn = tileToWorld(map2, 5, 7);
-  const shieldSpawn = tileToWorld(map2, 14, 7);
+  // map2b enemies — three Heat Chasers in staggered cover positions
+  const map2bChaser1Spawn = tileToWorld(map2b, 14, 2);
+  const map2bChaser2Spawn = tileToWorld(map2b, 4, 7);
+  const map2bChaser3Spawn = tileToWorld(map2b, 12, 9);
+  // map2c enemies — two Heat Turrets (corners) + two Shield Guards (corners)
+  const map2cTurret1Spawn = tileToWorld(map2c, 4, 2);
+  const map2cTurret2Spawn = tileToWorld(map2c, 17, 2);
+  const map2cShield1Spawn = tileToWorld(map2c, 4, 9);
+  const map2cShield2Spawn = tileToWorld(map2c, 17, 9);
+  // map2_boss — single Reactor Core boss
+  const map2BossSpawn = tileToWorld(map2boss, 11, 6);
   const enemies = [
     // map1
     createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map1, "map1", "chaser", map1Chaser1Spawn.x, map1Chaser1Spawn.y),
@@ -410,10 +432,17 @@ const bootstrap = async (): Promise<void> => {
     createEnemyState(turretEnemyData, spriteAtlas.entities.turret.idle, map1c, "map1c", "turret", map1cTurret2Spawn.x, map1cTurret2Spawn.y),
     // map1_boss
     createEnemyState(heavyTurretEnemyData, spriteAtlas.entities.turret.idle, map1boss, "map1_boss", "turret", map1BossSpawn.x, map1BossSpawn.y),
-    // map2
-    createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map2, "map2", "chaser", chaserSpawn.x, chaserSpawn.y),
-    createEnemyState(turretEnemyData, spriteAtlas.entities.turret.idle, map2, "map2", "turret", turretSpawn.x, turretSpawn.y),
-    createEnemyState(shieldEnemyData, spriteAtlas.entities.shield.idle, map2, "map2", "shield", shieldSpawn.x, shieldSpawn.y),
+    // map2b — three Heat Chasers
+    createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map2b, "map2b", "chaser", map2bChaser1Spawn.x, map2bChaser1Spawn.y),
+    createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map2b, "map2b", "chaser", map2bChaser2Spawn.x, map2bChaser2Spawn.y),
+    createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map2b, "map2b", "chaser", map2bChaser3Spawn.x, map2bChaser3Spawn.y),
+    // map2c — two Heat Turrets + two Shield Guards
+    createEnemyState(heatTurretEnemyData, spriteAtlas.entities.turret.idle, map2c, "map2c", "turret", map2cTurret1Spawn.x, map2cTurret1Spawn.y),
+    createEnemyState(heatTurretEnemyData, spriteAtlas.entities.turret.idle, map2c, "map2c", "turret", map2cTurret2Spawn.x, map2cTurret2Spawn.y),
+    createEnemyState(shieldEnemyData, spriteAtlas.entities.shield.idle, map2c, "map2c", "shield", map2cShield1Spawn.x, map2cShield1Spawn.y),
+    createEnemyState(shieldEnemyData, spriteAtlas.entities.shield.idle, map2c, "map2c", "shield", map2cShield2Spawn.x, map2cShield2Spawn.y),
+    // map2_boss — Reactor Core
+    createEnemyState(heatBossData, spriteAtlas.entities.turret.idle, map2boss, "map2_boss", "turret", map2BossSpawn.x, map2BossSpawn.y),
   ];
 
   const npcSprite = makeAnim(spriteAtlas.entities.npc.idle, 0.07);
@@ -458,6 +487,8 @@ const bootstrap = async (): Promise<void> => {
   const map1cDoorRect = zoneMaps.map1c.door ? rectToWorld(map1c, zoneMaps.map1c.door.rect) : null;
   const map1bossDoorRect = zoneMaps.map1_boss.door ? rectToWorld(map1boss, zoneMaps.map1_boss.door.rect) : null;
   const map2DoorRect = zoneMaps.map2.door ? rectToWorld(map2, zoneMaps.map2.door.rect) : null;
+  const map2bDoorRect = zoneMaps.map2b.door ? rectToWorld(map2b, zoneMaps.map2b.door.rect) : null;
+  const map2cDoorRect = zoneMaps.map2c.door ? rectToWorld(map2c, zoneMaps.map2c.door.rect) : null;
 
   const doorMarker1 = new PIXI.Container();
   const doorFrame1 = new PIXI.Graphics();
@@ -530,6 +561,8 @@ const bootstrap = async (): Promise<void> => {
   const doorMarker1b = makeDoorMarker(map1bDoorRect, map1b.tileSize, false);
   const doorMarker1c = makeDoorMarker(map1cDoorRect, map1c.tileSize, false);
   const doorMarker1boss = makeDoorMarker(map1bossDoorRect, map1boss.tileSize, false);
+  const doorMarker2b = makeDoorMarker(map2bDoorRect, map2b.tileSize, false);
+  const doorMarker2c = makeDoorMarker(map2cDoorRect, map2c.tileSize, false);
 
   const chestMarker = new PIXI.Container();
   const chestBox = new PIXI.Graphics();
@@ -572,6 +605,16 @@ const bootstrap = async (): Promise<void> => {
   finishMarker.position.set(finishPos.x, finishPos.y);
   finishMarker.visible = false;
   world.addChild(finishMarker);
+
+  // Act 2 finish marker — star at right side of boss room after clearing it
+  const finishMarker2boss = new PIXI.Container();
+  const finishStar2boss = new PIXI.Graphics();
+  finishStar2boss.poly([0, -10, 6, 0, 0, 10, -6, 0]).fill({ color: 0xfa7c15, alpha: 0.9 });
+  finishMarker2boss.addChild(finishStar2boss);
+  const finish2bossPos = tileToWorld(map2boss, 19, 6);
+  finishMarker2boss.position.set(finish2bossPos.x, finish2bossPos.y);
+  finishMarker2boss.visible = false;
+  world.addChild(finishMarker2boss);
 
   const uiLayer = new PIXI.Container();
   uiLayer.sortableChildren = true;
@@ -1130,6 +1173,8 @@ const bootstrap = async (): Promise<void> => {
       { mapId: "map1c", view: doorMarker1c },
       { mapId: "map1_boss", view: doorMarker1boss },
       { mapId: "map2", view: doorMarker2 },
+      { mapId: "map2b", view: doorMarker2b },
+      { mapId: "map2c", view: doorMarker2c },
     ],
     doorPrompt,
     doorPromptBg,
@@ -1263,6 +1308,22 @@ const bootstrap = async (): Promise<void> => {
       view: finishMarker,
       onTrigger: () => {
         finishStar.tint = 0xfde047;
+      },
+    },
+    {
+      id: "run-end-act2",
+      mapId: "map2_boss",
+      type: "runEnd",
+      xMin: finishMarker2boss.position.x - 16,
+      xMax: finishMarker2boss.position.x + 16,
+      yMin: finishMarker2boss.position.y - 16,
+      yMax: finishMarker2boss.position.y + 16,
+      prompt: "Space: Finish Run",
+      once: true,
+      triggered: false,
+      view: finishMarker2boss,
+      onTrigger: () => {
+        finishStar2boss.tint = 0xfde047;
       },
     },
   ];
