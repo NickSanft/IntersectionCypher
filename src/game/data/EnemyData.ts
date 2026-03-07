@@ -69,6 +69,29 @@ export const turretEnemyData: EnemyData = {
   element: "Wave",
 };
 
+export const heavyTurretEnemyData: EnemyData = {
+  name: "Core Node",
+  maxHp: 30,
+  radius: 16,
+  respawnSeconds: 999,
+  hitFlashSeconds: 0.15,
+  labelOffsetY: 58,
+  speed: 0,
+  aggroRange: 600,
+  stopRange: 0,
+  patrolRadius: 0,
+  attackRange: 550,
+  attackWindupSeconds: 0.5,
+  attackCooldownSeconds: 0.7,
+  strafeSpeed: 0,
+  strafeSwitchSeconds: 1,
+  projectileSpeed: 420,
+  projectileDamage: 2,
+  projectileRadius: 7,
+  projectileLifetime: 2.0,
+  element: "Neutral",
+};
+
 export const shieldEnemyData: EnemyData = {
   name: "Shield Guard",
   maxHp: 12,

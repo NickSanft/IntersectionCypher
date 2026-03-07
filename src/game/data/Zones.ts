@@ -21,6 +21,51 @@ export const zoneConfigs: Record<string, ZoneConfig> = {
       },
     },
   },
+  map1b: {
+    id: "map1b",
+    rhythm: {
+      bpm: 120,
+      windowSeconds: 0.12,
+      onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x0d1f2d,
+        floorGrid: 0x0f2336,
+        wallTop: 0x1e3d52,
+        wallFront: 0x08121a,
+        ambientTint: 0xffffff,
+      },
+    },
+  },
+  map1c: {
+    id: "map1c",
+    rhythm: {
+      bpm: 128,
+      windowSeconds: 0.12,
+      onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x0e1e30,
+        floorGrid: 0x122540,
+        wallTop: 0x234862,
+        wallFront: 0x090e18,
+        ambientTint: 0xeef4ff,
+      },
+    },
+  },
+  map1_boss: {
+    id: "map1_boss",
+    rhythm: {
+      bpm: 132,
+      windowSeconds: 0.11,
+      onBeatDamageMult: 2,
+      palette: {
+        floorFill: 0x0a0f18,
+        floorGrid: 0x0d1525,
+        wallTop: 0x1a2a40,
+        wallFront: 0x060a0f,
+        ambientTint: 0xfff0e0,
+      },
+    },
+  },
   map2: {
     id: "map2",
     rhythm: {
