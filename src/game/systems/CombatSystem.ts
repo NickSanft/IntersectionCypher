@@ -223,26 +223,6 @@ export class CombatSystem {
             enemy.entity.sprite.alpha = 1;
           }
         }
-        enemy.respawnTimer -= dt;
-        if (enemy.respawnTimer <= 0) {
-          enemy.dead = false;
-          enemy.deathTimer = 0;
-          enemy.expGranted = false;
-          enemy.hp = enemy.maxHp;
-          const visible = enemy.mapId === state.currentMapId;
-          enemy.entity.visible = visible;
-          enemy.hpBar.visible = visible;
-          enemy.label.visible = visible;
-          if (enemy.shieldGfx) {
-            enemy.shieldGfx.visible = visible;
-          }
-          enemy.entity.sprite.tint = 0xffffff;
-          if (visible) {
-            enemy.entity.sprite.alpha = 0;
-            enemy.respawnFadeTimer = 0.4;
-          }
-          this.drawEnemyHp(enemy);
-        }
       }
     }
 

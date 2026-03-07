@@ -21,9 +21,14 @@ export class TriggerSystem {
       return;
     }
 
-    this.updatePrompt(state, active);
+    const enemiesRemaining = state.enemies.filter(
+      e => e.mapId === state.currentMapId && !e.dead
+    ).length;
+    const blocked = active.type === "runEnd" && enemiesRemaining > 0;
 
-    if (actionJustPressed) {
+    this.updatePrompt(state, active, blocked ? enemiesRemaining : 0);
+
+    if (actionJustPressed && !blocked) {
       this.activateTrigger(state, active);
     }
   }
@@ -45,16 +50,20 @@ export class TriggerSystem {
     return null;
   }
 
-  private updatePrompt(state: GameState, trigger: TriggerState): void {
+  private updatePrompt(state: GameState, trigger: TriggerState, enemiesRemaining = 0): void {
     state.triggerPrompt.visible = true;
-    state.triggerPromptText.text = trigger.prompt;
+    const blocked = enemiesRemaining > 0;
+    state.triggerPromptText.text = blocked
+      ? `Defeat all enemies (${enemiesRemaining} left)`
+      : trigger.prompt;
+    state.triggerPromptText.tint = blocked ? 0xfca5a5 : 0xffffff;
     const padding = 10;
     const width = state.triggerPromptText.width + padding * 2;
     const height = state.triggerPromptText.height + padding * 2;
     state.triggerPrompt.setSize(width, height);
     state.triggerPromptBg.clear();
     state.triggerPromptBg.beginFill(0x0f1720, 0.85);
-    state.triggerPromptBg.lineStyle(1, 0x2b3440, 1);
+    state.triggerPromptBg.lineStyle(1, blocked ? 0x7f1d1d : 0x2b3440, 1);
     state.triggerPromptBg.drawRoundedRect(0, 0, width, height, 6);
     state.triggerPromptBg.endFill();
     state.triggerPromptText.position.set(width * 0.5, height * 0.5);

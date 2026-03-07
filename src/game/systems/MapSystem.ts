@@ -27,21 +27,29 @@ export class MapSystem {
     const px = state.player.pos.x;
     const py = state.player.pos.y;
     const inDoor = px >= door.xMin && px <= door.xMax && py >= door.yMin && py <= door.yMax;
+    const enemiesRemaining = state.enemies.filter(
+      e => e.mapId === state.currentMapId && !e.dead
+    ).length;
+    const cleared = enemiesRemaining === 0;
+
     state.doorPrompt.visible = inDoor && state.transitionPhase === "idle";
     if (state.doorPrompt.visible) {
-      state.doorPromptText.text = "Space: Enter";
+      state.doorPromptText.text = cleared
+        ? "Space: Enter"
+        : `Defeat all enemies (${enemiesRemaining} left)`;
       const padding = 10;
       const width = state.doorPromptText.width + padding * 2;
       const height = state.doorPromptText.height + padding * 2;
       state.doorPrompt.setSize(width, height);
       state.doorPromptBg.clear();
       state.doorPromptBg.beginFill(0x0f1720, 0.85);
-      state.doorPromptBg.lineStyle(1, 0x2b3440, 1);
+      state.doorPromptBg.lineStyle(1, cleared ? 0x2b3440 : 0x7f1d1d, 1);
       state.doorPromptBg.drawRoundedRect(0, 0, width, height, 6);
       state.doorPromptBg.endFill();
       state.doorPromptText.position.set(width * 0.5, height * 0.5);
+      state.doorPromptText.tint = cleared ? 0xffffff : 0xfca5a5;
     }
-    if (inDoor && state.input.isActionPressed("action")) {
+    if (inDoor && cleared && state.input.isActionPressed("action")) {
       state.transitionPhase = "fadeOut";
       state.transitionTime = 0;
       state.transitionTargetMapId = door.to;
