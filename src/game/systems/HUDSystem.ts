@@ -192,8 +192,9 @@ export class HUDSystem {
   private updateRhythmIndicator(state: GameState): void {
     const pulse = state.rhythm.pulse;
     const onBeat = state.rhythm.onBeat;
-    const color = onBeat ? 0xfbbf24 : 0x38bdf8;
-    state.hudBeatLabel.tint = onBeat ? 0xfef08a : 0x93c5fd;
+    const tempoBurstActive = state.tempoBurstBeatsLeft > 0;
+    const color = tempoBurstActive ? 0xfde047 : onBeat ? 0xfbbf24 : 0x38bdf8;
+    state.hudBeatLabel.tint = tempoBurstActive ? 0xfde047 : onBeat ? 0xfef08a : 0x93c5fd;
 
     state.hudBeatRing.clear();
 

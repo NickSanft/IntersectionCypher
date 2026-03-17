@@ -10,6 +10,8 @@ const ELEMENT_COLORS: Record<Element, number> = {
 };
 
 export class CombatSystem {
+  private lastBeatForTempo = -1;
+
   private acquireDamageText(state: GameState): GameState["damageTextPool"][number] {
     for (const entry of state.damageTextPool) {
       if (!entry.inUse) {
@@ -169,9 +171,29 @@ export class CombatSystem {
     }
   }
 
+  private spawnSplitterChildren(state: GameState, parent: GameState["enemies"][number]): void {
+    const childHp = Math.max(1, Math.ceil(parent.maxHp / 2));
+    const offsets = [{ x: -16, y: 0 }, { x: 16, y: 0 }];
+    for (const off of offsets) {
+      state.spawnQueue.push({
+        type: "chaser",
+        mapId: parent.mapId,
+        x: parent.entity.pos.x + off.x,
+        y: parent.entity.pos.y + off.y,
+        hp: childHp,
+      });
+    }
+  }
+
   public update(state: GameState, dt: number): void {
     if (state.levelUp.active) {
       return;
+    }
+
+    // Tempo Burst: decrement beats on each new beat
+    if (state.tempoBurstBeatsLeft > 0 && state.rhythm.lastBeat !== this.lastBeatForTempo) {
+      this.lastBeatForTempo = state.rhythm.lastBeat;
+      state.tempoBurstBeatsLeft = Math.max(0, state.tempoBurstBeatsLeft - 1);
     }
 
     // Combo decay
@@ -244,6 +266,13 @@ export class CombatSystem {
         const dy = entry.projectile.entity.pos.y - enemy.entity.pos.y;
         const dist = Math.hypot(dx, dy);
         if (dist <= enemy.radius + entry.projectile.radius) {
+          // Phase Guard: skip damage while invulnerable
+          if (enemy.type === "phaseguard" && enemy.phaseActive) {
+            enemy.entity.sprite.tint = 0x88ccff;
+            enemy.hitTimer = 0.08;
+            continue;
+          }
+
           // Shield block check
           if (
             enemy.type === "shield" &&
@@ -277,6 +306,11 @@ export class CombatSystem {
             }
           }
 
+          // Tempo Burst: treat shot as on-beat
+          if (state.tempoBurstBeatsLeft > 0) {
+            entry.onBeat = true;
+          }
+
           // Weakness triangle: Heat > Wave > Neutral > Heat
           const ELEMENT_WEAKNESS: Record<import("../types").Element, import("../types").Element> = {
             Heat: "Wave", Wave: "Neutral", Neutral: "Heat",
@@ -284,7 +318,27 @@ export class CombatSystem {
           const isWeakness = ELEMENT_WEAKNESS[entry.element] === enemy.element;
           const elementBonus = isWeakness ? 1.5 : 1;
           const comboBonus = state.combo.multiplier;
-          const finalDamage = Math.max(1, Math.round(entry.damage * elementBonus * comboBonus));
+
+          // Resonant Frequency: every 4th consecutive on-beat hit deals 3x instead of 2x
+          let onBeatMult = entry.onBeat ? state.rhythm.onBeatDamageMult : 1;
+          if (entry.onBeat) {
+            state.onBeatStreak += 1;
+            state.lastOnBeatShotTime = state.rhythm.totalTime;
+            if (state.passives.resonantFrequency && state.onBeatStreak % 4 === 0) {
+              onBeatMult = 3;
+            }
+          } else {
+            state.onBeatStreak = 0;
+          }
+
+          // Amp Crystal: next charged shot deals 4x
+          let ampBonus = 1;
+          if (entry.isCharged && state.ampCrystalReady) {
+            ampBonus = 2; // stacks with base 2x for 4x total
+            state.ampCrystalReady = false;
+          }
+
+          const finalDamage = Math.max(1, Math.round(entry.damage * elementBonus * comboBonus * onBeatMult * ampBonus));
           enemy.entity.sprite.tint = 0xffc2c2;
           enemy.hitTimer = enemy.hitFlashSeconds;
           enemy.hp = Math.max(0, enemy.hp - finalDamage);
@@ -300,6 +354,10 @@ export class CombatSystem {
             state.killCount += 1;
             writeSave(state);
             SoundSystem.playEnemyDeath(state, entry.onBeat);
+            // Splitter: spawn two child chasers
+            if (enemy.type === "splitter" && !enemy.isChild) {
+              this.spawnSplitterChildren(state, enemy);
+            }
             // On-beat kill: bright screen flash
             if (entry.onBeat) {
               state.rhythm.overlayAlpha = Math.max(state.rhythm.overlayAlpha, 0.5);
@@ -336,6 +394,17 @@ export class CombatSystem {
               enemy.burnTickTimer = 0.5;
             } else if (entry.element === "Wave") {
               enemy.slowTimer = 1.5;
+              // Wave Amp: also slow nearby enemies within 60px of hit point
+              if (state.passives.waveAmp) {
+                for (const other of state.enemies) {
+                  if (other === enemy || other.mapId !== state.currentMapId || other.dead) continue;
+                  const adx = other.entity.pos.x - enemy.entity.pos.x;
+                  const ady = other.entity.pos.y - enemy.entity.pos.y;
+                  if (Math.hypot(adx, ady) <= 60) {
+                    other.slowTimer = Math.max(other.slowTimer, 1.5);
+                  }
+                }
+              }
             }
           }
 
@@ -459,7 +528,11 @@ export class CombatSystem {
         state.screenFlash.alpha = 0.45;
         state.screenFlash.color = 0xff2222;
         SoundSystem.playPlayerHurt(state);
-        const damage = Math.max(0, entry.damage * state.playerDamageMult);
+        // Beat Armor: reduce damage by 1 if player shot on-beat within last 2s
+        const recentOnBeat = state.passives.beatArmor &&
+          (state.rhythm.totalTime - state.lastOnBeatShotTime) <= 2;
+        const armorReduction = recentOnBeat ? 1 : 0;
+        const damage = Math.max(0, entry.damage * state.playerDamageMult - armorReduction);
         state.playerData.stats.hp = Math.max(0, state.playerData.stats.hp - damage);
         state.combo.count = 0;
         state.combo.multiplier = 1;

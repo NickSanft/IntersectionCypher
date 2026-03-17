@@ -225,6 +225,50 @@ export class EnemyAISystem {
         continue;
       }
 
+      if (enemy.type === "phaseguard") {
+        // Cycle invulnerability: 1.5s active, 2.5s vulnerable
+        enemy.phaseTimer -= dt;
+        if (enemy.phaseTimer <= 0) {
+          enemy.phaseActive = !enemy.phaseActive;
+          enemy.phaseTimer = enemy.phaseActive ? 1.5 : 2.5;
+        }
+        // Draw ring when invulnerable
+        if (enemy.phaseActive) {
+          enemy.telegraphGfx.visible = enemy.mapId === state.currentMapId;
+          enemy.telegraphGfx.clear();
+          const r = enemy.radius + 6;
+          enemy.telegraphGfx.rect(
+            enemy.entity.pos.x - r, enemy.entity.pos.y - r, r * 2, r * 2
+          ).stroke({ width: 2, color: 0x38bdf8, alpha: 0.85 });
+        } else {
+          enemy.telegraphGfx.clear();
+          enemy.telegraphGfx.visible = false;
+        }
+        // Behave like a chaser otherwise
+        if (dist <= enemy.aggroRange && !enemy.phaseActive) {
+          const nx = dist === 0 ? 0 : dx / dist;
+          const ny = dist === 0 ? 0 : dy / dist;
+          if (dist > enemy.stopRange) {
+            enemy.entity.vel.x = nx * effectiveSpeed;
+            enemy.entity.vel.y = ny * effectiveSpeed;
+          } else {
+            enemy.entity.vel.x = 0;
+            enemy.entity.vel.y = 0;
+          }
+          if (enemy.attackCooldown <= 0 && dist <= enemy.attackRange && enemy.attackTimer <= 0) {
+            enemy.attackTimer = enemy.attackWindupSeconds;
+            enemy.attackCooldown = enemy.attackCooldownSeconds;
+          }
+        } else {
+          enemy.entity.vel.x = 0;
+          enemy.entity.vel.y = 0;
+        }
+        moveWithCollision(enemy.entity.pos, enemy.entity.vel, dt, enemy.radius, state.map);
+        { const eBase = Math.abs(enemy.entity.sprite.scale.x); enemy.entity.sprite.scale.x = dx < 0 ? -eBase : eBase; }
+        enemy.entity.renderUpdate();
+        continue;
+      }
+
       if (enemy.type === "turret") {
         enemy.entity.vel.x = 0;
         enemy.entity.vel.y = 0;

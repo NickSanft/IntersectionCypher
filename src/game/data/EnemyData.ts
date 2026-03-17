@@ -138,6 +138,52 @@ export const heavyTurretEnemyData: EnemyData = {
   element: "Neutral",
 };
 
+export const splitterData: EnemyData = {
+  name: "Splitter",
+  maxHp: 8,
+  radius: 13,
+  respawnSeconds: 999,
+  hitFlashSeconds: 0.15,
+  labelOffsetY: 46,
+  speed: 100,
+  aggroRange: 200,
+  stopRange: 32,
+  patrolRadius: 40,
+  attackRange: 0,
+  attackWindupSeconds: 0,
+  attackCooldownSeconds: 999,
+  strafeSpeed: 0,
+  strafeSwitchSeconds: 1,
+  projectileSpeed: 0,
+  projectileDamage: 0,
+  projectileRadius: 5,
+  projectileLifetime: 1,
+  element: "Heat",
+};
+
+export const phaseGuardData: EnemyData = {
+  name: "Phase Guard",
+  maxHp: 15,
+  radius: 14,
+  respawnSeconds: 999,
+  hitFlashSeconds: 0.12,
+  labelOffsetY: 52,
+  speed: 60,
+  aggroRange: 240,
+  stopRange: 60,
+  patrolRadius: 36,
+  attackRange: 180,
+  attackWindupSeconds: 0.5,
+  attackCooldownSeconds: 2.0,
+  strafeSpeed: 40,
+  strafeSwitchSeconds: 2,
+  projectileSpeed: 300,
+  projectileDamage: 1,
+  projectileRadius: 5,
+  projectileLifetime: 1.4,
+  element: "Wave",
+};
+
 export const shieldEnemyData: EnemyData = {
   name: "Shield Guard",
   maxHp: 12,

@@ -11,6 +11,8 @@ export type KeyAction =
   | "ability1"
   | "ability2"
   | "ability3"
+  | "ability4"
+  | "ability5"
   | "cycleElement";
 
 const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
@@ -21,11 +23,13 @@ const actionKeyMap: Record<KeyAction, ReadonlyArray<string>> = {
   action: ["Space", "Enter"],
   menu: ["Escape", "KeyM", "KeyI"],
   useItem: ["KeyH"],
-  summary: ["KeyR"],
+  summary: ["KeyP"],
   settings: ["KeyO"],
   ability1: ["KeyQ", "Digit1"],
   ability2: ["KeyE", "Digit2"],
   ability3: ["KeyF", "Digit3"],
+  ability4: ["KeyR", "Digit4"],
+  ability5: ["KeyC", "Digit5"],
   cycleElement: ["Tab", "KeyX"],
 };
 

@@ -117,10 +117,17 @@ export interface HitMarkerEntry {
   pool: HitMarkerPoolEntry;
 }
 
+export interface PassivesState {
+  beatArmor: boolean;
+  resonantFrequency: boolean;
+  capacitor: boolean;
+  waveAmp: boolean;
+}
+
 export interface EnemyState {
   entity: ZEntity;
   name: string;
-  type: "chaser" | "turret" | "shield";
+  type: "chaser" | "turret" | "shield" | "splitter" | "phaseguard";
   animState: AnimationState;
   radius: number;
   maxHp: number;
@@ -169,6 +176,11 @@ export interface EnemyState {
   burnTimer: number;
   burnTickTimer: number;
   slowTimer: number;
+  phaseTimer: number;
+  phaseActive: boolean;
+  isBoss: boolean;
+  phaseTwo: boolean;
+  isChild: boolean;
 }
 
 export interface DialogState {
@@ -393,6 +405,12 @@ export interface GameState {
   hudKillText: PIXI.Text;
   lowHpPulseGfx: PIXI.Graphics;
   screenFlash: { gfx: PIXI.Graphics; alpha: number; color: number };
+  passives: PassivesState;
+  tempoBurstBeatsLeft: number;
+  onBeatStreak: number;
+  ampCrystalReady: boolean;
+  lastOnBeatShotTime: number;
+  spawnQueue: Array<{ type: EnemyState["type"]; mapId: string; x: number; y: number; hp: number }>;
 }
 
 export interface UpgradeHistoryEntry {

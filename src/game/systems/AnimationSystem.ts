@@ -14,12 +14,16 @@ const ENEMY_TYPE_TO_ENTITY: Record<EnemyState["type"], EntityType> = {
   chaser: "chaser",
   turret: "turret",
   shield: "shield",
+  splitter: "chaser",
+  phaseguard: "chaser",
 };
 
 const ENEMY_ANIM_CONFIGS: Record<EnemyState["type"], AnimSet> = {
   chaser: chaserAnims,
   turret: turretAnims,
   shield: shieldAnims,
+  splitter: chaserAnims,
+  phaseguard: chaserAnims,
 };
 
 export class AnimationSystem {

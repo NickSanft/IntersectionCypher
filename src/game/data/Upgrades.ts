@@ -1,5 +1,7 @@
 import type { AbilityDefinition } from "../types";
 
+export type PassiveId = "beatArmor" | "resonantFrequency" | "capacitor" | "waveAmp";
+
 export type UpgradeEffect =
   | {
       type: "stat";
@@ -7,7 +9,8 @@ export type UpgradeEffect =
       amount: number;
     }
   | { type: "ability"; abilityId: AbilityDefinition["id"]; field: "cooldown" | "castTime"; delta: number }
-  | { type: "rhythm"; field: "windowSeconds" | "onBeatDamageMult"; delta: number };
+  | { type: "rhythm"; field: "windowSeconds" | "onBeatDamageMult"; delta: number }
+  | { type: "passive"; passive: PassiveId };
 
 export interface UpgradeDefinition {
   id: string;
@@ -96,6 +99,34 @@ const upgradePool: UpgradeDefinition[] = [
     effect: { type: "rhythm", field: "onBeatDamageMult", delta: 0.5 },
     rarity: "Epic",
     minLevel: 4,
+  },
+  {
+    id: "passive-beat-armor",
+    label: "Beat Armor",
+    effect: { type: "passive", passive: "beatArmor" },
+    rarity: "Rare",
+    minLevel: 2,
+  },
+  {
+    id: "passive-resonant-freq",
+    label: "Resonant Frequency",
+    effect: { type: "passive", passive: "resonantFrequency" },
+    rarity: "Epic",
+    minLevel: 3,
+  },
+  {
+    id: "passive-capacitor",
+    label: "Capacitor",
+    effect: { type: "passive", passive: "capacitor" },
+    rarity: "Rare",
+    minLevel: 2,
+  },
+  {
+    id: "passive-wave-amp",
+    label: "Wave Amp",
+    effect: { type: "passive", passive: "waveAmp" },
+    rarity: "Rare",
+    minLevel: 2,
   },
 ];
 

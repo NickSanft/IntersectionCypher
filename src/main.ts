@@ -27,7 +27,7 @@ import { SettingsSystem } from "./game/systems/SettingsSystem";
 import { AnimationSystem } from "./game/systems/AnimationSystem";
 import type { GameState } from "./game/types";
 import { defaultPlayerData } from "./game/data/PlayerData";
-import { defaultEnemyData, turretEnemyData, shieldEnemyData, heavyTurretEnemyData, heatTurretEnemyData, heatBossData, type EnemyData } from "./game/data/EnemyData";
+import { defaultEnemyData, turretEnemyData, shieldEnemyData, heavyTurretEnemyData, heatTurretEnemyData, heatBossData, splitterData, phaseGuardData, type EnemyData } from "./game/data/EnemyData";
 import { createAbilityStates } from "./game/abilities/AbilityFactory";
 import { findNearestOpen } from "./core/world/MapUtils";
 import npcDialog from "./game/dialogs/npc.json";
@@ -263,9 +263,11 @@ const bootstrap = async (): Promise<void> => {
     frames: PIXI.Texture[],
     map: TileMap,
     mapId: string,
-    type: "chaser" | "turret" | "shield",
+    type: import("./game/types").EnemyState["type"],
     spawnX: number,
-    spawnY: number
+    spawnY: number,
+    overrideHp?: number,
+    isChild = false
   ) => {
     const enemySprite = makeAnim(frames, 0.08);
     enemySprite.scale.set(3); // 16px → 48px
@@ -347,8 +349,8 @@ const bootstrap = async (): Promise<void> => {
       shieldArcDeg: type === "shield" ? 120 : undefined,
       shieldGfx,
       radius: data.radius,
-      maxHp: data.maxHp,
-      hp: data.maxHp,
+      maxHp: overrideHp ?? data.maxHp,
+      hp: overrideHp ?? data.maxHp,
       hitTimer: 0,
       dead: false,
       deathTimer: 0,
@@ -389,6 +391,11 @@ const bootstrap = async (): Promise<void> => {
       burnTimer: 0,
       burnTickTimer: 0,
       slowTimer: 0,
+      phaseTimer: 2.5,
+      phaseActive: false,
+      isBoss: false,
+      phaseTwo: false,
+      isChild,
     };
   };
 
@@ -403,20 +410,22 @@ const bootstrap = async (): Promise<void> => {
   const map1cChaser1Spawn = tileToWorld(map1c, 8, 3);
   const map1cChaser2Spawn = tileToWorld(map1c, 18, 11);
   const map1cTurret1Spawn = tileToWorld(map1c, 4, 10);
-  const map1cTurret2Spawn = tileToWorld(map1c, 20, 3);
   // map1_boss — single heavy turret boss in center
   const map1BossSpawn = tileToWorld(map1boss, 11, 7);
   // map2b enemies — three Heat Chasers in staggered cover positions
   const map2bChaser1Spawn = tileToWorld(map2b, 14, 2);
   const map2bChaser2Spawn = tileToWorld(map2b, 4, 7);
   const map2bChaser3Spawn = tileToWorld(map2b, 12, 9);
-  // map2c enemies — two Heat Turrets (corners) + two Shield Guards (corners)
+  // map2c enemies — two Heat Turrets (corners) + two Shield Guards (corners) + one Phase Guard
   const map2cTurret1Spawn = tileToWorld(map2c, 4, 2);
   const map2cTurret2Spawn = tileToWorld(map2c, 17, 2);
   const map2cShield1Spawn = tileToWorld(map2c, 4, 9);
   const map2cShield2Spawn = tileToWorld(map2c, 17, 9);
+  const map2cPhaseGuardSpawn = tileToWorld(map2c, 11, 5);
   // map2_boss — single Reactor Core boss
   const map2BossSpawn = tileToWorld(map2boss, 11, 6);
+  // map1c Splitter spawn
+  const map1cSplitterSpawn = tileToWorld(map1c, 12, 7);
   const enemies = [
     // map1
     createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map1, "map1", "chaser", map1Chaser1Spawn.x, map1Chaser1Spawn.y),
@@ -429,18 +438,19 @@ const bootstrap = async (): Promise<void> => {
     createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map1c, "map1c", "chaser", map1cChaser1Spawn.x, map1cChaser1Spawn.y),
     createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map1c, "map1c", "chaser", map1cChaser2Spawn.x, map1cChaser2Spawn.y),
     createEnemyState(turretEnemyData, spriteAtlas.entities.turret.idle, map1c, "map1c", "turret", map1cTurret1Spawn.x, map1cTurret1Spawn.y),
-    createEnemyState(turretEnemyData, spriteAtlas.entities.turret.idle, map1c, "map1c", "turret", map1cTurret2Spawn.x, map1cTurret2Spawn.y),
+    createEnemyState(splitterData, spriteAtlas.entities.chaser.idle, map1c, "map1c", "splitter", map1cSplitterSpawn.x, map1cSplitterSpawn.y),
     // map1_boss
     createEnemyState(heavyTurretEnemyData, spriteAtlas.entities.turret.idle, map1boss, "map1_boss", "turret", map1BossSpawn.x, map1BossSpawn.y),
     // map2b — three Heat Chasers
     createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map2b, "map2b", "chaser", map2bChaser1Spawn.x, map2bChaser1Spawn.y),
     createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map2b, "map2b", "chaser", map2bChaser2Spawn.x, map2bChaser2Spawn.y),
     createEnemyState(defaultEnemyData, spriteAtlas.entities.chaser.idle, map2b, "map2b", "chaser", map2bChaser3Spawn.x, map2bChaser3Spawn.y),
-    // map2c — two Heat Turrets + two Shield Guards
+    // map2c — two Heat Turrets + two Shield Guards + one Phase Guard
     createEnemyState(heatTurretEnemyData, spriteAtlas.entities.turret.idle, map2c, "map2c", "turret", map2cTurret1Spawn.x, map2cTurret1Spawn.y),
     createEnemyState(heatTurretEnemyData, spriteAtlas.entities.turret.idle, map2c, "map2c", "turret", map2cTurret2Spawn.x, map2cTurret2Spawn.y),
     createEnemyState(shieldEnemyData, spriteAtlas.entities.shield.idle, map2c, "map2c", "shield", map2cShield1Spawn.x, map2cShield1Spawn.y),
     createEnemyState(shieldEnemyData, spriteAtlas.entities.shield.idle, map2c, "map2c", "shield", map2cShield2Spawn.x, map2cShield2Spawn.y),
+    createEnemyState(phaseGuardData, spriteAtlas.entities.chaser.idle, map2c, "map2c", "phaseguard", map2cPhaseGuardSpawn.x, map2cPhaseGuardSpawn.y),
     // map2_boss — Reactor Core
     createEnemyState(heatBossData, spriteAtlas.entities.turret.idle, map2boss, "map2_boss", "turret", map2BossSpawn.x, map2BossSpawn.y),
   ];
@@ -844,7 +854,7 @@ const bootstrap = async (): Promise<void> => {
   const abilitySlotLabels: PIXI.Text[] = [];
   const abilitySlotKeys: PIXI.Text[] = [];
 
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 5; i += 1) {
     const bg = new PIXI.Graphics();
     abilityBar.addChild(bg);
     abilitySlotBgs.push(bg);
@@ -1213,6 +1223,17 @@ const bootstrap = async (): Promise<void> => {
       hudPulse: 0,
     },
     screenFlash: { gfx: screenFlashGfx, alpha: 0, color: 0xffffff },
+    passives: {
+      beatArmor: false,
+      resonantFrequency: false,
+      capacitor: false,
+      waveAmp: false,
+    },
+    tempoBurstBeatsLeft: 0,
+    onBeatStreak: 0,
+    ampCrystalReady: false,
+    lastOnBeatShotTime: -999,
+    spawnQueue: [],
   };
 
   state.abilities = createAbilityStates(state);
@@ -1390,6 +1411,20 @@ const bootstrap = async (): Promise<void> => {
     uiSystem.update(state, dt);
     minimapSystem.update(state);
     hudSystem.update(state, dt);
+
+    // Process spawn queue (e.g. Splitter children)
+    if (state.spawnQueue.length > 0) {
+      const toSpawn = state.spawnQueue.splice(0);
+      for (const req of toSpawn) {
+        const spawnData = req.type === "chaser" ? defaultEnemyData : defaultEnemyData;
+        const frames = spriteAtlas.entities.chaser.idle;
+        const newEnemy = createEnemyState(
+          spawnData, frames, state.maps[req.mapId].map,
+          req.mapId, req.type, req.x, req.y, req.hp, true
+        );
+        state.enemies.push(newEnemy);
+      }
+    }
 
     // Screen flash decay
     const sf = state.screenFlash;

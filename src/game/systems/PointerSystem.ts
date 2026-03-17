@@ -150,6 +150,11 @@ export const setupPointerSystem = (
     }
     if (isCharged) {
       spawnProjectile(normX, normY, 8, baseSpeed * 0.9, baseDamage * 3 * damageMult, onBeat, true);
+      // Capacitor: fire a second charged projectile at +8° offset
+      if (state.passives.capacitor) {
+        const angle = Math.atan2(normY, normX) + (8 * Math.PI) / 180;
+        spawnProjectile(Math.cos(angle), Math.sin(angle), 8, baseSpeed * 0.9, baseDamage * 3 * damageMult, onBeat, true);
+      }
     } else {
       spawnProjectile(normX, normY, 4, baseSpeed, baseDamage * damageMult, onBeat, false);
     }

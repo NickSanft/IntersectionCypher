@@ -2,7 +2,10 @@ import type { InventoryItem } from "./Inventory";
 
 export type ItemRarity = "Common" | "Rare" | "Epic";
 export type ItemKind = "consumable" | "material";
-export type ItemEffect = { type: "heal"; amount: number };
+export type ItemEffect =
+  | { type: "heal"; amount: number }
+  | { type: "beatStim" }
+  | { type: "ampCrystal" };
 
 export interface ItemDefinition {
   id: string;
@@ -51,6 +54,22 @@ export const itemDefs: Record<string, ItemDefinition> = {
     rarity: "Rare",
     kind: "material",
     price: 35,
+  },
+  beatStim: {
+    id: "beatStim",
+    name: "Beat Stim",
+    rarity: "Rare",
+    kind: "consumable",
+    price: 25,
+    effect: { type: "beatStim" },
+  },
+  ampCrystal: {
+    id: "ampCrystal",
+    name: "Amp Crystal",
+    rarity: "Epic",
+    kind: "consumable",
+    price: 40,
+    effect: { type: "ampCrystal" },
   },
 };
 

@@ -47,6 +47,11 @@ export const applyUpgrade = (state: GameState, upgrade: UpgradeDefinition): void
     return;
   }
 
+  if (effect.type === "passive") {
+    state.passives[effect.passive] = true;
+    return;
+  }
+
   if (effect.type === "rhythm") {
     if (effect.field === "windowSeconds") {
       state.rhythm.windowSeconds = Math.min(
